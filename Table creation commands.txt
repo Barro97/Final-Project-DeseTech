@@ -1,0 +1,110 @@
+-- Drop tables if they exist (order matters because of foreign key dependencies)
+DROP TABLE IF EXISTS dataset_tag;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS comment;
+DROP TABLE IF EXISTS likes;
+DROP TABLE IF EXISTS dataset;
+DROP TABLE IF EXISTS tag;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+
+-- 1. Create ROLES table
+CREATE TABLE roles (
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(255) NOT NULL
+);
+
+-- 2. Create USERS table
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    gender VARCHAR(50),
+    password VARCHAR(255) NOT NULL,
+    country VARCHAR(255),
+    profile_picture TEXT,
+    education VARCHAR(255),
+    organization VARCHAR(255),
+    role_id INT,
+    CONSTRAINT fk_role
+        FOREIGN KEY (role_id) 
+        REFERENCES roles(role_id)
+);
+
+-- 3. Create DATASET table
+CREATE TABLE dataset (
+    dataset_id SERIAL PRIMARY KEY,
+    dataset_name VARCHAR(255) NOT NULL,
+    date_of_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dataset_last_updated TIMESTAMP,
+    dataset_description TEXT,
+    downloads_count INT DEFAULT 0,
+    uploader_id INT,
+    CONSTRAINT fk_uploader
+        FOREIGN KEY (uploader_id)
+        REFERENCES users(user_id)
+);
+
+-- 4. Create FILES table
+CREATE TABLE files (
+    file_id SERIAL PRIMARY KEY,
+    file_date_of_upload TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    file_name VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50),
+    size INT,
+    file_url TEXT,
+    dataset_id INT,
+    CONSTRAINT fk_dataset_file
+        FOREIGN KEY (dataset_id)
+        REFERENCES dataset(dataset_id)
+);
+
+-- 5. Create COMMENT table
+CREATE TABLE comment (
+    comment_id SERIAL PRIMARY KEY,
+    comment_dt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    comment_text TEXT,
+    user_id INT,
+    dataset_id INT,
+    CONSTRAINT fk_comment_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(user_id),
+    CONSTRAINT fk_comment_dataset
+        FOREIGN KEY (dataset_id)
+        REFERENCES dataset(dataset_id)
+);
+
+-- 6. Create LIKES table
+CREATE TABLE likes (
+    like_id SERIAL PRIMARY KEY,
+    like_dt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id INT,
+    dataset_id INT,
+    CONSTRAINT fk_like_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(user_id),
+    CONSTRAINT fk_like_dataset
+        FOREIGN KEY (dataset_id)
+        REFERENCES dataset(dataset_id)
+);
+
+-- 7. Create TAG table
+CREATE TABLE tag (
+    tag_id SERIAL PRIMARY KEY,
+    tag_category_name VARCHAR(255) NOT NULL
+);
+
+-- 8. Create join table for many-to-many relationship between DATASET and TAG
+CREATE TABLE dataset_tag (
+    dataset_id INT,
+    tag_id INT,
+    PRIMARY KEY (dataset_id, tag_id),
+    CONSTRAINT fk_dt_dataset
+        FOREIGN KEY (dataset_id)
+        REFERENCES dataset(dataset_id),
+    CONSTRAINT fk_dt_tag
+        FOREIGN KEY (tag_id)
+        REFERENCES tag(tag_id)
+);

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend.api.file_routes import router as file_router
 
 app = FastAPI()
 
@@ -11,6 +12,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(file_router)
 
 @app.get("/")
 async def read_root():

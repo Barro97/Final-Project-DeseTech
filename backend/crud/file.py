@@ -9,4 +9,5 @@ def create_file(db: Session , file: FileCreate ):
     db.refresh(db_file)
     return db_file
 
-
+def get_file(db: Session, file_id: int):
+    return db.query(File).filter(File.file_id == file_id).first()

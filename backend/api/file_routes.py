@@ -7,7 +7,7 @@ from backend.crud.file import create_file, get_file
 
 router = APIRouter()
 
-@router.post("/files/")
+@router.post("/upload-file/")
 async def create_file_route(file: FileCreate, db: Session = Depends(get_db)):
     return create_file(db = db, file = file)
 

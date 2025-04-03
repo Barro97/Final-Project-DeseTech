@@ -27,8 +27,8 @@ async def create_file_route(dataset_id: int, file: UploadFile = File(...), db: S
         file_url=file_path,                     # local path
         dataset_id=dataset_id
     )
-    
-    return create_file(db = db, file = file)
+
+    return create_file(db = db, file_data = file_data)
 
 @router.get("/files/{file_id}")
 async def get_file_route(file_id: int, db: Session = Depends(get_db)):

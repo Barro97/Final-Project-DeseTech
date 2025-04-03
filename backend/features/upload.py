@@ -12,7 +12,7 @@ BACKEND_DIR = os.path.dirname(BASE_DIR)               # backend/
 UPLOAD_DIR = os.path.join(BACKEND_DIR, "storage", "uploads")
 
 def save_file_locally(file: UploadFile) -> str:
-    filename = f"{uuid.uuid4()}.{file.filename}"
+    filename = f"{uuid.uuid4()}.{file.filename}" # Create a unique file name
     file_path = os.path.join(UPLOAD_DIR, filename)
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)

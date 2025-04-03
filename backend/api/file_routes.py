@@ -1,14 +1,33 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter , UploadFile, File
 from sqlalchemy.orm import Session
 from backend.database.session import get_db
 from backend.schemas.file import FileCreate
 from backend.crud.file import create_file, get_file
+from backend.features.upload import save_file
+import os
+
 
 
 router = APIRouter()
 
 @router.post("/upload-file/")
-async def create_file_route(file: FileCreate, db: Session = Depends(get_db)):
+async def create_file_route(dataset_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    
+    # Save the file itself
+    file_path = save_file(file)
+
+    # Get the size of the file
+    size = os.path.getsize(file_path)
+
+    # Construct a pydantic model that fits the data
+    file_data = FileCreate(
+        file_name = file.filename,
+        file_type=file.content_type,   # e.g. 'text/csv', 'image/png', etc.
+        size=size,
+        file_url=file_path,                     # local path
+        dataset_id=dataset_id
+    )
+    
     return create_file(db = db, file = file)
 
 @router.get("/files/{file_id}")

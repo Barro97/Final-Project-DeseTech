@@ -19,15 +19,19 @@ project/
 └── backend/         # FastAPI backend
 ```
 
+##Terminal command - Noam
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+
 ## Backend Setup (FastAPI)
 
 1. Open Command Prompt and navigate to the backend directory:
 
-   cd backend
+   cd C:\Users\97252\Desktop\DeseTech\Project\Final-Project-DeseTech\backend
 
 2. Create a Python virtual environment:
-
-   python -m venv venv
+   
+   py -m venv venv   
 
 3. Activate the virtual environment:
 
@@ -38,7 +42,7 @@ project/
    pip install -r requirements.txt
 
 5. Start the FastAPI server:
-   uvicorn main:app --reload
+   uvicorn backend.main:app --reload
 
 The backend server will be running at `http://localhost:8000`
 
@@ -51,7 +55,7 @@ You can access:
 
 1. Open a new Command Prompt window and navigate to the frontend directory:
 
-   cd frontend
+   cd C:\Users\97252\Desktop\DeseTech\Project\Final-Project-DeseTech\frontend
 
 2. Install the required dependencies:
 
@@ -98,3 +102,17 @@ The frontend application will be running at `http://localhost:3000`
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
+
+
+#פקודות לגיטאב
+git checkout -b <branch-name>  #יצירת ענף חדש
+
+git switch -c <branch-name>   #החלפה לענף
+
+
+#להעלות לגיט את כל העבודה
+git add .      #בחירת כל הקבצים
+
+git commit -m "" #שם לשמירה
+
+git push  #שיגור השימרה לענן 

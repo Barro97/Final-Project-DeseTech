@@ -24,7 +24,7 @@ async def create_file_route(dataset_id: int, file: UploadFile = File(...), db: S
         file_name = file.filename,
         file_type=file.content_type,   # e.g. 'text/csv', 'image/png', etc.
         size=size,
-        file_url=file_path,                     # local path
+        file_url=file_path,                     
         dataset_id=dataset_id
     )
 

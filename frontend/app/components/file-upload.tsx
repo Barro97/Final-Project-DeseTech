@@ -269,9 +269,7 @@ export function FileUpload({
                     {formatBytes(file.file.size)}
                   </p>
                   {file.status === "error" && (
-                    <p className="text-xs text-destructive mt-1">
-                      {file.error}
-                    </p>
+                    <p className="text-xs text-red-500 mt-1">{file.error}</p>
                   )}
                 </div>
               </div>
@@ -288,7 +286,7 @@ export function FileUpload({
                 )}
 
                 {file.status === "error" && (
-                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <AlertCircle className="h-5 w-5 text-red-500" />
                 )}
 
                 <Button

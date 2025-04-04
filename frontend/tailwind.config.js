@@ -16,6 +16,7 @@ module.exports = {
         // background: "var(--background)",
         // foreground: "var(--foreground)",
         primary: "hsl(var(--primary) / <alpha-value>)",
+        destructive: "hsl(var(--destructive) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
         background: "hsl(var(--background) / <alpha-value>)",
       },

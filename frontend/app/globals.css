@@ -113,11 +113,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
-  /* * {
+/* @layer base { */
+/* * {
     @apply border-border outline-[2px_solid_var(--ring)];
   } */
-  body {
+/* body {
     @apply bg-background text-foreground;
   }
-}
+} */

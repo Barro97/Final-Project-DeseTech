@@ -13,8 +13,11 @@ module.exports = {
         border: "var(--border)",
         // The key “ring” => color name = ring-ring, or outline-ring, etc.
         ring: "var(--ring)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        // background: "var(--background)",
+        // foreground: "var(--foreground)",
+        primary: "hsl(var(--primary) / <alpha-value>)",
+        border: "hsl(var(--border) / <alpha-value>)",
+        background: "hsl(var(--background) / <alpha-value>)",
       },
     },
   },

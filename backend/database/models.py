@@ -25,7 +25,7 @@ class Role(Base):
 class User(Base):
     __tablename__ = 'users'
 
-    user_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String(255), nullable=False, unique=True)
     username = Column(String(255), nullable=False, unique=True)
     first_name = Column(String(255))

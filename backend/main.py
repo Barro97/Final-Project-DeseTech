@@ -3,6 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.file_routes import router as file_router
 from backend.api.user_routes import router as user_router
 
+
+#############
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#############
+
+
 app = FastAPI()
 
 # Configure CORS

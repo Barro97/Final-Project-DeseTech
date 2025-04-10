@@ -5,3 +5,5 @@ sqlalchemy==2.0.28
 pydantic==2.6.3 
 asyncpg
 passlib[bcrypt]
+python-multipart
+

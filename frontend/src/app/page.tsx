@@ -1,51 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { FileUpload } from "./components/file-upload";
 
 export default function Home() {
-  const [message, setMessage] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
-
-  const testBackendConnection = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("http://localhost:8000/");
-      const data = await response.json();
-      setMessage(data.message);
-    } catch {
-      setError(
-        "Failed to connect to the backend. Make sure the backend server is running."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        Frontend-Backend Connection Test
-      </h1>
+    <main className="container mx-auto py-10 px-4 max-w-3xl">
+      <h1 className="text-2xl font-bold mb-6">File Upload Example</h1>
 
-      <button
-        onClick={testBackendConnection}
-        disabled={loading}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 mb-4"
-      >
-        {loading ? "Testing..." : "Test Backend Connection"}
-      </button>
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Basic File Upload</h2>
+          <FileUpload
+            onUpload={async (files) => {
+              // In a real application, you would upload the files to your server or a storage service
+              console.log("Files to upload:", files);
 
-      {message && (
-        <div className="p-4 bg-green-100 text-green-700 rounded mb-4">
-          Response from backend: {message}
+              // Simulate network delay
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              // Return success
+              return Promise.resolve();
+            }}
+          />
         </div>
-      )}
 
-      {error && (
-        <div className="p-4 bg-red-100 text-red-700 rounded">{error}</div>
-      )}
-    </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Image Upload Only</h2>
+          <FileUpload
+            accept="image/*"
+            maxSize={2 * 1024 * 1024} // 2MB
+            onUpload={async (files) => {
+              console.log("Images to upload:", files);
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+              return Promise.resolve();
+            }}
+          />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">PDF Upload</h2>
+          <FileUpload
+            accept=".pdf,application/pdf"
+            maxFiles={1}
+            onUpload={async (files) => {
+              console.log("PDF to upload:", files);
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+              return Promise.resolve();
+            }}
+          />
+        </div>
+      </div>
+    </main>
   );
 }

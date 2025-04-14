@@ -1,4 +1,4 @@
-import { useFileUpload } from "./useUpload";
+// import { useFileUpload } from "./useUpload";
 import { FileItem } from "@/app/types/file";
 import { validateFile } from "@/app/lib/uploadHelpers";
 
@@ -7,10 +7,10 @@ export function useProcessFile(
   maxSize: number,
   accept: string,
   files: FileItem[],
-  setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
-  onUpload: (files: File[]) => Promise<void>
+  setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>
+  // onUpload: (files: File[]) => Promise<void>
 ) {
-  const { upload } = useFileUpload();
+  // const { upload } = useFileUpload(setFiles);
 
   const processFiles = (fileList: FileList) => {
     const newFiles: FileItem[] = [];
@@ -41,26 +41,26 @@ export function useProcessFile(
     setFiles(combinedFiles);
 
     // Auto-upload if handler provided
-    if (onUpload) {
-      const validFiles = combinedFiles
-        .filter((f) => f.status !== "error")
-        .map((f) => f.file);
+    // if (onUpload) {
+    //   const validFiles = combinedFiles
+    //     .filter((f) => f.status !== "error")
+    //     .map((f) => f.file);
 
-      if (validFiles.length > 0) {
-        upload(combinedFiles.filter((f) => f.status !== "error"));
-        onUpload(validFiles).catch(() => {
-          // Handle upload error
-          setFiles((prev) =>
-            prev.map((f) => ({
-              ...f,
-              status: "error",
-              error: "Upload failed",
-              progress: 0,
-            }))
-          );
-        });
-      }
-    }
+    //   if (validFiles.length > 0) {
+    //     upload(combinedFiles.filter((f) => f.status !== "error"));
+    //     onUpload(validFiles).catch(() => {
+    //       // Handle upload error
+    //       setFiles((prev) =>
+    //         prev.map((f) => ({
+    //           ...f,
+    //           status: "error",
+    //           error: "Upload failed",
+    //           progress: 0,
+    //         }))
+    //       );
+    //     });
+    //   }
+    // }
   };
 
   return { processFiles };

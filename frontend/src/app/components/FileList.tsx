@@ -22,7 +22,7 @@ function FileList({
       ))}
 
       {files.some((f) => f.status === "idle") && (
-        <UploadButton files={files} onUpload={onUpload} />
+        <UploadButton files={files} onUpload={onUpload} setFiles={setFiles} />
       )}
     </div>
   );

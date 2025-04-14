@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter , UploadFile, File
+from fastapi import Depends, APIRouter , UploadFile, File, Form
 from sqlalchemy.orm import Session
 from backend.database.session import get_db
 from backend.schemas.file import FileCreate
@@ -11,8 +11,9 @@ import os
 router = APIRouter()
 
 @router.post("/upload-file/")
-async def create_file_route(dataset_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    
+async def create_file_route(dataset_id: int = Form(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
+    # print(f"file input: {file}")
+    # print(f"dataset input: {dataset_id}")
     # Save the file itself
     file_path = save_file(file)
 

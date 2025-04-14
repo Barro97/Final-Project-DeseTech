@@ -5,21 +5,32 @@ import { Button } from "./ui/button";
 function UploadButton({
   files,
   onUpload,
+  setFiles,
 }: {
   files: FileItem[];
   onUpload: (files: File[]) => Promise<void>;
+  setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>;
 }) {
-  const { upload } = useFileUpload();
+  const { upload } = useFileUpload(setFiles);
+
+  async function handleUpload() {
+    const filesToUpload = files.filter((f) => f.status === "idle");
+
+    await upload(filesToUpload);
+  }
 
   return (
     <Button
-      onClick={() => {
-        const filesToUpload = files.filter((f) => f.status === "idle");
-        upload(filesToUpload);
-        if (onUpload) {
-          onUpload(filesToUpload.map((f) => f.file));
-        }
-      }}
+      onClick={
+        handleUpload
+        //   () => {
+        //   const filesToUpload = files.filter((f) => f.status === "idle");
+        //   upload(filesToUpload);
+        //   if (onUpload) {
+        //     onUpload(filesToUpload.map((f) => f.file));
+        //   }
+        // }
+      }
       className="mt-2"
     >
       Upload {files.filter((f) => f.status === "idle").length} files

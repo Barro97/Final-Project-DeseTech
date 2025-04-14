@@ -2,10 +2,12 @@
 import { useCallback } from "react";
 import { FileItem } from "../types/file";
 import axios from "axios";
+import { useToast } from "./useToast";
 
 export function useFileUpload(
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>
 ) {
+  const { toast } = useToast();
   const upload = useCallback(
     // useCallback allows to use the upload function without creating it each time the component is rendered, good for better runtime
 
@@ -67,6 +69,11 @@ export function useFileUpload(
                 : f
             )
           );
+          toast({
+            title: `Success!`,
+            description: `${fileItem.file.name} was uploaded successfully`,
+            variant: "success",
+          });
         } catch (error) {
           setFiles((prev) =>
             prev.map((f) =>
@@ -79,54 +86,15 @@ export function useFileUpload(
                 : f
             )
           );
-          console.log(`An error occurred while uploading file: ${error}`);
+          toast({
+            title: `Oops!`,
+            description: `An error occurred while uploading ${fileItem.file.name}, please try again`,
+            variant: "error",
+          });
         }
       }
     },
-    [setFiles]
+    [setFiles, toast]
   );
-  // const [files, setFiles] = useState<FileItem[]>([]);
-
-  // This function simulates file upload progress
-  // In a real application, you would track actual upload progress
-  // const upload = (filesToUpload: FileItem[]) => {
-  //   const fileIds = filesToUpload.map((f) => f.id);
-
-  //   // Set all selected files to uploading state
-  //   setFiles((prev) =>
-  //     prev.map((f) =>
-  //       fileIds.includes(f.id) ? { ...f, status: "uploading" as const } : f
-  //     )
-  //   );
-
-  //   // Simulate progress updates
-  //   const interval = setInterval(() => {
-  //     setFiles((prev) => {
-  //       const allDone = prev.every(
-  //         (f) => !fileIds.includes(f.id) || f.progress >= 100
-  //       );
-
-  //       if (allDone) {
-  //         clearInterval(interval);
-
-  //         // Set all uploaded files to success state
-  //         return prev.map((f) =>
-  //           fileIds.includes(f.id) ? { ...f, status: "success" as const } : f
-  //         );
-  //       }
-
-  //       return prev.map((f) => {
-  //         if (fileIds.includes(f.id) && f.progress < 100) {
-  //           const increment = Math.floor(Math.random() * 10) + 5;
-  //           const newProgress = Math.min(f.progress + increment, 100);
-  //           return { ...f, progress: newProgress };
-  //         }
-  //         return f;
-  //       });
-  //     });
-  //   }, 300);
-  // };
-
-  // return { files, setFiles, upload };
   return { upload };
 }

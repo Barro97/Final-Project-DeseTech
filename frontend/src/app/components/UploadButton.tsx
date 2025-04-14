@@ -20,19 +20,7 @@ function UploadButton({
   }
 
   return (
-    <Button
-      onClick={
-        handleUpload
-        //   () => {
-        //   const filesToUpload = files.filter((f) => f.status === "idle");
-        //   upload(filesToUpload);
-        //   if (onUpload) {
-        //     onUpload(filesToUpload.map((f) => f.file));
-        //   }
-        // }
-      }
-      className="mt-2"
-    >
+    <Button onClick={handleUpload} className="mt-2">
       Upload {files.filter((f) => f.status === "idle").length} files
     </Button>
   );

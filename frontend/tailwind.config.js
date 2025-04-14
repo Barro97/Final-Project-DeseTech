@@ -1,3 +1,5 @@
+import animate from "tailwindcss-animate";
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -22,5 +24,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [animate],
 };

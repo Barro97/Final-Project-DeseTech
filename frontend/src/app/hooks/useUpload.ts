@@ -88,7 +88,7 @@ export function useFileUpload(
           );
           toast({
             title: `Oops!`,
-            description: `An error occurred while uploading ${fileItem.file.name}, please try again`,
+            description: `An error occurred while uploading "${fileItem.file.name}", please try again`,
             variant: "error",
           });
         }

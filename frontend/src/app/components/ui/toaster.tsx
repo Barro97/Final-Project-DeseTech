@@ -34,7 +34,7 @@ export function Toaster() {
       )}
       <ToastViewport
         className="fixed flex flex-col gap-2 p-4 sm:max-w-[420px]"
-        position={toasts[0]?.position || "top-right"}
+        position={toasts[0]?.position || "bottom-right"}
       />
     </ToastProvider>
   );

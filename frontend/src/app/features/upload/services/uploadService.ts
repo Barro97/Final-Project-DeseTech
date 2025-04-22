@@ -1,4 +1,4 @@
-import { FileItem } from "@/app/types/file";
+import { FileItem } from "@/app/features/upload/types/file";
 export async function uploadFile(dataset_id: number, file: FileItem) {
   const formData = new FormData();
   formData.append("dataset_id", String(dataset_id));

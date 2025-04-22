@@ -1,4 +1,4 @@
-import { Toaster } from "./components/ui/toaster";
+import { Toaster } from "@/app/components/toaster";
 import "./globals.css";
 
 export default function RootLayout({

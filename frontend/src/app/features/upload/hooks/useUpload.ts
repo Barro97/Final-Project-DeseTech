@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { FileItem } from "../types/file";
 import axios from "axios";
-import { useToast } from "./useToast";
+import { useToast } from "../../../hooks/useToast";
 
 export function useFileUpload(
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>
@@ -38,11 +38,15 @@ export function useFileUpload(
             formData,
             {
               onUploadProgress: (progressEvent) => {
-                const total = progressEvent.total;
-                const current = progressEvent.loaded;
+                // const total = progressEvent.total;
+                // const current = progressEvent.loaded;
 
-                const percentCompleted = total
-                  ? Math.round((current * 100) / total)
+                // const percentCompleted = total
+                //   ? Math.round((current * 100) / total)
+                //   : 0;
+
+                const percentCompleted = progressEvent.progress
+                  ? Math.round(progressEvent.progress)
                   : 0;
 
                 setFiles((prev) =>

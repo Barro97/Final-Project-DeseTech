@@ -1,6 +1,6 @@
 // import { useFileUpload } from "./useUpload";
-import { FileItem } from "@/app/types/file";
-import { validateFile } from "@/app/lib/uploadHelpers";
+import { FileItem } from "@/app/features/upload/types/file";
+import { validateFile } from "@/app/features/upload/lib/uploadHelpers";
 
 export function useProcessFile(
   maxFiles: number,

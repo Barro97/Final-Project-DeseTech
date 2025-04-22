@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUpload } from "./components/file-upload";
+import { FileUpload } from "@/app/features/upload/components/file-upload";
 
 export default function Home() {
   return (

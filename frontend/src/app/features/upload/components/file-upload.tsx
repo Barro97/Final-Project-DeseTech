@@ -1,7 +1,7 @@
 "use client";
 
 import DragDropArea from "./DragDropArea";
-import { FileItem, FileUploadProps } from "@/app/types/file";
+import { FileItem, FileUploadProps } from "@/app/features/upload/types/file";
 // import { useFileUpload } from "../hooks/useUpload";
 import FileList from "./FileList";
 import { useState } from "react";

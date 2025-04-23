@@ -15,10 +15,10 @@ async def create_file_route(dataset_id: int = Form(...), file: UploadFile = File
     # print(f"file input: {file}")
     # print(f"dataset input: {dataset_id}")
     # Save the file itself
-    file_path = save_file(file)
+    file_path,size = save_file(file)
 
     # Get the size of the file
-    size = os.path.getsize(file_path)
+    # size = os.path.getsize(file_path)
 
     # Construct a pydantic model that fits the data
     file_data = FileCreate(

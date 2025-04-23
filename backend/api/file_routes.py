@@ -2,8 +2,8 @@ from fastapi import Depends, APIRouter , UploadFile, File, Form
 from sqlalchemy.orm import Session
 from backend.database.session import get_db
 from backend.schemas.file import FileCreate
-from backend.crud.file import create_file, get_file
-from backend.features.upload import save_file
+from backend.crud.file import create_file, get_file, delete_file_record, get_url
+from backend.features.upload import save_file, delete_file_from_storage
 import os
 
 
@@ -34,3 +34,10 @@ async def create_file_route(dataset_id: int = Form(...), file: UploadFile = File
 @router.get("/files/{file_id}")
 async def get_file_route(file_id: int, db: Session = Depends(get_db)):
     return get_file(db = db, file_id = file_id)
+
+@router.delete("/delete_file/{file_id}")
+async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
+    file_url = get_url(db = db, file_id = file_id)
+    if file_url:
+        delete_file_from_storage(file_url)
+    return delete_file_record(db = db, file_id = file_id)

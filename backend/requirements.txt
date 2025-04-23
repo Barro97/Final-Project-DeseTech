@@ -6,4 +6,5 @@ pydantic==2.6.3
 asyncpg
 passlib[bcrypt]
 python-multipart
+psycopg2
 

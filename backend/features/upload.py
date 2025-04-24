@@ -1,15 +1,16 @@
 from fastapi import UploadFile
 import os, shutil
 import uuid
-from supabase import create_client, Client
+from urllib.parse import quote
+from supabase import create_client
 
-  SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
+SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
 
-    key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
 
-    bucket = 'files'
+bucket = 'files'
 
-    client = create_client(SUPABASE_URL,key)
+client = create_client(SUPABASE_URL,key)
 
 
 
@@ -43,22 +44,21 @@ def save_file_to_cloud(file: UploadFile) -> str: #TODO: Implement this function 
     file_path = client.storage.from_(bucket).get_public_url(unique_name)
 
     size = file.file.tell()            # current pointer == size
-    return file_path, size
+    return unique_name, size
 
 def save_file(file: UploadFile) -> str:
     # if not os.path.exists(UPLOAD_DIR):
     #     os.makedirs(UPLOAD_DIR)
     return save_file_to_cloud(file)
 
-def delete_file_from_storage(file_url: str):
-    prefix = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/"
-    if not file_url.startswith(prefix):
-        raise ValueError("Invalid file URL for this bucket")
-
-    # Strip the public URL prefix to get the internal file key
-    file_key = file_path.replace(prefix, "")
-
+def delete_file_from_storage(file_key: str):
     # Delete the file
     result = client.storage.from_(bucket).remove([file_key])
+    if result[0].get("error"):
+        raise Exception(f"Failed to delete file from storage: {result[0].get("error")['message']}")
+    return True
 
-    return result is not None
+def list_all_files():
+    result = client.storage.from_(bucket).list()
+    for file in result:
+        print("Stored file:", file.get("name"))

@@ -3,6 +3,16 @@ import os, shutil
 import uuid
 from supabase import create_client, Client
 
+  SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
+
+    key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
+
+    bucket = 'files'
+
+    client = create_client(SUPABASE_URL,key)
+
+
+
 
 # Where *this file* is located:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # backend/features/
@@ -22,17 +32,13 @@ def save_file_locally(file: UploadFile) -> str:
 
 def save_file_to_cloud(file: UploadFile) -> str: #TODO: Implement this function when we want to share files via cloud
 
-    SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
-
-    key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
-
-    bucket = 'files'
+  
     # unique path inside the bucket
     unique_name = f"{uuid.uuid4()}/{file.filename}"
     file.file.seek(0)
     file_bytes = file.file.read()
 
-    client = create_client(SUPABASE_URL,key)
+    
     client.storage.from_(bucket).upload(unique_name,file_bytes),{"content-type": file.content_type, "upsert": True},
     file_path = client.storage.from_(bucket).get_public_url(unique_name)
 
@@ -44,3 +50,15 @@ def save_file(file: UploadFile) -> str:
     #     os.makedirs(UPLOAD_DIR)
     return save_file_to_cloud(file)
 
+def delete_file_from_storage(file_url: str):
+    prefix = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/"
+    if not file_url.startswith(prefix):
+        raise ValueError("Invalid file URL for this bucket")
+
+    # Strip the public URL prefix to get the internal file key
+    file_key = file_path.replace(prefix, "")
+
+    # Delete the file
+    result = client.storage.from_(bucket).remove([file_key])
+
+    return result is not None

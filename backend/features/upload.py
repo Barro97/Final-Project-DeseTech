@@ -3,17 +3,18 @@ import os, shutil
 import uuid
 from urllib.parse import quote
 from supabase import create_client
+from backend.config import SUPABASE_URL,SUPABASE_KEY,SUPABASE_STORAGE_BUCKET
+# from dotenv import load_dotenv
 
-SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
-
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
-
-bucket = 'files'
-
-client = create_client(SUPABASE_URL,key)
+# load_dotenv()
 
 
-
+# SUPABASE_URL = os.getenv("SUPABASE_URL")
+# key = os.getenv("SUPABASE_KEY")
+# bucket = os.getenv("SUPABASE_STORAGE_BUCKET")
+# print(DATABASE_URL,SUPABASE_KEY)
+print(SUPABASE_URL)
+client = create_client(SUPABASE_URL,SUPABASE_KEY)
 
 # Where *this file* is located:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # backend/features/
@@ -40,8 +41,8 @@ def save_file_to_cloud(file: UploadFile) -> str: #TODO: Implement this function 
     file_bytes = file.file.read()
 
     
-    client.storage.from_(bucket).upload(unique_name,file_bytes),{"content-type": file.content_type, "upsert": True},
-    file_path = client.storage.from_(bucket).get_public_url(unique_name)
+    client.storage.from_(SUPABASE_STORAGE_BUCKET).upload(unique_name,file_bytes),{"content-type": file.content_type, "upsert": True},
+    # file_path = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(unique_name)
 
     size = file.file.tell()            # current pointer == size
     return unique_name, size
@@ -53,12 +54,12 @@ def save_file(file: UploadFile) -> str:
 
 def delete_file_from_storage(file_key: str):
     # Delete the file
-    result = client.storage.from_(bucket).remove([file_key])
+    result = client.storage.from_(SUPABASE_STORAGE_BUCKET).remove([file_key])
     if result[0].get("error"):
         raise Exception(f"Failed to delete file from storage: {result[0].get("error")['message']}")
     return True
 
 def list_all_files():
-    result = client.storage.from_(bucket).list()
+    result = client.storage.from_(SUPABASE_STORAGE_BUCKET).list()
     for file in result:
         print("Stored file:", file.get("name"))

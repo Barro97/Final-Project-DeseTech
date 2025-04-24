@@ -44,6 +44,7 @@ cd ..
 
 :: 6. Run the backend server
 echo 🚀 Starting backend server...
-uvicorn backend.main:app --reload
+uvicorn backend.main:app --reload --env-file backend/.env
+
 
 pause

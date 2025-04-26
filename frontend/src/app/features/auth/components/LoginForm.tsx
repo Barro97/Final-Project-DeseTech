@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { CardContent } from "./ui/card";
 import { InputWithIcon } from "./InputWithIcon";
 import { Label } from "@radix-ui/react-label";
 import { ArrowRight, Lock, Mail } from "lucide-react";
@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { Separator } from "@radix-ui/react-separator";
 import SocialLogin from "./SocialLogin";
 import Header from "./Header";
+import Footer from "./Footer";
 interface LoginData {
   email: string;
   password: string;
@@ -72,17 +73,7 @@ function LoginForm() {
           <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
         </Button>
 
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <SocialLogin />
+        <Footer />
       </CardContent>
     </form>
   );

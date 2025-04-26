@@ -27,6 +27,7 @@ import {
 } from "@/app/features/auth/components/ui/tabs";
 import { Separator } from "@/app/features/auth/components/ui/separator";
 import { cn } from "@/app/lib/utils";
+import LoginForm from "./LoginForm";
 
 export default function AuthForms() {
   const [showPassword, setShowPassword] = useState(false);
@@ -123,7 +124,7 @@ export default function AuthForms() {
                   className="absolute w-full animate-in fade-in data-[state=inactive]:animate-out data-[state=inactive]:fade-out data-[state=active]:duration-300"
                   ref={loginRef}
                 >
-                  <CardHeader className="space-y-1 pb-2">
+                  {/* <CardHeader className="space-y-1 pb-2">
                     <CardTitle className="text-2xl font-bold">Login</CardTitle>
                     <CardDescription>
                       Enter your credentials to access your account
@@ -241,7 +242,8 @@ export default function AuthForms() {
                         <span>GitHub</span>
                       </Button>
                     </div>
-                  </CardContent>
+                  </CardContent> */}
+                  <LoginForm />
                 </TabsContent>
 
                 <TabsContent

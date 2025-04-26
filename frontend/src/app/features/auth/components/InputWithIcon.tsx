@@ -25,7 +25,6 @@ export const InputWithIcon = forwardRef<HTMLInputElement, InputWithIconProps>(
           type={realType}
           placeholder={placeholder}
           className="pl-10 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring"
-          required
         />
         {showToggle && (
           <Button

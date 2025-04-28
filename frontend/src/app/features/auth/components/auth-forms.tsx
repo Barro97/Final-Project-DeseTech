@@ -6,60 +6,32 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/features/auth/components/ui/tabs";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 // import { Separator } from "@/app/features/auth/components/ui/separator";
 import { cn } from "@/app/lib/utils";
+import { useContentHeight } from "../hooks/useContentHeight";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 
 export default function AuthForms() {
   // const [showPassword, setShowPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  // const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   const loginRef = useRef<HTMLDivElement>(null);
   const signupRef = useRef<HTMLDivElement>(null);
 
-  // Prevent hydration issues
-  useEffect(() => {
-    setMounted(true);
+  const refs = { login: loginRef, signup: signupRef };
 
-    // Set initial height
-    if (activeTab === "login" && loginRef.current) {
-      setContentHeight(loginRef.current.scrollHeight);
-    } else if (activeTab === "signup" && signupRef.current) {
-      setContentHeight(signupRef.current.scrollHeight);
-    }
-  }, []);
-
-  // Update height when tab changes
-  useEffect(() => {
-    if (!mounted) return;
-
-    const timer = setTimeout(() => {
-      if (activeTab === "login" && loginRef.current) {
-        setContentHeight(loginRef.current.scrollHeight);
-      } else if (activeTab === "signup" && signupRef.current) {
-        setContentHeight(signupRef.current.scrollHeight);
-      }
-    }, 10); // Small delay to ensure DOM is updated
-
-    return () => clearTimeout(timer);
-  }, [activeTab, mounted]);
-
-  // const togglePasswordVisibility = () => {
-  //   setShowPassword(!showPassword);
-  // };
-
-  if (!mounted) return null;
+  const contentHeight = useContentHeight(activeTab, refs);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Welcome back
+            Welcome!
           </h1>
           <p className="mt-2 text-muted-foreground">
             Please sign in to your account or create a new one

@@ -1,4 +1,5 @@
-import { Toaster } from "@/app/components/toaster";
+import QueryProvider from "@/app/providers/QueryProvider";
+import { Toaster } from "@/app/features/toaster/components/toaster";
 import "./globals.css";
 
 export default function RootLayout({
@@ -9,8 +10,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
-        <Toaster />
+        <QueryProvider>
+          <main>{children}</main>
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );

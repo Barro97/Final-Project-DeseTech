@@ -11,7 +11,7 @@ interface LoginData {
 }
 
 function LoginForm() {
-  const { register, handleSubmit, formState } = useForm<LoginData>();
+  const { register, handleSubmit } = useForm<LoginData>();
 
   function onSubmit(data: LoginData) {
     //Implement submit logic

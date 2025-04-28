@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { FileItem } from "../types/file";
 import axios from "axios";
-import { useToast } from "../../../hooks/useToast";
+import { useToast } from "../../toaster/hooks/useToast";
 
 export function useFileUpload(
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>

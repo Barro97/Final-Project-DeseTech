@@ -1,6 +1,6 @@
 // This is a hook for dynamically changing the size of the form
 
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 export function useContentHeight(
   active: string, // This refers to the active tab

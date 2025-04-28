@@ -6,12 +6,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/features/auth/components/ui/tabs";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 // import { Separator } from "@/app/features/auth/components/ui/separator";
 import { cn } from "@/app/lib/utils";
+import { useContentHeight } from "../hooks/useContentHeight";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
-import { useContentHeight } from "../hooks/useContentHeight";
 
 export default function AuthForms() {
   // const [showPassword, setShowPassword] = useState(false);

@@ -1,11 +1,12 @@
-import { useForm } from "react-hook-form";
-import { CardContent } from "./ui/card";
-import { InputWithIcon } from "./InputWithIcon";
 import { Label } from "@radix-ui/react-label";
 import { ArrowRight, Lock, Mail } from "lucide-react";
-import { Button } from "./ui/button";
-import Header from "./Header";
+import { useForm } from "react-hook-form";
 import Footer from "./Footer";
+import Header from "./Header";
+import { InputWithIcon } from "./InputWithIcon";
+import { Button } from "./ui/button";
+import { CardContent } from "./ui/card";
+import FormField from "./FormField";
 interface LoginData {
   email: string;
   password: string;
@@ -26,44 +27,35 @@ function LoginForm() {
         description="Enter your credentials to access your account"
       ></Header>
       <CardContent className="space-y-4 pt-0">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">
-            Email
-          </Label>
+        <FormField
+          label="Email"
+          htmlFor="email"
+          icon={
+            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="email"
+          placeholder="you@example.com"
+          register={register("email", { required: true })}
+        />
+        <FormField
+          label="Password"
+          htmlFor="password"
+          icon={
+            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="password"
+          placeholder="••••••••"
+          showToggle
+          register={register("password", { required: true })}
+        >
+          <a
+            href="#"
+            className="text-xs text-primary transition-colors hover:text-primary/80"
+          >
+            Forgot password?
+          </a>
+        </FormField>
 
-          <InputWithIcon
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            icon={
-              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            }
-            {...register("email", { required: true })}
-          />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium">
-              Password
-            </Label>
-            <a
-              href="#"
-              className="text-xs text-primary transition-colors hover:text-primary/80"
-            >
-              Forgot password?
-            </a>
-          </div>
-          <InputWithIcon
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            icon={
-              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            }
-            showToggle
-            {...register("password", { required: true })}
-          />
-        </div>
         <Button
           type="submit"
           className="w-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"

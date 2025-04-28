@@ -1,12 +1,10 @@
-import { Label } from "@radix-ui/react-label";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import Footer from "./Footer";
+import FormField from "./FormField";
 import Header from "./Header";
-import { InputWithIcon } from "./InputWithIcon";
 import { Button } from "./ui/button";
 import { CardContent } from "./ui/card";
-import FormField from "./FormField";
 interface LoginData {
   email: string;
   password: string;
@@ -26,6 +24,7 @@ function LoginForm() {
         title="Login"
         description="Enter your credentials to access your account"
       ></Header>
+
       <CardContent className="space-y-4 pt-0">
         <FormField
           label="Email"
@@ -37,6 +36,7 @@ function LoginForm() {
           placeholder="you@example.com"
           register={register("email", { required: true })}
         />
+
         <FormField
           label="Password"
           htmlFor="password"

@@ -7,6 +7,7 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import Footer from "./Footer";
+import FormField from "./FormField";
 
 interface SignUpData {
   email: string;
@@ -31,7 +32,23 @@ function SignUpForm() {
       />
       <CardContent className="space-y-4 pt-0">
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <FormField
+            label="First name"
+            htmlFor="first-name"
+            icon={
+              <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            }
+            placeholder="John"
+            register={register("firstName", { required: true })}
+          />
+          <FormField
+            label="Last name"
+            htmlFor="last-name"
+            placeholder="Doe"
+            asPlainInput={true}
+            register={register("lastName", { required: true })}
+          />
+          {/* <div className="space-y-2">
             <Label htmlFor="first-name" className="text-sm font-medium">
               First name
             </Label>
@@ -44,8 +61,8 @@ function SignUpForm() {
               }
               {...register("firstName", { required: true })}
             />
-          </div>
-          <div className="space-y-2">
+          </div> */}
+          {/* <div className="space-y-2">
             <Label htmlFor="last-name" className="text-sm font-medium">
               Last name
             </Label>
@@ -55,52 +72,43 @@ function SignUpForm() {
               className="transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring"
               {...register("lastName", { required: true })}
             />
-          </div>
+          </div> */}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email-signup" className="text-sm font-medium">
-            Email
-          </Label>
-          <InputWithIcon
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            icon={
-              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            }
-            {...register("email", { required: true })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password-signup" className="text-sm font-medium">
-            Password
-          </Label>
-          <InputWithIcon
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            icon={
-              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            }
-            showToggle
-            {...register("password", { required: true })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="confirm-password" className="text-sm font-medium">
-            Confirm Password
-          </Label>
-          <InputWithIcon
-            id="confirm-password"
-            type="password"
-            placeholder="••••••••"
-            icon={
-              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            }
-            showToggle
-            {...register("confirmPassword", { required: true })}
-          />
-        </div>
+        <FormField
+          label="Email"
+          htmlFor="email-signup"
+          icon={
+            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="email"
+          placeholder="you@example.com"
+          register={register("email", { required: true })}
+        />
+
+        <FormField
+          label="Password"
+          htmlFor="password-signup"
+          icon={
+            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="password"
+          placeholder="••••••••"
+          showToggle
+          register={register("password", { required: true })}
+        />
+
+        <FormField
+          label="Confirm Password"
+          htmlFor="confirm-password"
+          icon={
+            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="password"
+          placeholder="••••••••"
+          showToggle
+          register={register("confirmPassword", { required: true })}
+        />
+
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -119,7 +127,10 @@ function SignUpForm() {
             </a>
           </label>
         </div>
-        <Button className="w-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90">
+        <Button
+          type="submit"
+          className="w-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"
+        >
           <span>Create Account</span>
           <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
         </Button>

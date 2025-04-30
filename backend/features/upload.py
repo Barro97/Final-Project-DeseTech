@@ -3,13 +3,13 @@ import os, shutil
 import uuid
 from supabase import create_client, Client
 
-  SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
+SUPABASE_URL = "https://lcoduucmlcawbschlsaf.supabase.co"
 
-    key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxjb2R1dWNtbGNhd2JzY2hsc2FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzE2MzkzMiwiZXhwIjoyMDU4NzM5OTMyfQ.kD-WEr15AHkwZK-zKhWkZpQSQowUjlaoAfb3l_2w6EQ"
 
-    bucket = 'files'
+bucket = 'files'
 
-    client = create_client(SUPABASE_URL,key)
+client = create_client(SUPABASE_URL,key)
 
 
 

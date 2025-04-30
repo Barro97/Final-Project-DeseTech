@@ -2,6 +2,7 @@ import { forwardRef, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Eye, EyeOff } from "lucide-react";
+import { UseFormRegisterReturn } from "react-hook-form";
 
 export interface InputWithIconProps {
   id: string;
@@ -9,10 +10,11 @@ export interface InputWithIconProps {
   placeholder?: string;
   icon: React.ReactNode;
   showToggle?: boolean; // if true, adds password eye toggle
+  register: UseFormRegisterReturn;
 }
 
 export const InputWithIcon = forwardRef<HTMLInputElement, InputWithIconProps>(
-  ({ id, type, placeholder, icon, showToggle }, ref) => {
+  ({ id, type, placeholder, icon, showToggle, register }, ref) => {
     const [visible, setVisible] = useState(false);
     const realType = showToggle ? (visible ? "text" : "password") : type;
 
@@ -20,7 +22,7 @@ export const InputWithIcon = forwardRef<HTMLInputElement, InputWithIconProps>(
       <div className="relative">
         {icon}
         <Input
-          ref={ref}
+          {...register}
           id={id}
           type={realType}
           placeholder={placeholder}

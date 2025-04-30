@@ -12,7 +12,7 @@ from backend.crud.user import (
 )
 
 router = APIRouter(
-    #prefix="/users",
+    prefix="/users",
     #tags=["users"]
 )
 

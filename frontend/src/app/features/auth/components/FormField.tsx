@@ -36,7 +36,12 @@ function FormField({
         {children}
       </div>
       {asPlainInput ? (
-        <Input id={htmlFor} placeholder={placeholder} {...register} />
+        <Input
+          id={htmlFor}
+          placeholder={placeholder}
+          type={type}
+          {...register}
+        />
       ) : (
         <InputWithIcon
           id={htmlFor}
@@ -44,7 +49,7 @@ function FormField({
           placeholder={placeholder}
           icon={icon}
           showToggle={showToggle}
-          {...register}
+          register={register}
         />
       )}
     </div>

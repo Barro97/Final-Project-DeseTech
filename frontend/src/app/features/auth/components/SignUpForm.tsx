@@ -1,0 +1,143 @@
+import { useForm } from "react-hook-form";
+import Header from "./Header";
+import { CardContent } from "./ui/card";
+import { InputWithIcon } from "./InputWithIcon";
+import { ArrowRight, Lock, Mail, User } from "lucide-react";
+import { Label } from "@radix-ui/react-label";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import Footer from "./Footer";
+import FormField from "./FormField";
+
+interface SignUpData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  confirmPassword: string;
+}
+
+function SignUpForm() {
+  const { register, handleSubmit, formState } = useForm<SignUpData>();
+
+  function onSubmit(data: SignUpData) {
+    //Implement submit logic
+    console.log("Form is submitting");
+  }
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <Header
+        title="Create an account"
+        description="Enter your information to create an account"
+      />
+      <CardContent className="space-y-4 pt-0">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="First name"
+            htmlFor="first-name"
+            icon={
+              <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            }
+            placeholder="John"
+            register={register("firstName", { required: true })}
+          />
+          <FormField
+            label="Last name"
+            htmlFor="last-name"
+            placeholder="Doe"
+            asPlainInput={true}
+            register={register("lastName", { required: true })}
+          />
+          {/* <div className="space-y-2">
+            <Label htmlFor="first-name" className="text-sm font-medium">
+              First name
+            </Label>
+            <InputWithIcon
+              id="first-name"
+              type="text"
+              placeholder="John"
+              icon={
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+              }
+              {...register("firstName", { required: true })}
+            />
+          </div> */}
+          {/* <div className="space-y-2">
+            <Label htmlFor="last-name" className="text-sm font-medium">
+              Last name
+            </Label>
+            <Input
+              id="last-name"
+              placeholder="Doe"
+              className="transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring"
+              {...register("lastName", { required: true })}
+            />
+          </div> */}
+        </div>
+        <FormField
+          label="Email"
+          htmlFor="email-signup"
+          icon={
+            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="email"
+          placeholder="you@example.com"
+          register={register("email", { required: true })}
+        />
+
+        <FormField
+          label="Password"
+          htmlFor="password-signup"
+          icon={
+            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="password"
+          placeholder="••••••••"
+          showToggle
+          register={register("password", { required: true })}
+        />
+
+        <FormField
+          label="Confirm Password"
+          htmlFor="confirm-password"
+          icon={
+            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          }
+          type="password"
+          placeholder="••••••••"
+          showToggle
+          register={register("confirmPassword", { required: true })}
+        />
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="terms"
+            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+            required
+          />
+          <label htmlFor="terms" className="text-sm text-muted-foreground">
+            I agree to the{" "}
+            <a href="#" className="text-primary hover:text-primary/80">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="#" className="text-primary hover:text-primary/80">
+              Privacy Policy
+            </a>
+          </label>
+        </div>
+        <Button
+          type="submit"
+          className="w-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"
+        >
+          <span>Create Account</span>
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+        </Button>
+
+        <Footer />
+      </CardContent>
+    </form>
+  );
+}
+export default SignUpForm;

@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter , UploadFile, File, Form
+from fastapi import Depends, APIRouter , UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from backend.database.session import get_db
 from backend.schemas.file import FileCreate
@@ -38,6 +38,15 @@ async def get_file_route(file_id: int, db: Session = Depends(get_db)):
 @router.delete("/delete_file/{file_id}")
 async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
     file_url = get_url(db = db, file_id = file_id)
-    if file_url:
+    if not file_url:
+        raise HTTPException(status_code=404,detail="File not found")
+    
+    try:
         delete_file_from_storage(file_url)
-    return delete_file_record(db = db, file_id = file_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"file deletion failed: {str(e)}")
+    
+    if delete_file_record(db = db, file_id = file_id):
+        return {"detail":"File and record deleted"}
+    else:
+        raise HTTPException(status_code=500,detail="Record deletion failed")

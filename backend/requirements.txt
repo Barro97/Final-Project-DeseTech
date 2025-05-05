@@ -5,6 +5,7 @@ sqlalchemy==2.0.28
 pydantic==2.6.3 
 asyncpg
 passlib[bcrypt]
+bcrypt==3.2.0
 python-multipart
 psycopg2
 

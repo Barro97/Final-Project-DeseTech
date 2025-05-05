@@ -19,7 +19,7 @@ function LoginForm() {
   const { mutate: login, isPending } = useLogin();
 
   const onSubmit: SubmitHandler<LoginData> = (data) => {
-    console.log("Form submitted with data:", data);
+    // console.log("Form submitted with data:", data);
     login(data);
   };
 

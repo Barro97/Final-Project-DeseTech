@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     profile_picture: Optional[str] = None
     education: Optional[str] = None
     organization: Optional[str] = None
-    role_id: Optional[int] = None
+    role_id: Optional[int] = 1
 
 class UserLogin(BaseModel):
     email: str

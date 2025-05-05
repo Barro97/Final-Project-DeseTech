@@ -9,19 +9,8 @@ import Header from "./Header";
 import { Button } from "./ui/button";
 import { CardContent } from "./ui/card";
 import { Label } from "./ui/label";
-
-interface SignUpData {
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-  confirmPassword: string;
-  gender?: "male" | "female" | "other" | "prefer-not-to-say";
-  country?: { value: string; label: string };
-  education?: "high-school" | "bachelors" | "masters" | "phd" | "other";
-  organization?: string;
-}
+import { SignUpData } from "@/app/features/auth/types/authTypes";
+import { useSignup } from "@/app/features/auth/hooks/useSignup";
 
 function SignUpForm() {
   const {
@@ -33,11 +22,14 @@ function SignUpForm() {
     setValue,
   } = useForm<SignUpData>();
 
+  const { mutate: signup, isPending } = useSignup();
+
   const countries = useMemo(() => countryList().getData(), []);
   const password = watch("password");
 
   const onSubmit: SubmitHandler<SignUpData> = (data) => {
     console.log("Form submitted with data:", data);
+    signup(data);
   };
 
   const onError = (errors: FieldErrors<SignUpData>) => {
@@ -245,7 +237,6 @@ function SignUpForm() {
               {...register("education")}
             >
               <option value="">Select education</option>
-              <option value="high-school">High School</option>
               <option value="bachelors">Bachelor's Degree</option>
               <option value="masters">Master's Degree</option>
               <option value="phd">PhD</option>
@@ -268,7 +259,7 @@ function SignUpForm() {
         </div>
 
         {/* Terms Checkbox */}
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <input
             type="checkbox"
             id="terms"
@@ -285,12 +276,12 @@ function SignUpForm() {
               Privacy Policy
             </a>
           </label>
-        </div>
+        </div> */}
 
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isPending}
           className="w-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"
         >
           <span>Create Account</span>

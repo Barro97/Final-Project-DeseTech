@@ -4,8 +4,8 @@ from backend.database.session import get_db
 from passlib.context import CryptContext
 from backend.schemas.user import UserLogin
 from backend.database.models import User
-
-router = APIRouter()
+from backend.features.token_creation import create_access_token
+router = APIRouter(prefix='/auth')
 
 # Set up password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

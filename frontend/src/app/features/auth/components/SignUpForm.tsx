@@ -28,7 +28,6 @@ function SignUpForm() {
   const password = watch("password");
 
   const onSubmit: SubmitHandler<SignUpData> = (data) => {
-    console.log("Form submitted with data:", data);
     signup(data);
   };
 

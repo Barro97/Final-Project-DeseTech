@@ -4,7 +4,6 @@ from backend.database.session import get_db
 from passlib.context import CryptContext
 from backend.schemas.user import UserLogin
 from backend.database.models import User
-from backend import crud
 
 router = APIRouter()
 

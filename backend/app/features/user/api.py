@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from backend.database.session import get_db
-from backend.schemas.user import UserCreate, UserUpdate, User as UserSchema
-from backend.crud.user import (
+from backend.app.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
+from backend.app.features.user.crud import (
     create_user,
     get_user,
     update_user,

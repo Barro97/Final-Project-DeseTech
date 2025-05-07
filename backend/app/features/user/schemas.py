@@ -52,7 +52,7 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 
 from backend.database.models import User
-from backend.schemas.user import UserCreate, UserUpdate
+from backend.app.features.user.schemas import UserCreate, UserUpdate
 
 
 def create_user(db: Session, user: UserCreate) -> User:

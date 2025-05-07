@@ -3,7 +3,7 @@ import os, shutil
 import uuid
 from urllib.parse import quote
 from supabase import create_client
-from backend.config import SUPABASE_URL,SUPABASE_KEY,SUPABASE_STORAGE_BUCKET
+from backend.app.core.config import SUPABASE_URL,SUPABASE_KEY,SUPABASE_STORAGE_BUCKET
 # from dotenv import load_dotenv
 
 # load_dotenv()

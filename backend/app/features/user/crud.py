@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from backend.database.models import User
-from backend.schemas.user import UserCreate, UserUpdate
+from backend.app.features.user.schemas import UserCreate, UserUpdate
 
 # יצירת הקשר להצפנת סיסמאות
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

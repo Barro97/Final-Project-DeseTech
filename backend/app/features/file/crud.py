@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from backend.database.models import File
-from backend.schemas.file import FileCreate
+from backend.app.features.file.schemas import FileCreate
 from 
 
 def create_file(db: Session , file_data: FileCreate ):

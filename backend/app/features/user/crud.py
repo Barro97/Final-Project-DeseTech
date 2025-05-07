@@ -9,8 +9,6 @@ from backend.app.features.user.schemas import UserCreate, UserUpdate
 # יצירת הקשר להצפנת סיסמאות
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -72,11 +70,10 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> User:
         )
 
 
-def delete_user(db: Session, user_id: int):
+def delete_user(db: Session, user_id: int) -> None:
     user = get_user(db, user_id)
     db.delete(user)
     db.commit()
-    return True
 
 
 

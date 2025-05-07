@@ -13,23 +13,23 @@ from backend.app.features.user.crud import (
 
 router = APIRouter(
     prefix="/users",
-    #tags=["users"]
+    tags=["users"]
 )
 
-@router.post("/create_new_user", status_code=status.HTTP_201_CREATED)
-def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db=db, user=user)  
+@router.post("/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
+    return create_user(db=db, user=user)
 
-@router.get("/get_user_by_id/{user_id}") #,response_model=UserSchema
-def read_user(user_id: int, db: Session = Depends(get_db)):
+@router.get("/{user_id}", response_model=UserSchema)
+def read_user_endpoint(user_id: int, db: Session = Depends(get_db)):
     return get_user(db=db, user_id=user_id)
 
-@router.put("/update_user_info/{user_id}") #,response_model=UserSchema
-def update_user_info(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
+@router.put("/{user_id}", response_model=UserSchema)
+def update_user_endpoint(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
     return update_user(db=db, user_id=user_id, user_update=user)
 
-@router.delete("/delete_user/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_user(user_id: int, db: Session = Depends(get_db)):
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_endpoint(user_id: int, db: Session = Depends(get_db)):
     delete_user(db=db, user_id=user_id)
     return None
 

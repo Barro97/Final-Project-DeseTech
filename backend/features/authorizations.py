@@ -61,6 +61,36 @@ def get_current_user(token: str = Depends(oauth2_scheme)):def get_current_user(
 
     return user
 
+    def permit_action(resource_type: str):
+    def checker(
+        dataset_id: int = None,
+        user_id: int = None,
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(get_current_user)
+    ):
+        # Admins can always proceed
+        if current_user["role"] == "admin":
+            return current_user
+
+        # Ownership check
+        if resource_type == "dataset":
+            dataset = db.query(DataSet).filter(DataSet.id == dataset_id).first()
+            if not dataset:
+                raise HTTPException(status_code=404, detail="Dataset not found")
+            if dataset.uploader_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="You do not own this dataset")
+
+        elif resource_type == "user":
+            if user_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="You can only access your own user")
+
+        else:
+            raise HTTPException(status_code=400, detail="Invalid resource type")
+
+        return current_user
+
+    return checker
+
 
 
 

@@ -29,8 +29,10 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         )
 
     # Step 3: If valid credentials, generate the JWT token
+    # Safely access role name
+    user_role = db_user.role.role_name if db_user.role else None
     access_token = create_access_token(data={"email": db_user.email,
-                                             "role": db_user.role.name,
+                                             "role": user_role,
     })
     
     # Return the token in response

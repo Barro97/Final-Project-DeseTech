@@ -3,11 +3,11 @@ import axios from "axios";
 
 export async function login(data: LoginData) {
   const response = await axios.post(
-    `${process.env.NEXT_PUBLIC_BACKEND}/users/login`,
+    `${process.env.NEXT_PUBLIC_BACKEND}/auth/login`,
     data
   );
 
-  return response.data;
+  return { ...response.data, accessToken: response.data.access_token };
 }
 
 export async function signup(data: SignUpData) {

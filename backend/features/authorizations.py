@@ -1,8 +1,10 @@
 from fastapi import Depends, HTTPException, status
+from backend.dependencies import get_current_user
 from sqlalchemy.orm import Session
-from backend.database.models import DataSet
+from backend.database.models import DataSet, User
 from fastapi.security import OAuth2PasswordBearer
-from backend.features.token_creation import verify_token
+from backend.token_creation import verify_token
+from backend.database.session import get_db 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")  
 
@@ -29,7 +31,10 @@ def verify_dataset_ownership(db: Session, dataset_id: int, current_user_id: int)
 
     return True
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme)):def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     payload = verify_token(token)
 
     if not payload:
@@ -38,7 +43,23 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             detail="Invalid token",
         )
 
-    return payload
+    user_id = payload.get("sub")  # sub is a standard JWT claim for subject (user ID)
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token payload missing user ID",
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    return user
 
 
 

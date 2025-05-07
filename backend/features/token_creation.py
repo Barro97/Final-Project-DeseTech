@@ -10,6 +10,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 🔥 Token valid for 60 minutes
 def create_access_token(data: dict):
     to_encode = data.copy()
 
+    # Include a user ID in the standard "sub" field
+    to_encode.update({"sub": str(data["id"])})
+
     # Set expiration time
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})

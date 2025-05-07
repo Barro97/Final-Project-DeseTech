@@ -37,6 +37,7 @@ class User(Base):
     education = Column(String(255))
     organization = Column(String(255))
     role_id = Column(Integer, ForeignKey('roles.role_id'))
+    role = relationship("Role")
 
     # Relationships
     role = relationship("Role", back_populates="users")

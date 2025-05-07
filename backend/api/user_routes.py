@@ -32,3 +32,7 @@ def update_user_info(user_id: int, user: UserUpdate, db: Session = Depends(get_d
 def remove_user(user_id: int, db: Session = Depends(get_db)):
     delete_user(db=db, user_id=user_id)
     return None
+
+@router.get("/admin-only")
+def read_admin_data(user = Depends(role_required(["admin"]))):
+    return {"msg": f"Hello {user.username}, you're an admin"}

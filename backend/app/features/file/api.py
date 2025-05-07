@@ -1,6 +1,6 @@
 from fastapi import Depends, APIRouter , UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
-from backend.database.session import get_db
+from backend.app.database.session import get_db
 from backend.app.features.file.schemas import FileCreate
 from backend.app.features.file.crud import create_file, get_file, delete_file_record, get_url
 from backend.app.features.file.utils.upload import save_file, delete_file_from_storage

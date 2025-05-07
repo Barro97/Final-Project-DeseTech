@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.database.session import get_db
+from backend.app.database.session import get_db
 from backend.app.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
 from backend.app.features.user.crud import (
     create_user,
@@ -33,6 +33,3 @@ def remove_user(user_id: int, db: Session = Depends(get_db)):
     delete_user(db=db, user_id=user_id)
     return None
 
-@router.get("/admin-only")
-def read_admin_data(user = Depends(role_required(["admin"]))):
-    return {"msg": f"Hello {user.username}, you're an admin"}

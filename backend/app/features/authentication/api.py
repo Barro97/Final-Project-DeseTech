@@ -1,10 +1,10 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
-from backend.database.session import get_db
+from backend.app.database.session import get_db
 from passlib.context import CryptContext
 from backend.app.features.user.schemas import UserLogin
-from backend.database.models import User
-from backend.features.token_creation import create_access_token
+from backend.app.database.models import User
+from backend.app.features.authentication.utils.token_creation import create_access_token
 router = APIRouter(prefix='/auth')
 
 # Set up password hashing
@@ -33,6 +33,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     user_role = db_user.role.role_name if db_user.role else None
     access_token = create_access_token(data={"email": db_user.email,
                                              "role": user_role,
+                                             'id': db_user.user_id
     })
     
     # Return the token in response

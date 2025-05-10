@@ -2,6 +2,8 @@ import QueryProvider from "@/app/providers/QueryProvider";
 import { Toaster } from "@/app/features/toaster/components/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
+import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
+import { AppSidebar } from "./components/app-sidebar";
 
 export default function RootLayout({
   children,
@@ -13,8 +15,14 @@ export default function RootLayout({
       <body>
         <QueryProvider>
           <AuthProvider>
-            <main>{children}</main>
-            <Toaster />
+            <SidebarProvider>
+              <AppSidebar />
+              <main>
+                <SidebarTrigger />
+                {children}
+              </main>
+              <Toaster />
+            </SidebarProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

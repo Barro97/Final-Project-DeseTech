@@ -53,6 +53,7 @@ def update_dataset(
     dataset_id: int,
     dataset_in: DatasetCreate,
     db: Session = Depends(get_db),
+    user = Depends(permit_action("dataset"))
 ):
     db_dataset = db.query(Dataset).filter_by(dataset_id=dataset_id).first()
     if not db_dataset:
@@ -82,7 +83,7 @@ def update_dataset(
     return db_dataset
 
 @router.delete("/datasets/{dataset_id}", status_code=204)
-def delete_dataset(dataset_id: int, db: Session = Depends(get_db)):
+def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depends(permit_action("dataset"))):
     db_dataset = db.query(Dataset).filter_by(dataset_id=dataset_id).first()
     if not db_dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")

@@ -1,16 +1,15 @@
 from fastapi import Depends, HTTPException, status
-from backend.dependencies import get_current_user
 from sqlalchemy.orm import Session
-from backend.database.models import DataSet, User
+from backend.app.database.models import Dataset, User
 from fastapi.security import OAuth2PasswordBearer
-from backend.token_creation import verify_token
-from backend.database.session import get_db 
+from backend.app.features.authentication.utils.token_creation import verify_token
+from backend.app.database.session import get_db 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")  
 
 
 def verify_dataset_ownership(db: Session, dataset_id: int, current_user_id: int):
-    dataset = db.query(DataSet).filter(DataSet.id == dataset_id).first()
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
 
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")

@@ -36,7 +36,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             {/* Add Dataset Button - Prominently Styled */}
             <div className="mb-4 px-2">
-              <button className="flex w-full items-center gap-2 rounded-md bg-sidebar-primary p-2 text-sidebar-primary-foreground transition-all duration-300 hover:bg-opacity-90 hover:shadow-md">
+              <button
+                className="flex w-full items-center gap-2 rounded-md p-2 text-white transition-all duration-300 hover:opacity-90 hover:shadow-md"
+                style={{ backgroundColor: "hsl(210 100% 50%)" }}
+              >
                 <PlusCircle className="h-5 w-5" />
                 <span className="font-medium">Add Dataset</span>
               </button>

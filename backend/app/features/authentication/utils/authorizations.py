@@ -20,7 +20,7 @@ def verify_dataset_ownership(db: Session, dataset_id: int, current_user_id: int)
 
     return True
 
-def get_current_user(token: str = Depends(oauth2_scheme)):def get_current_user(
+def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
@@ -50,7 +50,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):def get_current_user(
 
     return user
 
-    def permit_action(resource_type: str):
+def permit_action(resource_type: str):
     def checker(
         dataset_id: int = None,
         user_id: int = None,

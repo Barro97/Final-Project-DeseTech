@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
+from backend.app.database.session import get_db
 from passlib.context import CryptContext
-from backend.schemas.user import UserLogin
-from backend.database.models import User
-from backend import crud
-
-router = APIRouter()
+from backend.app.features.user.schemas import UserLogin
+from backend.app.database.models import User
+from backend.app.features.authentication.utils.token_creation import create_access_token
+router = APIRouter(prefix='/auth')
 
 # Set up password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -29,8 +29,11 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         )
 
     # Step 3: If valid credentials, generate the JWT token
-    access_token = create_access_token(data={"id": db_user.id,
-    "role": db_user.role.name,
+    # Safely access role name
+    user_role = db_user.role.role_name if db_user.role else None
+    access_token = create_access_token(data={"email": db_user.email,
+                                             "role": user_role,
+                                             'id': db_user.user_id
     })
     
     # Return the token in response

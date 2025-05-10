@@ -3,16 +3,8 @@ import os, shutil
 import uuid
 from urllib.parse import quote
 from supabase import create_client
-from backend.config import SUPABASE_URL,SUPABASE_KEY,SUPABASE_STORAGE_BUCKET
-# from dotenv import load_dotenv
+from backend.app.core.config import SUPABASE_URL,SUPABASE_KEY,SUPABASE_STORAGE_BUCKET
 
-# load_dotenv()
-
-
-# SUPABASE_URL = os.getenv("SUPABASE_URL")
-# key = os.getenv("SUPABASE_KEY")
-# bucket = os.getenv("SUPABASE_STORAGE_BUCKET")
-# print(DATABASE_URL,SUPABASE_KEY)
 print(SUPABASE_URL)
 client = create_client(SUPABASE_URL,SUPABASE_KEY)
 

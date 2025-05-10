@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from backend.config import DATABASE_URL
+from backend.app.core.config import DATABASE_URL
 # from dotenv import load_dotenv
 # import os
 

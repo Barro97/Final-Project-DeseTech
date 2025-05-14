@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from typing import List
 
 class DatasetBase(BaseModel):
     name: str
@@ -20,11 +19,9 @@ class Dataset(DatasetBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    owners: List[int]
 
     class Config:
         orm_mode = True
 
-class OwnerActionRequest(BaseModel):
-    user_id: int  # The ID of the user you want to add as an owner
+
 

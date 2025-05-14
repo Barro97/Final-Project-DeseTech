@@ -38,3 +38,28 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     
     # Return the token in response
     return {"access_token": access_token, "token_type": "bearer"}
+
+# Refresh token route
+@router.post("/refresh")
+async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
+    try:
+        # Decode the refresh token to get user details
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+        # Get the user from the database
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        
+        # Generate a new access token
+        new_access_token = create_access_token(data={"id": user.user_id, "email": user.email, "role": user.role.role_name})
+
+        return {"access_token": new_access_token, "token_type": "bearer"}
+
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+

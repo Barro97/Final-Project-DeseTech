@@ -35,4 +35,6 @@ class User(Base):
     role = relationship("Role", back_populates="users")
     datasets = relationship("Dataset", back_populates="uploader")
     comments = relationship("Comment", back_populates="user")
-    likes = relationship("Like", back_populates="user") 
+    likes = relationship("Like", back_populates="user")
+    datasets_owned = relationship("Dataset", secondary=dataset_owner_table, back_populates="owners")
+ 

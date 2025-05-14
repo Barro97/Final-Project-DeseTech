@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from backend.app.database.base import Base
+from backend.app.features.dataset.models import dataset_owner_table
 
 
 class Role(Base):
@@ -33,7 +34,7 @@ class User(Base):
 
     # Relationships
     role = relationship("Role", back_populates="users")
-    datasets = relationship("Dataset", back_populates="uploader")
+    datasets = relationship("Dataset", back_populates="uploader", foreign_keys="[Dataset.uploader_id]")
     comments = relationship("Comment", back_populates="user")
     likes = relationship("Like", back_populates="user")
     datasets_owned = relationship("Dataset", secondary=dataset_owner_table, back_populates="owners")

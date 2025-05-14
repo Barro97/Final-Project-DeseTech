@@ -1,7 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, text
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, text, Table
 from sqlalchemy.orm import relationship
 from backend.app.database.base import Base
 
+# Association table for the many-to-many relationship between Dataset and User
+dataset_owner_table = Table(
+    'dataset_owner',
+    Base.metadata,
+    Column('dataset_id', Integer, ForeignKey('dataset.dataset_id'), primary_key=True),
+    Column('user_id', Integer, ForeignKey('users.user_id'), primary_key=True)
+)
 
 class Dataset(Base):
     __tablename__ = 'dataset'
@@ -15,7 +22,7 @@ class Dataset(Base):
     uploader_id = Column(Integer, ForeignKey('users.user_id'))
 
     # Relationships
-    uploader = relationship("User", back_populates="datasets")
+    uploader = relationship("User", back_populates="datasets", foreign_keys=[uploader_id])
     comments = relationship("Comment", back_populates="dataset")
     files = relationship("File", back_populates="dataset")
     likes = relationship("Like", back_populates="dataset")
@@ -32,13 +39,3 @@ class DatasetTag(Base):
     # Relationships
     dataset = relationship("Dataset", back_populates="tags")
     tag = relationship("Tag", back_populates="datasets") 
-
-class DatasetOwner(Base):
-    __tablename__ = 'dataset_owner'
-    # Composite primary key on (dataset_id, user_id)
-    dataset_id = Column(Integer, ForeignKey('dataset.dataset_id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.user_id'), primary_key=True)
-
-    # Relationships
-    dataset = relationship("Dataset", back_populates="owner_links")
-    user = relationship("User", back_populates="dataset_links")

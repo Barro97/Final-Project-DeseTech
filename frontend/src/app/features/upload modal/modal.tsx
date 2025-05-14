@@ -54,79 +54,83 @@ export function UploadModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="!bg-background !bg-opacity-100 max-w-xl"
+        className="!bg-background !bg-opacity-100 max-w-xl max-h-[90vh] flex flex-col overflow-hidden"
         style={{
           opacity: 1,
           backgroundColor: "var(--background)",
           backdropFilter: "none",
         }}
       >
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Upload a new dataset</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Dataset Name
-            </label>
-            <input
-              id="name"
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter dataset name"
-              {...register("name", { required: "Dataset name is required" })}
-            />
-            {errors.name && (
-              <p className="text-destructive text-sm">{errors.name.message}</p>
-            )}
-          </div>
+        <div className="overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-1">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Dataset Name
+              </label>
+              <input
+                id="name"
+                className="w-full p-2 border rounded-md"
+                placeholder="Enter dataset name"
+                {...register("name", { required: "Dataset name is required" })}
+              />
+              {errors.name && (
+                <p className="text-destructive text-sm">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Description
-            </label>
-            <textarea
-              id="description"
-              className="w-full p-2 border rounded-md min-h-[80px]"
-              placeholder="Provide a short description of the dataset"
-              {...register("description", {
-                required: "Description is required",
-              })}
-            />
-            {errors.description && (
-              <p className="text-destructive text-sm">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
+              <textarea
+                id="description"
+                className="w-full p-2 border rounded-md min-h-[80px]"
+                placeholder="Provide a short description of the dataset"
+                {...register("description", {
+                  required: "Description is required",
+                })}
+              />
+              {errors.description && (
+                <p className="text-destructive text-sm">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Upload Files</label>
-            <FileUpload
-              maxFiles={5}
-              maxSize={10 * 1024 * 1024} // 10MB
-              accept=".csv,.json,.txt,.xlsx"
-              onUpload={handleFileUpload}
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Upload Files</label>
+              <FileUpload
+                maxFiles={5}
+                maxSize={10 * 1024 * 1024} // 10MB
+                accept=".csv,.json,.txt,.xlsx"
+                onUpload={handleFileUpload}
+              />
+            </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="px-4 py-2 border rounded-md hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-md text-white"
-              style={{ backgroundColor: "var(--primary)" }}
-            >
-              Upload Dataset
-            </button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-2 pt-6 mt-8 border-t">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 border rounded-md hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-md text-white"
+                style={{ backgroundColor: "var(--primary)" }}
+              >
+                Upload Dataset
+              </button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -4,9 +4,9 @@ import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
 
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
-import { AppSidebar } from "./components/app-sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthSessionManager from "@/app/features/auth/components/AuthSessionManager";
+import { ModalController } from "./components/ModalController";
 
 export default function RootLayout({
   children,
@@ -21,7 +21,7 @@ export default function RootLayout({
             <SidebarProvider>
               <div className="flex flex-1">
                 <ProtectedRoute>
-                  <AppSidebar />
+                  <ModalController />
                   <div className="sidebar">
                     <SidebarTrigger />
                   </div>

@@ -32,7 +32,7 @@ const items = [
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -50,6 +50,7 @@ export function AppSidebar() {
             {/* Add Dataset Button - Prominently Styled */}
             <div className="mb-4 px-2">
               <button
+                onClick={onOpenModal}
                 className="flex w-full items-center justify-center gap-2 rounded-md p-2.5 text-white font-medium text-sm transition-all duration-300 hover:opacity-95 hover:shadow-md relative overflow-hidden active:scale-[0.98] active:shadow-inner"
                 style={{
                   backgroundColor: "hsl(210 100% 50%)",

@@ -66,8 +66,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):def get_current_user(
             dataset = db.query(DataSet).filter(DataSet.id == dataset_id).first()
             if not dataset:
                 raise HTTPException(status_code=404, detail="Dataset not found")
-            if dataset.uploader_id != current_user["id"]:
+            if current_user["id"] not in [owner.user_id for owner in dataset.owners]:
                 raise HTTPException(status_code=403, detail="You do not own this dataset")
+
 
         elif resource_type == "user":
             if user_id != current_user["id"]:

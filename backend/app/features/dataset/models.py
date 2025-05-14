@@ -20,6 +20,7 @@ class Dataset(Base):
     files = relationship("File", back_populates="dataset")
     likes = relationship("Like", back_populates="dataset")
     tags = relationship("DatasetTag", back_populates="dataset")
+    owners = relationship("User", secondary=dataset_owner_table, back_populates="datasets_owned")
 
 
 class DatasetTag(Base):
@@ -31,3 +32,13 @@ class DatasetTag(Base):
     # Relationships
     dataset = relationship("Dataset", back_populates="tags")
     tag = relationship("Tag", back_populates="datasets") 
+
+class DatasetOwner(Base):
+    __tablename__ = 'dataset_owner'
+    # Composite primary key on (dataset_id, user_id)
+    dataset_id = Column(Integer, ForeignKey('dataset.dataset_id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.user_id'), primary_key=True)
+
+    # Relationships
+    dataset = relationship("Dataset", back_populates="owner_links")
+    user = relationship("User", back_populates="dataset_links")

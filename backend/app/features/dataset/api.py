@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 from models import Dataset, Tag  # SQLAlchemy models
-from schemas import DatasetCreate, Dataset as DatasetResponse
+from schemas import DatasetCreate, Dataset as DatasetResponse, OwnerActionRequest
 from database import get_db
-from fastapi import HTTPException, Path
+from backend.app.features.user.models import User
 
 router = APIRouter()
 
@@ -78,6 +78,12 @@ def update_dataset(
 
     db_dataset.tags = tag_objects  # Reassign all tags
 
+     #Add uploader as initial owner
+    uploader = db.query(User).filter_by(user_id=dataset_in.uploader_id).first()
+    if not uploader:
+        raise HTTPException(status_code=400, detail="Uploader not found")
+    db_dataset.owners = [uploader]  # start the owners list with the uploader
+
     db.commit()
     db.refresh(db_dataset)
     return db_dataset
@@ -91,3 +97,45 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depend
     db.delete(db_dataset)
     db.commit()
     return
+
+
+@router.post("/datasets/{dataset_id}/add-owner")
+def add_dataset_owner(
+    dataset_id: int,
+    owner_request: OwnerActionRequest,
+    db: Session = Depends(get_db)
+):
+    dataset = db.query(DatasetModel).filter(DatasetModel.id == dataset_id).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    user = db.query(UserModel).filter(UserModel.id == owner_request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user in dataset.owners:
+        raise HTTPException(status_code=400, detail="User is already an owner")
+
+    dataset.owners.append(user)
+    db.commit()
+
+    return {"message": "Owner added successfully"}
+
+@router.post("/datasets/{dataset_id}/remove-owner")
+def remove_dataset_owner(
+    dataset_id: int,
+    owner_request: OwnerActionRequest,
+    db: Session = Depends(get_db)
+):
+    dataset = db.query(DatasetModel).filter(DatasetModel.id == dataset_id).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    user = db.query(UserModel).filter(UserModel.id == owner_request.user_id).first()
+    if not user or user not in dataset.owners:
+        raise HTTPException(status_code=404, detail="User is not an owner")
+
+    dataset.owners.remove(user)
+    db.commit()
+
+    return {"message": "Owner removed successfully"}

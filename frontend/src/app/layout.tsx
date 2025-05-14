@@ -20,7 +20,9 @@ export default function RootLayout({
               <div className="flex flex-1">
                 <ProtectedRoute>
                   <AppSidebar />
-                  <SidebarTrigger />
+                  <div className="sidebar">
+                    <SidebarTrigger />
+                  </div>
                 </ProtectedRoute>
                 <main className="flex-1">{children}</main>
               </div>

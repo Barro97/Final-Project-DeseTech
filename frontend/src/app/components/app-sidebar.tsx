@@ -42,7 +42,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
+    <Sidebar className="sidebar">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>

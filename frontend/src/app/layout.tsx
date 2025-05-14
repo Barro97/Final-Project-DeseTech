@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function RootLayout({
   children,
@@ -12,15 +13,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="flex min-h-screen flex-col bg-background">
         <QueryProvider>
           <AuthProvider>
             <SidebarProvider>
-              <AppSidebar />
-              <main>
-                <SidebarTrigger />
-                {children}
-              </main>
+              <div className="flex flex-1">
+                <ProtectedRoute>
+                  <AppSidebar />
+                  <SidebarTrigger />
+                </ProtectedRoute>
+                <main className="flex-1">{children}</main>
+              </div>
               <Toaster />
             </SidebarProvider>
           </AuthProvider>

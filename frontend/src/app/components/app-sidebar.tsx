@@ -1,5 +1,8 @@
+"use client";
 import * as React from "react";
-import { Home, PlusCircle, Search, User } from "lucide-react";
+import { Home, PlusCircle, Search, User, LogOut } from "lucide-react";
+import { useAuth } from "@/app/features/auth/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 import {
   Sidebar,
@@ -19,17 +22,25 @@ import {
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/home",
     icon: Home,
   },
   {
     title: "Search Datasets",
-    url: "#",
+    url: "/datasets",
     icon: Search,
   },
 ];
 
 export function AppSidebar() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -39,7 +50,7 @@ export function AppSidebar() {
             {/* Add Dataset Button - Prominently Styled */}
             <div className="mb-4 px-2">
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-md p-2.5 text-white font-medium text-sm transition-all duration-300 hover:opacity-95 hover:shadow-md relative overflow-hidden"
+                className="flex w-full items-center justify-center gap-2 rounded-md p-2.5 text-white font-medium text-sm transition-all duration-300 hover:opacity-95 hover:shadow-md relative overflow-hidden active:scale-[0.98] active:shadow-inner"
                 style={{
                   backgroundColor: "hsl(210 100% 50%)",
                   border: "1px solid rgba(255, 255, 255, 0.2)",
@@ -48,7 +59,7 @@ export function AppSidebar() {
                 }}
               >
                 {/* Glossy/shine effect overlay */}
-                <span className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                <span className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none transition-opacity duration-200 active:opacity-0" />
 
                 <PlusCircle className="h-5 w-5" />
                 <span>Add Dataset</span>
@@ -81,18 +92,33 @@ export function AppSidebar() {
 
       <SidebarSeparator className="opacity-30" />
 
-      {/* Footer with Profile Button */}
+      {/* Footer with Profile Button and User Info */}
       <SidebarFooter>
+        {user && (
+          <div className="px-4 py-2 text-sm">
+            <p className="font-medium">{user.email}</p>
+            <p className="text-xs opacity-75">Role: {user.role}</p>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
             >
-              <a href="#">
+              <a href="/profile">
                 <User />
                 <span>Profile</span>
               </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
+            >
+              <LogOut />
+              <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

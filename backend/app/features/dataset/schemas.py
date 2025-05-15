@@ -8,7 +8,7 @@ class DatasetBase(BaseModel):
     description: Optional[str] = None
     download_count: Optional[int] = 0
     uploader_id: int
-    tags: List[str]
+    tags: Optional[List[str]] = None
 
 class DatasetCreate(DatasetBase):
     pass

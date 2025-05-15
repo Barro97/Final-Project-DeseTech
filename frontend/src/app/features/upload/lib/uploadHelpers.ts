@@ -15,7 +15,7 @@ export const formatBytes = (bytes: number, decimals = 2) => {
 export const validateFile = (
   file: File,
   maxSize: number,
-  accept: string
+  accept?: string
 ): { valid: boolean; error?: string } => {
   if (maxSize && file.size > maxSize) {
     return {
@@ -24,23 +24,38 @@ export const validateFile = (
     };
   }
 
-  if (accept !== "*") {
-    const acceptedTypes = accept.split(",").map((type) => type.trim());
-    const fileType = file.type || `application/${file.name.split(".").pop()}`;
+  // If accept is undefined, null, empty string, or "*", accept all file types
+  if (!accept || accept === "*" || accept.trim() === "") {
+    return { valid: true };
+  }
 
-    const isAccepted = acceptedTypes.some((type) => {
-      if (type.includes("*")) {
-        return fileType.startsWith(type.replace("*", ""));
-      }
-      return type === fileType;
-    });
+  const acceptedTypes = accept.split(",").map((type) => type.trim());
+  // Handle case where file might not have a type
+  const fileExtension = file.name.includes(".")
+    ? file.name.split(".").pop()?.toLowerCase()
+    : "";
+  const fileType =
+    file.type || (fileExtension ? `application/${fileExtension}` : "");
 
-    if (!isAccepted) {
-      return {
-        valid: false,
-        error: "File type not accepted",
-      };
+  if (!fileType) {
+    return {
+      valid: false,
+      error: "Unable to determine file type",
+    };
+  }
+
+  const isAccepted = acceptedTypes.some((type) => {
+    if (type.includes("*")) {
+      return fileType.startsWith(type.replace("*", ""));
     }
+    return type === fileType;
+  });
+
+  if (!isAccepted) {
+    return {
+      valid: false,
+      error: "File type not accepted",
+    };
   }
 
   return { valid: true };

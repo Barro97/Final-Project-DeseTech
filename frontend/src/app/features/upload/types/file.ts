@@ -11,7 +11,7 @@ export interface FileItem {
 export interface FileUploadProps {
   maxFiles: number;
   maxSize: number; // in bytes
-  accept: string;
+  accept?: string;
   onUpload: (files: File[]) => Promise<void>;
 }
 

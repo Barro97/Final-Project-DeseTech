@@ -16,34 +16,35 @@ def create_dataset(dataset_in: DatasetCreate, db: Session = Depends(get_db)):
     print("dataset_in: ", dataset_in)
     # 1. Create the dataset object
     db_dataset = Dataset(
-        dataset_name=dataset_in.name,
-        dataset_description=dataset_in.description,
+        dataset_name=dataset_in.dataset_name,
+        dataset_description=dataset_in.dataset_description,
         uploader_id=dataset_in.uploader_id,
     )
     print("db_dataset: ", db_dataset)
     
-    # 2. Handle tags
-    # tag_objects = []
-    # for tag_name in dataset_in.tags:
-    #     # Check if tag exists
-    #     tag = db.query(Tag).filter_by(tag_category_name=tag_name).first()
-    #     if not tag:
-    #         # If it doesn't exist, create it
-    #         tag = Tag(tag_category_name=tag_name)
-    #         db.add(tag)
-    #         db.commit()
-    #         db.refresh(tag)
-    #     tag_objects.append(tag)
-
-    # 3. Attach tags to the dataset
-    # db_dataset.tags = tag_objects
-
-    # 4. Save dataset
+    # Add uploader as initial owner
+    uploader = db.query(User).filter_by(user_id=dataset_in.uploader_id).first()
+    if not uploader:
+        raise HTTPException(status_code=400, detail="Uploader not found")
+    
+    # Save dataset first to get the ID
     db.add(db_dataset)
     db.commit()
     db.refresh(db_dataset)
-
-    return db_dataset
+    
+    # Now add the owner relationship
+    db_dataset.owners = [uploader]
+    db.commit()
+    
+    # Refresh one more time to get the updated relationships
+    db.refresh(db_dataset)
+    
+    # Convert the response to match the schema
+    response_data = {
+        **db_dataset.__dict__,
+        'owners': [owner.user_id for owner in db_dataset.owners]
+    }
+    return response_data
 
 @router.get("/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(dataset_id: int, db: Session = Depends(get_db)):

@@ -1,12 +1,11 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
-from typing import List
+from typing import Optional, List
+from pydantic import BaseModel, Field
 
 class DatasetBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    download_count: Optional[int] = 0
+    dataset_name: str
+    dataset_description: Optional[str] = None
+    downloads_count: Optional[int] = 0
     uploader_id: int
     tags: Optional[List[str]] = None
 
@@ -17,14 +16,18 @@ class DatasetUpdate(DatasetBase):
     pass
 
 class Dataset(DatasetBase):
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    owners: List[int]
+    dataset_id: int
+    date_of_creation: datetime
+    dataset_last_updated: Optional[datetime] = None
+    
+    # Keep this as is for now since you'll fix the DB issue separately
+    owners: List[int] = []
 
     class Config:
         orm_mode = True
+        # This tells Pydantic to map model attributes to schema fields
+        from_attributes = True
 
 class OwnerActionRequest(BaseModel):
-    user_id: int  # The ID of the user you want to add as an owner
+    user_id: int
 

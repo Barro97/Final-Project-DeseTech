@@ -54,8 +54,8 @@ export function useDatasetUpload() {
       const datasetResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND}/datasets/`,
         {
-          name: formData.name,
-          description: formData.description,
+          dataset_name: formData.name,
+          dataset_description: formData.description,
           uploader_id: user?.id,
         }
       );

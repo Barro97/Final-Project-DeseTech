@@ -12,24 +12,19 @@ router = APIRouter()
 
 @router.post("/upload-file/")
 async def create_file_route(dataset_id: int = Form(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
-    # print(f"file input: {file}")
-    # print(f"dataset input: {dataset_id}")
     # Save the file itself
-    file_path,size = save_file(file)
-
-    # Get the size of the file
-    # size = os.path.getsize(file_path)
+    file_path, size = save_file(file)
 
     # Construct a pydantic model that fits the data
     file_data = FileCreate(
-        file_name = file.filename,
-        file_type=file.content_type,   # e.g. 'text/csv', 'image/png', etc.
+        file_name=file.filename,
+        file_type=file.content_type,
         size=size,
-        file_url=file_path,                     
+        file_url=file_path,
         dataset_id=dataset_id
     )
 
-    return create_file(db = db, file_data = file_data)
+    return create_file(db=db, file_data=file_data)
 
 @router.get("/files/{file_id}")
 async def get_file_route(file_id: int, db: Session = Depends(get_db)):

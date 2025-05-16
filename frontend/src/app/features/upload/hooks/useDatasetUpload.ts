@@ -59,51 +59,101 @@ export function useDatasetUpload() {
           uploader_id: user?.id,
         }
       );
-      const datasetId = datasetResponse.data.id;
+
+      // Log the entire response to see its structure
+      console.log("Dataset creation response:", datasetResponse.data);
+
+      // Check if we have a valid response with dataset_id
+      if (!datasetResponse.data || !datasetResponse.data.dataset_id) {
+        throw new Error(
+          `Failed to get dataset ID from response: ${JSON.stringify(datasetResponse.data)}`
+        );
+      }
+
+      const datasetId = datasetResponse.data.dataset_id;
+      console.log("Dataset created with ID:", datasetId);
+
+      // Validate dataset ID immediately after receiving it
+      if (!datasetId || isNaN(Number(datasetId))) {
+        throw new Error(`Invalid dataset ID received: ${datasetId}`);
+      }
 
       // Step 2: Upload each file with the dataset ID
       let completedFiles = 0;
 
       for (const fileItem of files) {
-        setUploadProgress((prev) => ({
-          ...prev,
-          currentFile: fileItem.file.name,
-        }));
+        try {
+          console.log(
+            "Starting upload for file:",
+            fileItem.file.name,
+            "with dataset ID:",
+            datasetId
+          );
+          setUploadProgress((prev) => ({
+            ...prev,
+            currentFile: fileItem.file.name,
+          }));
 
-        const fileFormData = new FormData();
-        fileFormData.append("file", fileItem.file);
-        fileFormData.append("dataset_id", datasetId);
+          const fileFormData = new FormData();
+          // Add file first to ensure it's properly added
+          fileFormData.append("file", fileItem.file);
 
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND}/upload-file/`,
-          fileFormData,
-          {
-            onUploadProgress: (progressEvent) => {
-              const filePercentCompleted = progressEvent.progress
-                ? Math.round(progressEvent.progress * 100)
-                : 0;
-
-              // Calculate overall progress based on completed files plus current file progress
-              const overallProgress =
-                ((completedFiles + filePercentCompleted / 100) / files.length) *
-                100;
-
-              setUploadProgress((prev) => ({
-                ...prev,
-                progress: Math.round(overallProgress),
-              }));
-            },
+          // Validate and add dataset_id
+          const numericDatasetId = Number(datasetId);
+          if (isNaN(numericDatasetId)) {
+            throw new Error(`Invalid dataset ID: ${datasetId}`);
           }
-        );
+          fileFormData.append("dataset_id", numericDatasetId.toString());
 
-        // Update completed files count after each successful upload
-        completedFiles++;
+          // Log FormData contents (for debugging)
+          console.log("FormData contents:");
+          for (const pair of fileFormData.entries()) {
+            console.log(pair[0], pair[1]);
+          }
 
-        setUploadProgress((prev) => ({
-          ...prev,
-          completedFiles,
-          progress: Math.round((completedFiles / files.length) * 100),
-        }));
+          const uploadResponse = await axios.post(
+            `${process.env.NEXT_PUBLIC_BACKEND}/upload-file/`,
+            fileFormData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+              onUploadProgress: (progressEvent) => {
+                const filePercentCompleted = progressEvent.progress
+                  ? Math.round(progressEvent.progress * 100)
+                  : 0;
+
+                const overallProgress =
+                  ((completedFiles + filePercentCompleted / 100) /
+                    files.length) *
+                  100;
+
+                setUploadProgress((prev) => ({
+                  ...prev,
+                  progress: Math.round(overallProgress),
+                }));
+              },
+            }
+          );
+
+          console.log("File upload response:", uploadResponse.data);
+
+          // Update completed files count after each successful upload
+          completedFiles++;
+
+          setUploadProgress((prev) => ({
+            ...prev,
+            completedFiles,
+            progress: Math.round((completedFiles / files.length) * 100),
+          }));
+        } catch (error) {
+          console.error("Error uploading file:", fileItem.file.name, error);
+          if (axios.isAxiosError(error)) {
+            console.error("Response data:", error.response?.data);
+            console.error("Response status:", error.response?.status);
+          }
+          throw error; // Re-throw to be caught by the outer try-catch
+        }
       }
 
       // All files uploaded successfully

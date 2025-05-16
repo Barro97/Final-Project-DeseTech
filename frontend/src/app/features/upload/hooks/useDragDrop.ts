@@ -5,9 +5,11 @@ import { FileItem } from "../types/file";
 export function useDragDrop(
   maxFiles: number,
   maxSize: number,
-  accept: string,
+  accept: string | undefined,
   files: FileItem[],
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
+  // Keep the parameter in the signature but mark as unused for compatibility
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onUpload: (files: File[]) => Promise<void>
 ) {
   const { processFiles } = useProcessFile(
@@ -15,8 +17,7 @@ export function useDragDrop(
     maxSize,
     accept,
     files,
-    setFiles,
-    onUpload
+    setFiles
   );
 
   const [isDragging, setIsDragging] = useState(false);

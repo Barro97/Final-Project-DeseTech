@@ -21,6 +21,14 @@ function DragDropArea({
     fileInputRef,
   } = useDragDrop(maxFiles, maxSize, accept, files, setFiles, onUpload);
 
+  // Determine what text to show for accepted file types
+  const getAcceptText = () => {
+    if (!accept || accept === "*" || accept.trim() === "") {
+      return "All file types accepted";
+    }
+    return `Accepted file types: ${accept}`;
+  };
+
   return (
     <>
       <div
@@ -48,9 +56,7 @@ function DragDropArea({
               </span>
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {accept !== "*"
-                ? `Accepted file types: ${accept}`
-                : "All file types accepted"}
+              {getAcceptText()}
               {maxSize && ` • Max size: ${formatBytes(maxSize)}`}
               {maxFiles && ` • Max files: ${maxFiles}`}
             </p>

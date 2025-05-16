@@ -11,3 +11,4 @@ psycopg2
 supabase 
 python-jose
 pytest
+alembic==1.12.1

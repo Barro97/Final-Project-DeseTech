@@ -5,7 +5,7 @@ import { validateFile } from "@/app/features/upload/lib/uploadHelpers";
 export function useProcessFile(
   maxFiles: number,
   maxSize: number,
-  accept: string,
+  accept: string | undefined,
   files: FileItem[],
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>
   // onUpload: (files: File[]) => Promise<void>

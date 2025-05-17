@@ -55,8 +55,13 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
       backgroundColor: isActive ? "hsl(210 100% 95%)" : "transparent",
       color: isActive ? "hsl(210 100% 50%)" : "inherit",
       fontWeight: isActive ? "500" : "normal",
+      transition: "all 0.2s ease-in-out",
     };
   };
+
+  // Hover styles to be applied via className
+  const menuItemHoverClass =
+    "transition-all duration-200 hover:translate-x-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:brightness-105";
 
   return (
     <Sidebar className="sidebar">
@@ -93,10 +98,10 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        className="transition-all duration-200 hover:translate-x-4"
+                        className={menuItemHoverClass}
                         style={getMenuItemStyles(isActive)}
                       >
-                        <Link href={item.url}>
+                        <Link href={item.url} className="rounded-md">
                           <item.icon
                             className={isActive ? "text-primary" : ""}
                           />
@@ -130,10 +135,10 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
             <SidebarMenuButton
               asChild
               isActive={pathname === "/profile"}
-              className="transition-all duration-200 hover:translate-x-4"
+              className={menuItemHoverClass}
               style={getMenuItemStyles(pathname === "/profile")}
             >
-              <Link href="/profile">
+              <Link href="/profile" className="rounded-md">
                 <User
                   className={pathname === "/profile" ? "text-primary" : ""}
                 />
@@ -144,7 +149,7 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="transition-all duration-200 hover:translate-x-4"
+              className={menuItemHoverClass}
             >
               <LogOut />
               <span>Logout</span>

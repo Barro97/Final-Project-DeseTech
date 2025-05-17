@@ -1,11 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
 import {
   getDatasetById,
   getDatasetFiles,
   downloadFile,
 } from "@/app/features/dataset/services/datasetService";
-import {
+import type {
   Dataset,
   DatasetFile,
 } from "@/app/features/dataset/types/datasetTypes";
@@ -13,6 +12,8 @@ import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
 import { Database, Calendar, Download, FileText, User } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+
 export default function DatasetDetailPage({
   params,
 }: {
@@ -20,35 +21,31 @@ export default function DatasetDetailPage({
 }) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [dataset, setDataset] = useState<Dataset | null>(null);
-  const [files, setFiles] = useState<DatasetFile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDataset = async () => {
+  // Query for dataset details
+  const {
+    data: dataset,
+    isLoading: isDatasetLoading,
+    error: datasetError,
+  } = useQuery({
+    queryKey: ["dataset", params.id],
+    queryFn: () => getDatasetById(params.id) as Promise<Dataset>,
+  });
+
+  // Query for dataset files
+  const { data: files = [], isLoading: isFilesLoading } = useQuery({
+    queryKey: ["datasetFiles", params.id],
+    queryFn: async () => {
       try {
-        setIsLoading(true);
-        const datasetData = await getDatasetById(params.id);
-        setDataset(datasetData);
-
-        try {
-          const filesData = await getDatasetFiles(params.id);
-          setFiles(filesData);
-        } catch (fileError) {
-          console.error("Error fetching files:", fileError);
-          // Don't set the main error state, just log it
-        }
-      } catch (err) {
-        console.error("Error fetching dataset:", err);
-        setError("Failed to load dataset. Please try again later.");
-      } finally {
-        setIsLoading(false);
+        return (await getDatasetFiles(params.id)) as DatasetFile[];
+      } catch (error) {
+        console.error("Error fetching files:", error);
+        return [] as DatasetFile[];
       }
-    };
-
-    fetchDataset();
-  }, [params.id]);
+    },
+    // Don't fail the whole page if files don't load
+    retry: 1,
+  });
 
   const handleDownload = async (fileId: number, fileName: string) => {
     try {
@@ -92,23 +89,31 @@ export default function DatasetDetailPage({
     return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  if (isLoading) {
+  // Show loading spinner while either dataset or files are loading
+  if (isDatasetLoading || isFilesLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error || !dataset) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-50 text-red-500 p-4 rounded-md">
-          <p>{error || "Dataset not found"}</p>
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-500">Loading dataset details...</p>
         </div>
       </div>
     );
   }
+
+  // Show error if dataset couldn't be loaded
+  if (datasetError || !dataset) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-50 text-red-500 p-4 rounded-md">
+          <p>Failed to load dataset. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Safely cast files to the correct type
+  const datasetFiles = files as DatasetFile[];
 
   return (
     <div className="container mx-auto p-4">
@@ -130,7 +135,7 @@ export default function DatasetDetailPage({
             <div className="flex items-center text-gray-600 dark:text-gray-300">
               <Database className="w-5 h-5 mr-2" />
               <span>
-                {files.length} file{files.length !== 1 ? "s" : ""}
+                {datasetFiles.length} file{datasetFiles.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -147,11 +152,11 @@ export default function DatasetDetailPage({
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Files</h2>
 
-            {files.length === 0 ? (
+            {datasetFiles.length === 0 ? (
               <p className="text-gray-500">No files in this dataset.</p>
             ) : (
               <div className="border rounded-md divide-y overflow-hidden">
-                {files.map((file) => (
+                {datasetFiles.map((file: DatasetFile) => (
                   <div
                     key={file.file_id}
                     className="p-4 flex items-center justify-between bg-gray-50 dark:bg-gray-700"

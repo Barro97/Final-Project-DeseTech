@@ -116,46 +116,13 @@ function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Welcome Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">
           Welcome back, {user.email.split("@")[0]}!
         </h1>
         <p className="mt-2 text-gray-600">
           Discover, share and manage your datasets all in one place.
         </p>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Button
-          className="h-auto py-4 flex flex-col items-center justify-center gap-3"
-          asChild
-        >
-          <Link href="/upload">
-            <Upload className="h-6 w-6" />
-            <span className="text-base font-medium">Upload Dataset</span>
-          </Link>
-        </Button>
-        <Button
-          className="h-auto py-4 flex flex-col items-center justify-center gap-3"
-          variant="outline"
-          asChild
-        >
-          <Link href="/datasets">
-            <Search className="h-6 w-6" />
-            <span className="text-base font-medium">Explore Datasets</span>
-          </Link>
-        </Button>
-        <Button
-          className="h-auto py-4 flex flex-col items-center justify-center gap-3"
-          variant="outline"
-          asChild
-        >
-          <Link href="/my-datasets">
-            <Database className="h-6 w-6" />
-            <span className="text-base font-medium">My Datasets</span>
-          </Link>
-        </Button>
       </div>
 
       {/* Statistics Cards */}

@@ -213,7 +213,6 @@
     opacity: 0;
   }
 }
-
 /* Add styles for main content area with proper layout */
 main {
   width: 100%;
@@ -225,10 +224,10 @@ main {
 }
 
 /* Adjust main content when sidebar is visible (for authenticated users) */
-.sidebar-visible main {
-  margin-left: var(--sidebar-width, 250px);
-  width: calc(100% - var(--sidebar-width, 250px));
-}
+/* .sidebar-visible main { */
+/* margin-left: var(--sidebar-width, 250px); */
+/* width: calc(100% - var(--sidebar-width, 250px)); */
+/* } */
 
 /* Sidebar transition improvements */
 .sidebar {

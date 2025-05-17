@@ -13,12 +13,14 @@ import { Database, Calendar, Download, FileText, User } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { use } from "react";
 
 export default function DatasetDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const resolvedParams = use(params);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -28,16 +30,16 @@ export default function DatasetDetailPage({
     isLoading: isDatasetLoading,
     error: datasetError,
   } = useQuery({
-    queryKey: ["dataset", params.id],
-    queryFn: () => getDatasetById(params.id) as Promise<Dataset>,
+    queryKey: ["dataset", resolvedParams.id],
+    queryFn: () => getDatasetById(resolvedParams.id) as Promise<Dataset>,
   });
 
   // Query for dataset files
   const { data: files = [], isLoading: isFilesLoading } = useQuery({
-    queryKey: ["datasetFiles", params.id],
+    queryKey: ["datasetFiles", resolvedParams.id],
     queryFn: async () => {
       try {
-        return (await getDatasetFiles(params.id)) as DatasetFile[];
+        return (await getDatasetFiles(resolvedParams.id)) as DatasetFile[];
       } catch (error) {
         console.error("Error fetching files:", error);
         return [] as DatasetFile[];

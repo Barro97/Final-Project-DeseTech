@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Home, PlusCircle, Search, User, LogOut, Database } from "lucide-react";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -41,10 +41,21 @@ const items = [
 export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  // Custom styles for menu items
+  const getMenuItemStyles = (isActive: boolean) => {
+    return {
+      transform: isActive ? "translateX(0.25rem)" : "none",
+      backgroundColor: isActive ? "hsl(210 100% 95%)" : "transparent",
+      color: isActive ? "hsl(210 100% 50%)" : "inherit",
+      fontWeight: isActive ? "500" : "normal",
+    };
   };
 
   return (
@@ -74,24 +85,31 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
             </div>
 
             <SidebarMenu className="flex flex-col space-y-1">
-              {items.map((item, index) => (
-                <React.Fragment key={item.title}>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
-                    >
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  {index < items.length - 1 && (
-                    <SidebarSeparator className="my-1 opacity-30" />
-                  )}
-                </React.Fragment>
-              ))}
+              {items.map((item, index) => {
+                const isActive = pathname === item.url;
+                return (
+                  <React.Fragment key={item.title}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className="transition-all duration-200 hover:translate-x-4"
+                        style={getMenuItemStyles(isActive)}
+                      >
+                        <Link href={item.url}>
+                          <item.icon
+                            className={isActive ? "text-primary" : ""}
+                          />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {index < items.length - 1 && (
+                      <SidebarSeparator className="my-1 opacity-30" />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -111,10 +129,14 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
+              isActive={pathname === "/profile"}
+              className="transition-all duration-200 hover:translate-x-4"
+              style={getMenuItemStyles(pathname === "/profile")}
             >
               <Link href="/profile">
-                <User />
+                <User
+                  className={pathname === "/profile" ? "text-primary" : ""}
+                />
                 <span>Profile</span>
               </Link>
             </SidebarMenuButton>
@@ -122,7 +144,7 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
+              className="transition-all duration-200 hover:translate-x-4"
             >
               <LogOut />
               <span>Logout</span>

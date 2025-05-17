@@ -7,7 +7,8 @@ import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthSessionManager from "@/app/features/auth/components/AuthSessionManager";
 import { ModalController } from "./components/ModalController";
-
+import { Suspense } from "react";
+import { LoadingSpinner } from "./components/ui/loading-spinner";
 export default function RootLayout({
   children,
 }: {
@@ -27,7 +28,9 @@ export default function RootLayout({
                   </div>
                 </ProtectedRoute>
                 <AuthSessionManager />
-                <main className="flex-1">{children}</main>
+                <main className="flex-1">
+                  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+                </main>
               </div>
               <Toaster />
             </SidebarProvider>

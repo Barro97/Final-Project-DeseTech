@@ -48,3 +48,7 @@ yarn-error.log*
 
 # Specific files
 backend/tests/files
+
+# Memory Bank
+memory-bank/
+.cursor/

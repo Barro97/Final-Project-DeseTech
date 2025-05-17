@@ -9,7 +9,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 def verify_dataset_ownership(db: Session, dataset_id: int, current_user_id: int):
-    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    dataset = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
 
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
@@ -39,7 +39,7 @@ def get_current_user(
             detail="Token payload missing user ID",
         )
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.user_id == user_id).first()
 
     if not user:
         raise HTTPException(
@@ -47,7 +47,12 @@ def get_current_user(
             detail="User not found",
         )
 
-    return user
+    # Return a dictionary instead of the user object
+    return {
+        "user_id": user.user_id,
+        "email": user.email,
+        "role": user.role.role_name if user.role else None
+    }
 
 def permit_action(resource_type: str):
     def checker(
@@ -62,14 +67,14 @@ def permit_action(resource_type: str):
 
         # Ownership check
         if resource_type == "dataset":
-            dataset = db.query(DataSet).filter(DataSet.id == dataset_id).first()
+            dataset = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
             if not dataset:
                 raise HTTPException(status_code=404, detail="Dataset not found")
-            if dataset.uploader_id != current_user["id"]:
+            if dataset.uploader_id != current_user["user_id"]:
                 raise HTTPException(status_code=403, detail="You do not own this dataset")
 
         elif resource_type == "user":
-            if user_id != current_user["id"]:
+            if user_id != current_user["user_id"]:
                 raise HTTPException(status_code=403, detail="You can only access your own user")
 
         else:

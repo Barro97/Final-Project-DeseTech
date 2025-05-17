@@ -1,17 +1,21 @@
-from fastapi import Depends, APIRouter , UploadFile, File, Form, HTTPException
+from fastapi import Depends, APIRouter, UploadFile, File as UploadFastFile, Form, HTTPException
 from sqlalchemy.orm import Session
 from backend.app.database.session import get_db
 from backend.app.features.file.schemas import FileCreate
 from backend.app.features.file.crud import create_file, get_file, delete_file_record, get_url
 from backend.app.features.file.utils.upload import save_file, delete_file_from_storage
 import os
+from fastapi.responses import FileResponse
+from pathlib import Path
+from backend.app.database.models import File, Dataset
+from backend.app.features.authentication.utils.authorizations import get_current_user
 
 
 
 router = APIRouter()
 
 @router.post("/upload-file/")
-async def create_file_route(dataset_id: int = Form(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_file_route(dataset_id: int = Form(...), file: UploadFile = UploadFastFile(...), db: Session = Depends(get_db)):
     # Save the file itself
     file_path, size = save_file(file)
 
@@ -45,3 +49,30 @@ async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
         return {"detail":"File and record deleted"}
     else:
         raise HTTPException(status_code=500,detail="Record deletion failed")
+
+@router.get("/{file_id}/download")
+def download_file(
+    file_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Download a file."""
+    # Get the file
+    file = db.query(File).filter(File.file_id == file_id).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Get the file path
+    file_path = Path(f"storage/uploads/{file.file_url}")
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on storage")
+    
+    # Update download count for the dataset
+    if file.dataset_id:
+        dataset = db.query(Dataset).filter(Dataset.dataset_id == file.dataset_id).first()
+        if dataset:
+            dataset.downloads_count += 1
+            db.commit()
+    
+    return FileResponse(path=file_path, filename=file.file_name, media_type='application/octet-stream')

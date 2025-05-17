@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { Home, PlusCircle, Search, User, LogOut } from "lucide-react";
+import { Home, PlusCircle, Search, User, LogOut, Database } from "lucide-react";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +24,11 @@ const items = [
     title: "Home",
     url: "/home",
     icon: Home,
+  },
+  {
+    title: "My Datasets",
+    url: "/my-datasets",
+    icon: Database,
   },
   {
     title: "Search Datasets",

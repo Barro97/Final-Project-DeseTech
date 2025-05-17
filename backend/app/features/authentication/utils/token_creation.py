@@ -11,7 +11,11 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     # Include a user ID in the standard "sub" field
-    to_encode.update({"sub": str(data["id"])})
+    to_encode.update({"sub": str(data["user_id"])})
+    
+    # Make sure user_id is also available directly
+    if "id" not in to_encode and "user_id" in data:
+        to_encode.update({"id": data["user_id"]})
 
     # Set expiration time
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

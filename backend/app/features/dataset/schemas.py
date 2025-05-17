@@ -31,3 +31,16 @@ class Dataset(DatasetBase):
 class OwnerActionRequest(BaseModel):
     user_id: int
 
+# Schema for file list in dataset response
+class FileSchema(BaseModel):
+    file_id: int
+    file_name: str
+    file_type: Optional[str] = None
+    size: Optional[int] = None
+    file_date_of_upload: datetime
+    file_url: str
+    dataset_id: int
+    
+    class Config:
+        from_attributes = True
+

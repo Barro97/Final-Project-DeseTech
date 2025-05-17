@@ -5,6 +5,9 @@ from passlib.context import CryptContext
 from backend.app.features.user.schemas import UserLogin
 from backend.app.database.models import User
 from backend.app.features.authentication.utils.token_creation import create_access_token
+from jose import JWTError, jwt
+from backend.app.features.authentication.utils.token_creation import SECRET_KEY, ALGORITHM
+
 router = APIRouter(prefix='/auth')
 
 # Set up password hashing
@@ -31,9 +34,10 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     # Step 3: If valid credentials, generate the JWT token
     # Safely access role name
     user_role = db_user.role.role_name if db_user.role else None
-    access_token = create_access_token(data={"email": db_user.email,
-                                             "role": user_role,
-                                             'id': db_user.user_id
+    access_token = create_access_token(data={
+        "email": db_user.email,
+        "role": user_role,
+        'user_id': db_user.user_id
     })
     
     # Return the token in response
@@ -56,7 +60,11 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
         
         # Generate a new access token
-        new_access_token = create_access_token(data={"id": user.user_id, "email": user.email, "role": user.role.role_name})
+        new_access_token = create_access_token(data={
+            "user_id": user.user_id,
+            "email": user.email,
+            "role": user.role.role_name
+        })
 
         return {"access_token": new_access_token, "token_type": "bearer"}
 

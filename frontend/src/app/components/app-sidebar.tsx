@@ -17,6 +17,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/app/components/ui/sidebar";
+import Link from "next/link";
 
 // Menu items.
 const items = [
@@ -80,10 +81,10 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
                       asChild
                       className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
                     >
-                      <a href={item.url}>
+                      <Link href={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   {index < items.length - 1 && (
@@ -112,10 +113,10 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
               asChild
               className="transition-all duration-200 hover:bg-sidebar-accent hover:translate-x-1"
             >
-              <a href="/profile">
+              <Link href="/profile">
                 <User />
                 <span>Profile</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>

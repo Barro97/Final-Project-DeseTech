@@ -14,6 +14,7 @@ export default function MyDatasetsPage() {
   const {
     data: datasets = [] as Dataset[],
     isLoading,
+    isFetching,
     error,
   } = useQuery({
     queryKey: ["userDatasets", user?.id],
@@ -34,8 +35,16 @@ export default function MyDatasetsPage() {
     }
   };
 
-  if (isLoading) {
-    return <LoadingSpinner />;
+  // Show spinner for both initial loading and subsequent fetching
+  if (isLoading || isFetching) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-500">Loading your datasets...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

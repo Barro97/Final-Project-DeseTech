@@ -12,13 +12,14 @@ import {
 import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
 import { Database, Calendar, Download, FileText, User } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
-
+import { useAuth } from "@/app/features/auth/context/AuthContext";
 export default function DatasetDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [files, setFiles] = useState<DatasetFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,7 +124,7 @@ export default function DatasetDetailPage({
 
             <div className="flex items-center text-gray-600 dark:text-gray-300">
               <User className="w-5 h-5 mr-2" />
-              <span>Uploader ID: {dataset.uploader_id}</span>
+              <span>Uploaded by: {user?.email}</span>
             </div>
 
             <div className="flex items-center text-gray-600 dark:text-gray-300">

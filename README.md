@@ -1,118 +1,132 @@
-# Full Stack Project with Next.js and FastAPI
+# Research Dataset Repository Platform
 
-This project consists of a Next.js frontend and a FastAPI backend. Below are the instructions to get both parts of the project up and running on Windows.
+A web-based platform that enables researchers to upload, manage, and share datasets with rich metadata support. Built with Next.js and FastAPI.
 
-## Prerequisites
+## Features
 
-Before you begin, ensure you have the following installed on your Windows system:
+- User authentication and profile management
+- Dataset upload with metadata management
+- Dataset viewing and downloading
+- Personal dataset management dashboard
+- Interactive homepage with platform statistics and featured datasets
+- File storage and management system
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Python](https://www.python.org/) (v3.8 or higher)
-- [pip](https://pip.pypa.io/en/stable/installation/) (Python package installer)
-- [npm](https://www.npmjs.com/) (Node.js package manager)
+## Tech Stack
+
+### Frontend
+
+- Next.js with TypeScript
+- React components
+- Tailwind CSS for styling
+- App Router for navigation
+
+### Backend
+
+- FastAPI (Python)
+- PostgreSQL database
+- SQLAlchemy ORM
+- JWT authentication
+- Supabase integration
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.12+
+- Node.js 18+
+- PostgreSQL 15+
+
+### Backend Setup
+
+1. Create and activate a Python virtual environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up the database
+
+- Create a PostgreSQL database for the project
+- Run database migrations:
+
+```bash
+alembic upgrade head
+```
+
+4. Start the backend server
+
+```bash
+# On Windows
+run_backend.bat
+
+# Alternative
+uvicorn main:app --reload
+```
+
+### Frontend Setup
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Start the development server
+
+```bash
+# On Windows
+run_frontend.bat
+
+# Alternative
+npm run dev
+```
 
 ## Project Structure
 
+### Backend
+
 ```
-project/
-├── frontend/         # Next.js frontend
-└── backend/         # FastAPI backend
+backend/
+├── app/                      # Main application package
+│   ├── core/                 # Core modules
+│   ├── database/             # Database configuration
+│   └── features/             # Feature modules
+│       ├── authentication/
+│       ├── dataset/
+│       ├── file/
+│       └── user/
+├── migrations/               # Database migrations
+└── storage/                  # File storage
 ```
 
-##Terminal command - Noam
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+### Frontend
 
+```
+frontend/
+├── src/
+│   └── app/
+│       ├── components/       # Shared UI components
+│       ├── features/         # Feature modules
+│       │   ├── auth/
+│       │   ├── dataset/
+│       │   ├── upload/
+│       │   └── home/
+│       ├── hooks/           # Shared hooks
+│       └── lib/             # Utilities
+└── public/                  # Static files
+```
 
-## Backend Setup (FastAPI)
+## Development Guidelines
 
-1. Open Command Prompt and navigate to the backend directory:
-
-   cd C:\Users\97252\Desktop\DeseTech\Project\Final-Project-DeseTech\backend
-
-2. Create a Python virtual environment:
-   
-   py -m venv venv   
-
-3. Activate the virtual environment:
-
-   .\venv\Scripts\activate
-
-4. Install the required dependencies:
-
-   pip install -r requirements.txt
-
-5. Start the FastAPI server:
-   uvicorn backend.main:app --reload
-
-The backend server will be running at `http://localhost:8000`
-
-You can access:
-
-- API documentation at `http://localhost:8000/docs`
-- Alternative API documentation at `http://localhost:8000/redoc`
-
-## Frontend Setup (Next.js)
-
-1. Open a new Command Prompt window and navigate to the frontend directory:
-
-   cd C:\Users\97252\Desktop\DeseTech\Project\Final-Project-DeseTech\frontend
-
-2. Install the required dependencies:
-
-   npm install
-
-3. Start the development server:
-
-   npm run dev
-
-The frontend application will be running at `http://localhost:3000`
-
-## Testing the Connection
-
-1. Make sure both servers are running:
-   - Backend server in one Command Prompt window (port 8000)
-   - Frontend server in another Command Prompt window (port 3000)
-2. Visit `http://localhost:3000` in your browser
-3. Click the "Test Backend Connection" button
-4. You should see a success message if everything is working correctly
-
-## Common Issues and Solutions
-
-1. **Backend server not starting**
-
-   - Make sure you're in the correct directory in Command Prompt
-   - Verify that the virtual environment is activated (you should see `(venv)` at the start of your command line)
-   - Run `pip list` to verify that all dependencies are installed
-   - Check if port 8000 is free by running: `netstat -ano | findstr :8000`
-   - If port is in use, you can kill the process using: `taskkill /PID <PID> /F`
-
-2. **Frontend server not starting**
-
-   - Make sure you're in the correct directory in Command Prompt
-   - Try deleting the `node_modules` folder and running `npm install` again
-   - Check if port 3000 is free by running: `netstat -ano | findstr :3000`
-   - If port is in use, you can kill the process using: `taskkill /PID <PID> /F`
-
-3. **Connection test failing**
-   - Ensure both Command Prompt windows show their respective servers are running
-   - Check the browser console (F12) for any CORS-related errors
-   - Verify that the backend URL in the frontend code matches the running backend server
-
-## Additional Resources
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-
-
-#פקודות לגיטאב
-git checkout -b <branch-name>  #יצירת ענף חדש
-
-git switch -c <branch-name>   #החלפה לענף
-
-
-#להעלות לגיט את כל העבודה
-git add .      #בחירת כל הקבצים
-
-git commit -m "" #שם לשמירה
-
-git push  #שיגור השימרה לענן 
+- Follow the feature-based architecture when adding new functionality
+- Ensure proper typing with TypeScript on frontend and Python type hints on backend
+- Use the established API response formatting patterns
+- Write clear commit messages describing your changes
+- Update documentation when making significant changes

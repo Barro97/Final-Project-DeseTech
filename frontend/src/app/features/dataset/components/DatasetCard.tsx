@@ -1,6 +1,6 @@
 "use client";
-import { Dataset } from "../types/datasetTypes";
-import { Card } from "@/app/components/ui/card";
+import { Dataset } from "@/app/features/dataset/types/datasetTypes";
+import { Card } from "@/app/components/molecules/card";
 import Link from "next/link";
 import { Database, Calendar, FileText } from "lucide-react";
 

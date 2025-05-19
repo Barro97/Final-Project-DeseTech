@@ -3,12 +3,15 @@ import { Toaster } from "@/app/features/toaster/components/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
 
-import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import {
+  SidebarProvider,
+  SidebarTrigger,
+} from "./components/organisms/sidebar";
+import ProtectedRoute from "./components/templates/ProtectedRoute";
 import AuthSessionManager from "@/app/features/auth/components/AuthSessionManager";
-import { ModalController } from "./components/ModalController";
+import { ModalController } from "./components/organisms/ModalController";
 import { Suspense } from "react";
-import { LoadingSpinner } from "./components/ui/loading-spinner";
+import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 export default function RootLayout({
   children,
 }: {

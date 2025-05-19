@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import Footer from "./Footer";
 import FormField from "./FormField";
 import Header from "./Header";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/app/components/atoms/button";
 import { CardContent } from "./ui/card";
 import { Label } from "./ui/label";
 import { SignUpData } from "@/app/features/auth/types/authTypes";

@@ -2,7 +2,7 @@
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LoadingSpinner } from "./ui/loading-spinner";
+import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { usePathname } from "next/navigation";
 
 export default function ProtectedRoute({

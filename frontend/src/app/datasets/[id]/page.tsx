@@ -8,7 +8,7 @@ import type {
   Dataset,
   DatasetFile,
 } from "@/app/features/dataset/types/datasetTypes";
-import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
+import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { Database, Calendar, Download, FileText, User } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";

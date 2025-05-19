@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/app/components/dialog";
+} from "@/app/components/atoms/dialog";
 import { useForm } from "react-hook-form";
 import { FileUpload } from "@/app/features/upload/components/file-upload";
 import { FileItem } from "@/app/features/upload/types/file";

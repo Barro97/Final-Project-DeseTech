@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/app/components/atoms/button";
 
 function RemoveButton({
   removeFunc,

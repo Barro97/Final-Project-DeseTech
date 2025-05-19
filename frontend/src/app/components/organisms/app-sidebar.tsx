@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
-} from "@/app/components/ui/sidebar";
+} from "@/app/components/organisms/sidebar";
 import Link from "next/link";
 
 // Menu items.

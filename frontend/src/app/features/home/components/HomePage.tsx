@@ -2,7 +2,7 @@
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
+import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import {
   Card,
   CardContent,
@@ -10,8 +10,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/app/components/ui/card";
-import { Button } from "@/app/components/ui/button";
+} from "@/app/components/molecules/card";
+import { Button } from "@/app/components/atoms/button";
 import {
   Database,
   FileText,

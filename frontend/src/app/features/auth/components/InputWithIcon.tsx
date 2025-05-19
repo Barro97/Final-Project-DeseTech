@@ -1,6 +1,6 @@
 import { forwardRef, useState } from "react";
-import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/atoms/button";
+import { Input } from "@/app/components/atoms/input";
 import { Eye, EyeOff } from "lucide-react";
 import { UseFormRegisterReturn } from "react-hook-form";
 

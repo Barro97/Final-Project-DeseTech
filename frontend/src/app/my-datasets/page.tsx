@@ -3,7 +3,7 @@ import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { getUserDatasets } from "@/app/features/dataset/services/datasetService";
 import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
-import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
+import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 

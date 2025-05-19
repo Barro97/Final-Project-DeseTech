@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { UseFormRegisterReturn } from "react-hook-form";
-import { Label } from "./ui/label";
+import { Label } from "../atoms/Label";
 import { InputWithIcon } from "./InputWithIcon";
 import { Input } from "@/app/components/atoms/input";
 

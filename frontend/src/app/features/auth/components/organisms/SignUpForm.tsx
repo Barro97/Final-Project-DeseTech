@@ -4,13 +4,13 @@ import Select from "react-select";
 import countryList from "react-select-country-list";
 import { useMemo } from "react";
 import Footer from "./Footer";
-import FormField from "./FormField";
-import Header from "./Header";
+import FormField from "../molecules/FormField";
+import Header from "../molecules/Header";
 import { Button } from "@/app/components/atoms/button";
 import { CardContent } from "@/app/components/molecules/card";
-import { Label } from "./ui/label";
+import { Label } from "../atoms/Label";
 import { SignUpData } from "@/app/features/auth/types/authTypes";
-import { useSignup } from "@/app/features/auth/hooks/useSignup";
+import { useSignup } from "../../hooks/useSignup";
 
 function SignUpForm() {
   const {

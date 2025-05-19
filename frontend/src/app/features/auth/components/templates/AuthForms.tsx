@@ -1,17 +1,12 @@
 "use client";
 import { Card } from "@/app/components/molecules/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/app/features/auth/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../atoms/Tabs";
 import { useRef, useState } from "react";
 // import { Separator } from "@/app/features/auth/components/ui/separator";
 import { cn } from "@/app/lib/utils";
-import { useContentHeight } from "../hooks/useContentHeight";
-import LoginForm from "./LoginForm";
-import SignUpForm from "./SignUpForm";
+import { useContentHeight } from "../../hooks/useContentHeight";
+import LoginForm from "../organisms/LoginForm";
+import SignUpForm from "../organisms/SignUpForm";
 
 export default function AuthForms() {
   // const [showPassword, setShowPassword] = useState(false);

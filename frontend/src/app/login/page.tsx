@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const AuthForms = dynamic(
   // solves a bug
-  () => import("@/app/features/auth/components/auth-forms"),
+  () => import("@/app/features/auth/components/templates/AuthForms"),
   {
     ssr: false,
   }

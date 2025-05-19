@@ -1,5 +1,5 @@
 import { Separator } from "@/app/components/atoms/separator";
-import SocialLogin from "./SocialLogin";
+import SocialLogin from "../molecules/SocialLogin";
 
 function Footer() {
   return (

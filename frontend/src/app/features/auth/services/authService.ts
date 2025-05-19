@@ -13,7 +13,12 @@ export async function login(data: LoginData) {
 export async function signup(data: SignUpData) {
   const response = await axios.post(
     `${process.env.NEXT_PUBLIC_BACKEND}/users/`,
-    { ...data, first_name: data.firstName, last_name: data.lastName }
+    {
+      ...data,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      country: data.country?.label,
+    }
   );
 
   return response.data;

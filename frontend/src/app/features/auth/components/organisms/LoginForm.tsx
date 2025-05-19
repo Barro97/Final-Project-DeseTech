@@ -2,12 +2,12 @@
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { SubmitHandler, useForm, FieldErrors } from "react-hook-form";
 import Footer from "./Footer";
-import FormField from "./FormField";
-import Header from "./Header";
+import FormField from "../molecules/FormField";
+import Header from "../molecules/Header";
 import { Button } from "@/app/components/atoms/button";
 import { CardContent } from "@/app/components/molecules/card";
 import { LoginData } from "@/app/features/auth/types/authTypes";
-import { useLogin } from "../hooks/useLogin";
+import { useLogin } from "../../hooks/useLogin";
 
 function LoginForm() {
   const {

@@ -1,7 +1,7 @@
 import { Upload } from "lucide-react";
 import { formatBytes } from "@/app/features/upload/lib/uploadHelpers";
 import { DragDropAreaProps } from "@/app/features/upload/types/file";
-import { useDragDrop } from "../hooks/useDragDrop";
+import { useDragDrop } from "../../hooks/useDragDrop";
 
 function DragDropArea({
   maxFiles,

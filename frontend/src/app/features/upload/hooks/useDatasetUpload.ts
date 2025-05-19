@@ -61,7 +61,6 @@ export function useDatasetUpload() {
       );
 
       // Log the entire response to see its structure
-      console.log("Dataset creation response:", datasetResponse.data);
 
       // Check if we have a valid response with dataset_id
       if (!datasetResponse.data || !datasetResponse.data.dataset_id) {
@@ -71,7 +70,6 @@ export function useDatasetUpload() {
       }
 
       const datasetId = datasetResponse.data.dataset_id;
-      console.log("Dataset created with ID:", datasetId);
 
       // Validate dataset ID immediately after receiving it
       if (!datasetId || isNaN(Number(datasetId))) {
@@ -83,12 +81,6 @@ export function useDatasetUpload() {
 
       for (const fileItem of files) {
         try {
-          console.log(
-            "Starting upload for file:",
-            fileItem.file.name,
-            "with dataset ID:",
-            datasetId
-          );
           setUploadProgress((prev) => ({
             ...prev,
             currentFile: fileItem.file.name,
@@ -106,10 +98,9 @@ export function useDatasetUpload() {
           fileFormData.append("dataset_id", numericDatasetId.toString());
 
           // Log FormData contents (for debugging)
-          console.log("FormData contents:");
-          for (const pair of fileFormData.entries()) {
-            console.log(pair[0], pair[1]);
-          }
+          // for (const pair of fileFormData.entries()) {
+          //   console.log(pair[0], pair[1]);
+          // }
 
           const uploadResponse = await axios.post(
             `${process.env.NEXT_PUBLIC_BACKEND}/upload-file/`,
@@ -136,7 +127,7 @@ export function useDatasetUpload() {
             }
           );
 
-          console.log("File upload response:", uploadResponse.data);
+          // console.log("File upload response:", uploadResponse.data);
 
           // Update completed files count after each successful upload
           completedFiles++;

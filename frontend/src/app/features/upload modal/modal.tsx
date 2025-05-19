@@ -6,12 +6,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/components/atoms/dialog";
-import { useForm } from "react-hook-form";
-import { FileUpload } from "@/app/features/upload/components/file-upload";
+import { FileUpload } from "@/app/features/upload/components/organisms/FileUpload";
+import { useDatasetUpload } from "@/app/features/upload/hooks/useDatasetUpload";
 import { FileItem } from "@/app/features/upload/types/file";
 import { useState } from "react";
-import { useDatasetUpload } from "@/app/features/upload/hooks/useDatasetUpload";
-import { useToast } from "@/app/features/toaster/hooks/useToast";
+import { useForm } from "react-hook-form";
+import { toast } from "../toaster/hooks/useToast";
 
 type FormData = {
   name: string;
@@ -35,7 +35,6 @@ export function UploadModal({
     reset,
   } = useForm<FormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const onSubmit = async (data: FormData) => {
     if (files.length === 0) {

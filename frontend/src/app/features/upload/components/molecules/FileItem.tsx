@@ -1,7 +1,7 @@
 import { FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { Progress } from "./ui/progress";
+import { Progress } from "../atoms/Progress";
 import { formatBytes } from "@/app/features/upload/lib/uploadHelpers";
-import { FileItem } from "../types/file";
+import { FileItem } from "../../types/file";
 import RemoveButton from "./RemoveButton";
 
 function FileItemComp({

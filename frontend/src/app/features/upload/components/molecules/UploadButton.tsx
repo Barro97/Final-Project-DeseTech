@@ -1,14 +1,12 @@
-import { useFileUpload } from "../hooks/useUpload";
-import { FileItem } from "../types/file";
+import { useFileUpload } from "../../hooks/useUpload";
+import { FileItem } from "../../types/file";
 import { Button } from "@/app/components/atoms/button";
 
 function UploadButton({
   files,
-  onUpload,
   setFiles,
 }: {
   files: FileItem[];
-  onUpload: (files: File[]) => Promise<void>;
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>;
 }) {
   const { upload } = useFileUpload(setFiles);

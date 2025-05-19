@@ -2,7 +2,7 @@
 
 import DragDropArea from "./DragDropArea";
 import { FileItem } from "@/app/features/upload/types/file";
-// import { useFileUpload } from "../hooks/useUpload";
+// import { useFileUpload } from "../../hooks/useUpload"; // Adjusted path if it were used
 import FileList from "./FileList";
 
 export interface FileCollectionProps {

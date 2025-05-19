@@ -1,6 +1,6 @@
-import { FileItem } from "../types/file";
-import FileItemComp from "./FileItem";
-import UploadButton from "./UploadButton";
+import { FileItem } from "../../types/file";
+import FileItemComp from "../molecules/FileItem";
+import UploadButton from "../molecules/UploadButton";
 
 function FileList({
   files,
@@ -26,7 +26,7 @@ function FileList({
       {showUploadButton &&
         onUpload &&
         files.some((f) => f.status === "idle") && (
-          <UploadButton files={files} onUpload={onUpload} setFiles={setFiles} />
+          <UploadButton files={files} setFiles={setFiles} />
         )}
     </div>
   );

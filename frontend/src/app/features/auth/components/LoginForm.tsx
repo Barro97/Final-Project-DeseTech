@@ -5,7 +5,7 @@ import Footer from "./Footer";
 import FormField from "./FormField";
 import Header from "./Header";
 import { Button } from "@/app/components/atoms/button";
-import { CardContent } from "./ui/card";
+import { CardContent } from "@/app/components/molecules/card";
 import { LoginData } from "@/app/features/auth/types/authTypes";
 import { useLogin } from "../hooks/useLogin";
 

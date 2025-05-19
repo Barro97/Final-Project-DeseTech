@@ -1,5 +1,5 @@
 "use client";
-import { Card } from "@/app/features/auth/components/ui/card";
+import { Card } from "@/app/components/molecules/card";
 import {
   Tabs,
   TabsContent,
@@ -46,7 +46,10 @@ export default function AuthForms() {
             )}
           />
 
-          <Card className="relative overflow-hidden border-border bg-card/80 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+          <Card
+            className="relative overflow-hidden border-border bg-card/80 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+            variant="auth"
+          >
             <Tabs
               defaultValue="login"
               value={activeTab}

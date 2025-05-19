@@ -1,6 +1,6 @@
 import { useFileUpload } from "../hooks/useUpload";
 import { FileItem } from "../types/file";
-import { Button } from "./ui/button";
+import { Button } from "@/app/components/ui/button";
 
 function UploadButton({
   files,

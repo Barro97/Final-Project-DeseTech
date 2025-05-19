@@ -1,4 +1,4 @@
-import { Separator } from "./ui/separator";
+import { Separator } from "@/app/components/ui/separator";
 import SocialLogin from "./SocialLogin";
 
 function Footer() {

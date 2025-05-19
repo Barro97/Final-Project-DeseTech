@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { UseFormRegisterReturn } from "react-hook-form";
 import { Label } from "./ui/label";
 import { InputWithIcon } from "./InputWithIcon";
-import { Input } from "./ui/input";
+import { Input } from "@/app/components/ui/input";
 
 interface FormFieldProps {
   label: string;

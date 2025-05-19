@@ -4,7 +4,7 @@ import { SubmitHandler, useForm, FieldErrors } from "react-hook-form";
 import Footer from "./Footer";
 import FormField from "./FormField";
 import Header from "./Header";
-import { Button } from "./ui/button";
+import { Button } from "@/app/components/ui/button";
 import { CardContent } from "./ui/card";
 import { LoginData } from "@/app/features/auth/types/authTypes";
 import { useLogin } from "../hooks/useLogin";

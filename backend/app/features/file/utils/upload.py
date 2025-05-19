@@ -35,7 +35,7 @@ def save_file_to_cloud(file: UploadFile) -> str: #TODO: Implement this function 
     
     client.storage.from_(SUPABASE_STORAGE_BUCKET).upload(unique_name,file_bytes),{"content-type": file.content_type, "upsert": True},
     # file_path = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(unique_name)
-
+    # print(file_path)
     size = file.file.tell()            # current pointer == size
     return unique_name, size
 

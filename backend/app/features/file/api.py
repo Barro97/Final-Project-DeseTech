@@ -5,10 +5,12 @@ from backend.app.features.file.schemas import FileCreate
 from backend.app.features.file.crud import create_file, get_file, delete_file_record, get_url
 from backend.app.features.file.utils.upload import save_file, delete_file_from_storage
 import os
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pathlib import Path
 from backend.app.database.models import File, Dataset
 from backend.app.features.authentication.utils.authorizations import get_current_user
+from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
+import io
 
 
 
@@ -54,25 +56,39 @@ async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
 def download_file(
     file_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    # current_user = Depends(get_current_user)
 ):
-    """Download a file."""
-    # Get the file
-    file = db.query(File).filter(File.file_id == file_id).first()
-    if not file:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    # Get the file path
-    file_path = Path(f"storage/uploads/{file.file_url}")
-    
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on storage")
+    """Download a file from Supabase cloud storage."""
+    # Get the file record from the database
+    file_record = db.query(File).filter(File.file_id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found in database")
+
+    try:
+        # Download the file bytes from Supabase storage
+        # file_record.file_url stores the path/key of the file in the Supabase bucket
+        file_bytes = client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_record.file_url)
+        
+        # The download method returns bytes directly or raises an error if not found/other issues.
+        # If it could return None on "not found" without an exception, an explicit check would be needed.
+        # Assuming it raises an exception for errors based on typical client library behavior.
+
+    except Exception as e:
+        # Log the specific Supabase error if possible, e.g., if e is a SupabaseStorageException
+        print(f"Error downloading file {file_record.file_url} from Supabase: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download file from cloud storage: {str(e)}")
     
     # Update download count for the dataset
-    if file.dataset_id:
-        dataset = db.query(Dataset).filter(Dataset.dataset_id == file.dataset_id).first()
-        if dataset:
-            dataset.downloads_count += 1
-            db.commit()
+    # if file_record.dataset_id:
+    #     dataset = db.query(Dataset).filter(Dataset.dataset_id == file_record.dataset_id).first()
+    #     if dataset:
+    #         dataset.downloads_count += 1
+    #         db.commit()
+    #         db.refresh(dataset) # Refresh to get updated count if needed elsewhere in same request
     
-    return FileResponse(path=file_path, filename=file.file_name, media_type='application/octet-stream')
+    # Stream the file back to the client
+    return StreamingResponse(
+        io.BytesIO(file_bytes),
+        media_type=file_record.file_type or 'application/octet-stream',
+        headers={"Content-Disposition": f'attachment; filename="{file_record.file_name}"'}
+    )

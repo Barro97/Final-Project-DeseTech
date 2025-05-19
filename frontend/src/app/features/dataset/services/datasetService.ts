@@ -41,7 +41,7 @@ export async function getDatasetFiles(
 
 // Download a file
 export async function downloadFile(fileId: string | number): Promise<Blob> {
-  const response = await axios.get(`${API_URL}/files/${fileId}/download`, {
+  const response = await axios.get(`${API_URL}/${fileId}/download`, {
     headers: {
       Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
     },

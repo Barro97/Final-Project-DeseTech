@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { FileItem } from "../types/file";
 import axios from "axios";
 import { useToast } from "../../toaster/hooks/useToast";
@@ -102,7 +102,7 @@ export function useDatasetUpload() {
           //   console.log(pair[0], pair[1]);
           // }
 
-          const uploadResponse = await axios.post(
+          /* const uploadResponse = */ await axios.post(
             `${process.env.NEXT_PUBLIC_BACKEND}/upload-file/`,
             fileFormData,
             {
@@ -186,7 +186,7 @@ export function useDatasetUpload() {
     }
   };
 
-  const resetUploadProgress = () => {
+  const resetUploadProgress = useCallback(() => {
     setUploadProgress({
       progress: 0,
       currentFile: null,
@@ -194,7 +194,7 @@ export function useDatasetUpload() {
       completedFiles: 0,
       status: "idle",
     });
-  };
+  }, [setUploadProgress]);
 
   return {
     uploadDataset,

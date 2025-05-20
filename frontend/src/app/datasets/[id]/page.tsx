@@ -20,18 +20,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/app/components/atoms/dialog";
 import { useState } from "react";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 
 export default function DatasetDetailPage({
   params,
@@ -42,6 +35,7 @@ export default function DatasetDetailPage({
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Query for dataset details
@@ -111,6 +105,12 @@ export default function DatasetDetailPage({
 
       setIsDeleteDialogOpen(false);
 
+      // Invalidate both the current dataset and the user's datasets queries
+      queryClient.invalidateQueries({
+        queryKey: ["dataset", resolvedParams.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["userDatasets", user?.id] });
+
       toast({
         title: "Success",
         description: "Dataset deleted successfully",
@@ -171,31 +171,14 @@ export default function DatasetDetailPage({
 
   return (
     <>
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Dataset</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this dataset? This action cannot
-              be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-end space-x-2 pt-4">
-            <button
-              onClick={() => setIsDeleteDialogOpen(false)}
-              className="px-4 py-2 border rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
-            >
-              Delete
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {dataset && (
+        <DeleteConfirmationDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDelete}
+          datasetName={dataset.dataset_name}
+        />
+      )}
 
       <div className="container mx-auto p-4">
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">

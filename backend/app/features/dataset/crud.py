@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from backend.app.database.models import Dataset, Tag, File, User
 from backend.app.features.dataset.schemas import DatasetCreate, OwnerActionRequest
 from backend.app.features.file.utils.upload import delete_file_from_storage
+from backend.app.features.file.crud import delete_file_record
 from typing import List
 
 
@@ -81,6 +82,7 @@ def delete_dataset_crud(db: Session, dataset_id: int):
     # Delete all associated files from storage
     for file_obj in db_dataset.files: # Renamed file to file_obj to avoid conflict
         try:
+            delete_file_record(db=db, file_id=file_obj.file_id)
             delete_file_from_storage(file_obj.file_url)
         except Exception as e:
             # Log the error but continue; consider how to handle partial failures

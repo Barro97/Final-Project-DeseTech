@@ -78,3 +78,17 @@ export async function deleteDatasets(
     throw error; // Re-throw to handle in the UI layer
   }
 }
+
+// Delete a single dataset
+export async function deleteDataset(datasetId: string | number): Promise<void> {
+  try {
+    await axios.delete(`${API_URL}/datasets/${datasetId}`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting dataset:", error);
+    throw error; // Re-throw to handle in the UI layer
+  }
+}

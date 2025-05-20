@@ -106,24 +106,21 @@ def get_dataset_files(
     return files
 
 # Define a Pydantic model for the request body of the batch delete operation
-# class BatchDeleteRequest(BaseModel): # Temporarily comment out or remove
-#     dataset_ids: List[int]
+class BatchDeleteRequest(BaseModel): 
+    dataset_ids: List[int]
 
 @router.delete("/batch-delete", status_code=200)
 async def batch_delete_datasets_route(
-    # request_data: BatchDeleteRequest, # Temporarily comment out
-    payload: dict = Body(...), # Accept a raw dict for now
+    request_data: BatchDeleteRequest, # Temporarily comment out
+    # payload: dict = Body(...), # Accept a raw dict for now
     db: Session = Depends(get_db),
     current_user_token: dict = Depends(get_current_user)
 ):
-    print("BATCH DELETE ROUTE ENTERED!") # This should now print
-    print("Received payload:", payload) # See what FastAPI gives you
-
     # Manually extract dataset_ids for now
-    if "dataset_ids" not in payload or not isinstance(payload["dataset_ids"], list):
+    if "dataset_ids" not in request_data or not isinstance(request_data["dataset_ids"], list):
         raise HTTPException(status_code=400, detail="Invalid payload structure. 'dataset_ids' list is missing.")
     
-    dataset_ids = payload["dataset_ids"]
+    dataset_ids = request_data["dataset_ids"]
     # Add a quick check for integer types within the list
     if not all(isinstance(item, int) for item in dataset_ids):
         raise HTTPException(status_code=400, detail="All dataset_ids must be integers.")

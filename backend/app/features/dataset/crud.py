@@ -83,6 +83,15 @@ def delete_dataset_crud(db: Session, dataset_id: int):
     for file_obj in db_dataset.files: # Renamed file to file_obj to avoid conflict
         try:
             delete_file_record(db=db, file_id=file_obj.file_id)
+        except Exception as e:
+            # Log the error but continue; consider how to handle partial failures
+            print(f"Error deleting file record {file_obj.file_id}: {str(e)}")
+            # Optionally re-raise or collect errors
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error deleting file record {file_obj.file_id}: {str(e)}"
+            )
+        try:
             delete_file_from_storage(file_obj.file_url)
         except Exception as e:
             # Log the error but continue; consider how to handle partial failures

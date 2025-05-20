@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DatasetFile,
 } from "@/app/features/dataset/types/datasetTypes";
 import { Button } from "@/app/components/atoms/button";
-import { FileText, Plus, Upload, X } from "lucide-react";
+import { FileText, X } from "lucide-react";
 import {
   updateDataset,
   deleteDatasetFile,
@@ -20,6 +20,8 @@ import {
 } from "@/app/features/dataset/services/datasetService";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useQueryClient } from "@tanstack/react-query";
+import { FileUpload } from "@/app/features/upload/components/organisms/FileUpload";
+import { FileItem } from "@/app/features/upload/types/file";
 
 interface EditDatasetDialogProps {
   isOpen: boolean;
@@ -45,21 +47,18 @@ export function EditDatasetDialog({
     dataset.dataset_description || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [newFiles, setNewFiles] = useState<FileItem[]>([]);
   const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handlers
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setNewFiles((prev) => [...prev, ...filesArray]);
+  // Reset form when dialog opens (to fix the visual bug)
+  useEffect(() => {
+    if (isOpen) {
+      setName(dataset.dataset_name);
+      setDescription(dataset.dataset_description || "");
+      setNewFiles([]);
+      setFilesToDelete([]);
     }
-  };
-
-  const handleRemoveNewFile = (index: number) => {
-    setNewFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, [isOpen, dataset]);
 
   const handleToggleFileToDelete = (fileId: number) => {
     if (filesToDelete.includes(fileId)) {
@@ -106,8 +105,8 @@ export function EditDatasetDialog({
       }
 
       // 3. Upload new files
-      for (const file of newFiles) {
-        await uploadFileToDataset(parseInt(datasetId), file);
+      for (const fileItem of newFiles) {
+        await uploadFileToDataset(parseInt(datasetId), fileItem.file);
       }
 
       // 4. Invalidate queries to refresh the data
@@ -120,6 +119,8 @@ export function EditDatasetDialog({
         variant: "success",
       });
 
+      // Reset form state to fix the visual bug
+      resetForm();
       onClose();
     } catch (error) {
       console.error("Error updating dataset:", error);
@@ -226,60 +227,15 @@ export function EditDatasetDialog({
               )}
             </div>
 
-            {/* New Files */}
+            {/* New Files - Using FileUpload component */}
             <div>
               <h3 className="text-md font-medium mb-2">Add New Files</h3>
-
-              {/* File input button */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                className="hidden"
-                multiple
+              <FileUpload
+                maxFiles={10}
+                maxSize={100 * 1024 * 1024} // 100MB limit
+                files={newFiles}
+                setFiles={setNewFiles}
               />
-
-              <div className="flex flex-col space-y-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md w-fit"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Files
-                </button>
-
-                {/* Display selected files */}
-                {newFiles.length > 0 && (
-                  <div className="mt-2 border rounded-md divide-y overflow-hidden">
-                    {newFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="p-3 flex items-center justify-between bg-green-50 dark:bg-green-900/20"
-                      >
-                        <div className="flex items-center">
-                          <Upload className="w-5 h-5 text-green-500 mr-3" />
-                          <div>
-                            <p className="font-medium">{file.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {Math.round(file.size / 1024)} KB
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveNewFile(index)}
-                          className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
-                          aria-label="Remove file"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 

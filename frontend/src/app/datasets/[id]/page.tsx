@@ -18,6 +18,7 @@ import {
   User,
   Trash2,
   Edit,
+  Clock,
 } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
@@ -225,6 +226,15 @@ export default function DatasetDetailPage({
                 <Calendar className="w-5 h-5 mr-2" />
                 <span>Created: {formatDate(dataset.date_of_creation)}</span>
               </div>
+
+              {dataset.dataset_last_updated && (
+                <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <Clock className="w-5 h-5 mr-2" />
+                  <span>
+                    Last updated: {formatDate(dataset.dataset_last_updated)}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <User className="w-5 h-5 mr-2" />

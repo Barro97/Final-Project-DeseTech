@@ -6,6 +6,7 @@ from backend.app.features.dataset.schemas import DatasetCreate, OwnerActionReque
 from backend.app.features.file.utils.upload import delete_file_from_storage
 from backend.app.features.file.crud import delete_file_record
 from typing import List
+from datetime import datetime
 
 
 def create_dataset_crud(db: Session, dataset_in: DatasetCreate):
@@ -49,6 +50,7 @@ def update_dataset_crud(db: Session, dataset_id: int, dataset_in: DatasetCreate)
     db_dataset.dataset_description = dataset_in.dataset_description
     db_dataset.downloads_count = dataset_in.downloads_count # Assuming this is intended, though not in original create
     db_dataset.uploader_id = dataset_in.uploader_id # Allow uploader change
+    db_dataset.dataset_last_updated = datetime.now()  # Set the last updated timestamp
 
     # Update tags
     # tag_objects = []

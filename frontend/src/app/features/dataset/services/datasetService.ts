@@ -92,3 +92,63 @@ export async function deleteDataset(datasetId: string | number): Promise<void> {
     throw error; // Re-throw to handle in the UI layer
   }
 }
+
+// Update dataset metadata
+export async function updateDataset(
+  datasetId: string | number,
+  updateData: Partial<Dataset>
+): Promise<Dataset> {
+  try {
+    const response = await axios.put<Dataset>(
+      `${API_URL}/datasets/${datasetId}`,
+      updateData,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating dataset:", error);
+    throw error;
+  }
+}
+
+// Delete a file from a dataset
+export async function deleteDatasetFile(fileId: number): Promise<void> {
+  try {
+    await axios.delete(`${API_URL}/delete_file/${fileId}`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    throw error;
+  }
+}
+
+// Upload a file to a dataset
+export async function uploadFileToDataset(
+  datasetId: number,
+  file: File
+): Promise<DatasetFile> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("dataset_id", datasetId.toString());
+
+  try {
+    const response = await axios.post(`${API_URL}/upload-file/`, formData, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw error;
+  }
+}

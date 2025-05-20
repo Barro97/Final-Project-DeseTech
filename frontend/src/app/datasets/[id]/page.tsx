@@ -17,6 +17,7 @@ import {
   FileText,
   User,
   Trash2,
+  Edit,
 } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
@@ -25,6 +26,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import { EditDatasetDialog } from "./EditDatasetDialog";
 
 export default function DatasetDetailPage({
   params,
@@ -37,6 +39,7 @@ export default function DatasetDetailPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Query for dataset details
   const {
@@ -129,8 +132,8 @@ export default function DatasetDetailPage({
     }
   };
 
-  // Check if user has permission to delete
-  const canDelete =
+  // Check if user has permission to modify (delete or edit)
+  const canModify =
     user &&
     (user.role === "admin" ||
       (dataset &&
@@ -180,20 +183,40 @@ export default function DatasetDetailPage({
         />
       )}
 
+      {dataset && (
+        <EditDatasetDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          dataset={dataset}
+          files={datasetFiles}
+          datasetId={resolvedParams.id}
+        />
+      )}
+
       <div className="container mx-auto p-4">
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">{dataset.dataset_name}</h1>
-              {canDelete && (
-                <button
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-2 transition-colors"
-                  aria-label="Delete dataset"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  Delete Dataset
-                </button>
+              {canModify && (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setIsEditDialogOpen(true)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 transition-colors"
+                    aria-label="Edit dataset"
+                  >
+                    <Edit className="w-5 h-5" />
+                    Edit Dataset
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-2 transition-colors"
+                    aria-label="Delete dataset"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete Dataset
+                  </button>
+                </div>
               )}
             </div>
 

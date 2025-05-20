@@ -51,16 +51,16 @@ def update_dataset_crud(db: Session, dataset_id: int, dataset_in: DatasetCreate)
     db_dataset.uploader_id = dataset_in.uploader_id # Allow uploader change
 
     # Update tags
-    tag_objects = []
-    if dataset_in.tags: # Ensure tags are provided
-        for tag_name in dataset_in.tags:
-            tag = db.query(Tag).filter_by(tag_category_name=tag_name).first()
-            if not tag:
-                tag = Tag(tag_category_name=tag_name)
-                db.add(tag)
-                # Commit and refresh for each new tag if necessary, or batch commit later
-            tag_objects.append(tag)
-    db_dataset.tags = tag_objects
+    # tag_objects = []
+    # if dataset_in.tags: # Ensure tags are provided
+    #     for tag_name in dataset_in.tags:
+    #         tag = db.query(Tag).filter_by(tag_category_name=tag_name).first()
+    #         if not tag:
+    #             tag = Tag(tag_category_name=tag_name)
+    #             db.add(tag)
+    #             # Commit and refresh for each new tag if necessary, or batch commit later
+    #         tag_objects.append(tag)
+    # db_dataset.tags = tag_objects
 
     # Update owner - ensure uploader is an owner. Consider if other owners should be preserved or replaced.
     # Current logic replaces all owners with only the uploader.

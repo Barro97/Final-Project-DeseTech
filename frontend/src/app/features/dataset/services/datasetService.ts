@@ -49,3 +49,32 @@ export async function downloadFile(fileId: string | number): Promise<Blob> {
   });
   return response.data;
 }
+
+// Expected response structure from the batch delete endpoint
+export interface BatchDeleteResponse {
+  message: string;
+  deleted_count: number;
+  errors: Array<{ dataset_id: number; error: string }>;
+}
+
+// Delete multiple datasets
+export async function deleteDatasets(
+  datasetIds: number[]
+): Promise<BatchDeleteResponse> {
+  try {
+    const response = await axios.delete<BatchDeleteResponse>(
+      `${API_URL}/datasets/batch-delete`,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+        data: { dataset_ids: datasetIds },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting datasets:", error);
+    throw error; // Re-throw to handle in the UI layer
+  }
+}

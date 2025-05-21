@@ -4,13 +4,14 @@ import { CSVPreview } from "./CSVPreview";
 import { JSONPreview } from "./JSONPreview";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { useInView } from "react-intersection-observer";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface FilePreviewProps {
   files: DatasetFile[];
 }
 
 export function FilePreview({ files }: FilePreviewProps) {
+  const [initialLoading, setInitialLoading] = useState(true);
   const {
     currentFile,
     previewData,
@@ -24,6 +25,20 @@ export function FilePreview({ files }: FilePreviewProps) {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.5,
   });
+
+  // Set initial loading to false once data is loaded
+  useEffect(() => {
+    if (previewData || error) {
+      setInitialLoading(false);
+    }
+  }, [previewData, error]);
+
+  // Reset initial loading when file changes
+  useEffect(() => {
+    if (currentFile) {
+      setInitialLoading(true);
+    }
+  }, [currentFile]);
 
   // Load more data when the load more trigger comes into view
   useEffect(() => {
@@ -71,9 +86,10 @@ export function FilePreview({ files }: FilePreviewProps) {
       <div className="border rounded-lg overflow-hidden bg-white">
         {error ? (
           <div className="p-4 text-red-500">{error}</div>
-        ) : !currentFile || !previewData ? (
-          <div className="p-4 flex justify-center">
-            <LoadingSpinner />
+        ) : initialLoading || !currentFile || !previewData ? (
+          <div className="p-8 flex flex-col items-center justify-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-500">Loading preview...</p>
           </div>
         ) : (
           <>

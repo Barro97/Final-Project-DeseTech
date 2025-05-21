@@ -83,6 +83,7 @@ export function useFilePreview({
         return {
           ...nextChunk,
           data: [...prev.data, ...nextChunk.data] as PreviewResponse["data"],
+          headers: prev.headers || nextChunk.headers,
         };
       });
     } catch (err) {

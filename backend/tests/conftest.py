@@ -1,13 +1,13 @@
-import pytest
+Simport pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 
 # Adjust these imports based on your project structure
-from ..app.main import app  # Assuming your FastAPI app is here
-from ..app.database.base import Base  # Assuming your SQLAlchemy Base is here
-from ..app.database.session import get_db # Original get_db dependency
+from backend.main import app  # Changed from relative import
+from backend.database.base import Base  # Changed from relative import
+from backend.database.session import get_db # Changed from relative import
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 

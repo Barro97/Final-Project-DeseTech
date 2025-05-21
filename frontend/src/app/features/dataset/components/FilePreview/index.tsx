@@ -106,7 +106,7 @@ export function FilePreview({ files, onFileChange }: FilePreviewProps) {
               onClick={() => selectFile(file.file_id)}
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
                 currentFile?.file_id === file.file_id
-                  ? "bg-primary text-white"
+                  ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 hover:bg-gray-200 text-gray-700"
               }`}
             >

@@ -42,6 +42,9 @@ export default function DatasetDetailPage({
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentPreviewFile, setCurrentPreviewFile] = useState<string | null>(
+    null
+  );
 
   // Query for dataset details
   const {
@@ -307,8 +310,16 @@ export default function DatasetDetailPage({
 
                   {/* File preview */}
                   <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-4">File Preview</h3>
-                    <FilePreview files={datasetFiles} />
+                    <h3 className="text-lg font-medium mb-2">File Preview</h3>
+                    {currentPreviewFile && (
+                      <p className="text-sm text-gray-500 mb-4">
+                        Currently viewing: {currentPreviewFile}
+                      </p>
+                    )}
+                    <FilePreview
+                      files={datasetFiles}
+                      onFileChange={setCurrentPreviewFile}
+                    />
                   </div>
                 </>
               )}

@@ -9,9 +9,10 @@ import { useEffect, useState, useRef } from "react";
 
 interface FilePreviewProps {
   files: DatasetFile[];
+  onFileChange?: (fileName: string | null) => void;
 }
 
-export function FilePreview({ files }: FilePreviewProps) {
+export function FilePreview({ files, onFileChange }: FilePreviewProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const csvContainerRef = useRef<HTMLDivElement>(null);
   const jsonContainerRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,13 @@ export function FilePreview({ files }: FilePreviewProps) {
       containerElement.removeEventListener("scroll", handleScroll);
     };
   }, [previewData, hasMore, isLazyLoading, loadMore, currentFile]);
+
+  // Add effect to notify parent component when currentFile changes
+  useEffect(() => {
+    if (onFileChange) {
+      onFileChange(currentFile?.file_name || null);
+    }
+  }, [currentFile, onFileChange]);
 
   // Find previewable files
   const previewableFiles = files.filter(
@@ -143,11 +151,13 @@ export function FilePreview({ files }: FilePreviewProps) {
 
         {/* Floating lazy loading indicator */}
         {isLazyLoading && (
-          <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 z-50 flex items-center space-x-3">
-            <LoadingSpinner />
-            <span className="text-gray-800 font-medium">
-              Loading more data...
-            </span>
+          <div className="fixed inset-x-0 bottom-4 flex justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3 max-w-xs mx-auto">
+              <LoadingSpinner />
+              <span className="text-gray-800 font-medium whitespace-nowrap">
+                Loading more data...
+              </span>
+            </div>
           </div>
         )}
       </div>

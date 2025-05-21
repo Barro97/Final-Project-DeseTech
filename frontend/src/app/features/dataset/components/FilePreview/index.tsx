@@ -139,13 +139,6 @@ export function FilePreview({ files, onFileChange }: FilePreviewProps) {
                 <JSONPreview data={previewData.data} />
               </div>
             )}
-
-            {/* Only show loading state at the bottom when near the end of data */}
-            {hasMore && isLazyLoading && (
-              <div className="p-4 flex justify-center border-t">
-                <LoadingSpinner />
-              </div>
-            )}
           </>
         )}
 

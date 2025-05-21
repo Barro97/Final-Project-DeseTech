@@ -152,3 +152,39 @@ export async function uploadFileToDataset(
     throw error;
   }
 }
+
+export interface PreviewData {
+  [key: string]: string | number | boolean | null;
+}
+
+export interface PreviewResponse {
+  data: PreviewData[] | string[][]; // Can be JSON objects or CSV rows
+  total_size: number;
+  has_more: boolean;
+  current_offset: number;
+  file_type: string;
+  headers?: string[];
+}
+
+// Get file preview
+export async function getFilePreview(
+  fileId: number,
+  offset: number = 0,
+  maxRows: number = 50
+): Promise<PreviewResponse> {
+  try {
+    const response = await axios.get(`${API_URL}/${fileId}/preview`, {
+      params: {
+        offset,
+        max_rows: maxRows,
+      },
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting file preview:", error);
+    throw error;
+  }
+}

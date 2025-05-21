@@ -6,6 +6,8 @@ import {
   DialogContent,
   DialogTitle,
   DialogFooter,
+  DialogHeader,
+  DialogDescription,
 } from "@/app/components/atoms/dialog";
 import {
   Dataset,
@@ -22,6 +24,7 @@ import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileUpload } from "@/app/features/upload/components/organisms/FileUpload";
 import { FileItem } from "@/app/features/upload/types/file";
+import "./editDatasetStyles.css";
 
 interface EditDatasetDialogProps {
   isOpen: boolean;
@@ -137,122 +140,135 @@ export function EditDatasetDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
-        className="!bg-background !bg-opacity-100 max-w-3xl"
+        className="!bg-background !bg-opacity-100 max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
         style={{
           opacity: 1,
           backgroundColor: "var(--background)",
           backdropFilter: "none",
         }}
       >
-        <DialogTitle>Edit Dataset</DialogTitle>
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>Edit Dataset</DialogTitle>
+          <DialogDescription>
+            Make changes to your dataset metadata, add new files, or remove
+            existing files.
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-6">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
-                Dataset Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 border rounded-md dark:bg-gray-800"
-                required
-              />
-            </div>
+        <div className="overflow-y-auto flex-1 p-1">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Dataset Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2 border rounded-md dark:bg-gray-800"
+                  required
+                />
+              </div>
 
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium mb-1"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2 border rounded-md h-24 dark:bg-gray-800"
-              />
-            </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full p-2 border rounded-md h-24 dark:bg-gray-800"
+                />
+              </div>
 
-            {/* Existing Files */}
-            <div>
-              <h3 className="text-md font-medium mb-2">Files</h3>
-              {files.length === 0 ? (
-                <p className="text-gray-500">No files in this dataset.</p>
-              ) : (
-                <div className="border rounded-md divide-y overflow-hidden">
-                  {files.map((file) => (
-                    <div
-                      key={file.file_id}
-                      className={`p-3 flex items-center justify-between ${
-                        filesToDelete.includes(file.file_id)
-                          ? "bg-red-50 dark:bg-red-900/20"
-                          : "bg-gray-50 dark:bg-gray-700"
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 text-blue-500 mr-3" />
-                        <div>
-                          <p className="font-medium">{file.file_name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {file.size
-                              ? `${Math.round(file.size / 1024)} KB`
-                              : "Size unknown"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFileToDelete(file.file_id)}
-                        className={`p-1 rounded-full ${
+              {/* Existing Files */}
+              <div>
+                <h3 className="text-md font-medium mb-2">Files</h3>
+                {files.length === 0 ? (
+                  <p className="text-gray-500">No files in this dataset.</p>
+                ) : (
+                  <div className="border rounded-md divide-y overflow-hidden">
+                    {files.map((file) => (
+                      <div
+                        key={file.file_id}
+                        className={`p-3 flex items-center justify-between ${
                           filesToDelete.includes(file.file_id)
-                            ? "text-white bg-red-500 hover:bg-red-600"
-                            : "text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30"
+                            ? "bg-red-50 dark:bg-red-900/20"
+                            : "bg-gray-50 dark:bg-gray-700"
                         }`}
-                        aria-label={
-                          filesToDelete.includes(file.file_id)
-                            ? "Cancel file deletion"
-                            : "Mark file for deletion"
-                        }
                       >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 text-blue-500 mr-3" />
+                          <div>
+                            <p className="font-medium">{file.file_name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {file.size
+                                ? `${Math.round(file.size / 1024)} KB`
+                                : "Size unknown"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFileToDelete(file.file_id)}
+                          className={`p-1 rounded-full ${
+                            filesToDelete.includes(file.file_id)
+                              ? "text-white bg-red-500 hover:bg-red-600"
+                              : "text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          }`}
+                          aria-label={
+                            filesToDelete.includes(file.file_id)
+                              ? "Cancel file deletion"
+                              : "Mark file for deletion"
+                          }
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* New Files - Using FileUpload component with green highlight */}
+              <div>
+                <h3 className="text-md font-medium mb-2">Add New Files</h3>
+                <div className="file-upload-new-files">
+                  <FileUpload
+                    maxFiles={10}
+                    maxSize={100 * 1024 * 1024} // 100MB limit
+                    files={newFiles}
+                    setFiles={setNewFiles}
+                  />
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* New Files - Using FileUpload component */}
-            <div>
-              <h3 className="text-md font-medium mb-2">Add New Files</h3>
-              <FileUpload
-                maxFiles={10}
-                maxSize={100 * 1024 * 1024} // 100MB limit
-                files={newFiles}
-                setFiles={setNewFiles}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="flex-shrink-0 pt-4 border-t mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

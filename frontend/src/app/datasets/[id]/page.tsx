@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { EditDatasetDialog } from "./EditDatasetDialog";
+import { FilePreview } from "@/app/features/dataset/components/FilePreview";
 
 export default function DatasetDetailPage({
   params,
@@ -265,42 +266,51 @@ export default function DatasetDetailPage({
               {datasetFiles.length === 0 ? (
                 <p className="text-gray-500">No files in this dataset.</p>
               ) : (
-                <div className="border rounded-md divide-y overflow-hidden">
-                  {datasetFiles.map((file: DatasetFile) => (
-                    <div
-                      key={file.file_id}
-                      className="p-4 flex items-center justify-between bg-gray-50 dark:bg-gray-700"
-                    >
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 text-blue-500 mr-3" />
-                        <div>
-                          <p className="font-medium">{file.file_name}</p>
-                          <div className="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            <span>
-                              {file.size
-                                ? `${Math.round(file.size / 1024)} KB`
-                                : "Size unknown"}
-                            </span>
-                            <span className="mx-2">•</span>
-                            <span>
-                              Uploaded: {formatDate(file.file_date_of_upload)}
-                            </span>
+                <>
+                  {/* File list */}
+                  <div className="border rounded-md divide-y overflow-hidden mb-6">
+                    {datasetFiles.map((file: DatasetFile) => (
+                      <div
+                        key={file.file_id}
+                        className="p-4 flex items-center justify-between bg-gray-50 dark:bg-gray-700"
+                      >
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 text-blue-500 mr-3" />
+                          <div>
+                            <p className="font-medium">{file.file_name}</p>
+                            <div className="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <span>
+                                {file.size
+                                  ? `${Math.round(file.size / 1024)} KB`
+                                  : "Size unknown"}
+                              </span>
+                              <span className="mx-2">•</span>
+                              <span>
+                                Uploaded: {formatDate(file.file_date_of_upload)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <button
-                        onClick={() =>
-                          handleDownload(file.file_id, file.file_name)
-                        }
-                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
-                        aria-label="Download file"
-                      >
-                        <Download className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <button
+                          onClick={() =>
+                            handleDownload(file.file_id, file.file_name)
+                          }
+                          className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
+                          aria-label="Download file"
+                        >
+                          <Download className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* File preview */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium mb-4">File Preview</h3>
+                    <FilePreview files={datasetFiles} />
+                  </div>
+                </>
               )}
             </div>
           </div>

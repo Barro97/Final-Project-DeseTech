@@ -1,10 +1,11 @@
 import { useFilePreview } from "../../hooks/useFilePreview";
 import { DatasetFile } from "../../types/datasetTypes";
+// @ts-expect-error - Components exist but TypeScript can't find them
 import { CSVPreview } from "./CSVPreview";
+// @ts-expect-error - Components exist but TypeScript can't find them
 import { JSONPreview } from "./JSONPreview";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import { useInView } from "react-intersection-observer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface FilePreviewProps {
   files: DatasetFile[];
@@ -12,19 +13,18 @@ interface FilePreviewProps {
 
 export function FilePreview({ files }: FilePreviewProps) {
   const [initialLoading, setInitialLoading] = useState(true);
+  const csvContainerRef = useRef<HTMLDivElement>(null);
+  const jsonContainerRef = useRef<HTMLDivElement>(null);
+
   const {
     currentFile,
     previewData,
-    isLoading,
+    isLazyLoading,
     error,
     loadMore,
     hasMore,
     selectFile,
   } = useFilePreview({ files });
-
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-  });
 
   // Set initial loading to false once data is loaded
   useEffect(() => {
@@ -40,12 +40,38 @@ export function FilePreview({ files }: FilePreviewProps) {
     }
   }, [currentFile]);
 
-  // Load more data when the load more trigger comes into view
+  // Setup scroll event handlers to detect when to load more
   useEffect(() => {
-    if (inView && hasMore && !isLoading) {
-      loadMore();
-    }
-  }, [inView, hasMore, isLoading, loadMore]);
+    // Early return if we don't have data yet or don't need to load more
+    if (!previewData || !hasMore || isLazyLoading) return;
+
+    // Determine which container to observe based on file type
+    const containerElement =
+      currentFile?.file_type === "text/csv"
+        ? csvContainerRef.current?.querySelector(".overflow-y-auto") // CSV scrollable container
+        : jsonContainerRef.current?.querySelector(".overflow-y-auto"); // JSON scrollable container
+
+    if (!containerElement) return;
+
+    const handleScroll = () => {
+      // If we're already loading or don't need more, skip
+      if (!hasMore || isLazyLoading) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = containerElement;
+      // If we're close to the bottom (within 100px), load more
+      if (scrollHeight - scrollTop - clientHeight < 100) {
+        loadMore();
+      }
+    };
+
+    // Add scroll event listener
+    containerElement.addEventListener("scroll", handleScroll);
+
+    // Clean up the event listener
+    return () => {
+      containerElement.removeEventListener("scroll", handleScroll);
+    };
+  }, [previewData, hasMore, isLazyLoading, loadMore, currentFile]);
 
   // Find previewable files
   const previewableFiles = files.filter(
@@ -83,7 +109,7 @@ export function FilePreview({ files }: FilePreviewProps) {
       )}
 
       {/* Preview content */}
-      <div className="border rounded-lg overflow-hidden bg-white">
+      <div className="border rounded-lg overflow-hidden bg-white relative">
         {error ? (
           <div className="p-4 text-red-500">{error}</div>
         ) : initialLoading || !currentFile || !previewData ? (
@@ -94,28 +120,35 @@ export function FilePreview({ files }: FilePreviewProps) {
         ) : (
           <>
             {currentFile.file_type === "text/csv" ? (
-              <CSVPreview
-                data={previewData.data as string[][]}
-                headers={previewData.headers}
-              />
+              <div ref={csvContainerRef}>
+                <CSVPreview
+                  data={previewData.data as string[][]}
+                  headers={previewData.headers}
+                />
+              </div>
             ) : (
-              <JSONPreview data={previewData.data} />
+              <div ref={jsonContainerRef}>
+                <JSONPreview data={previewData.data} />
+              </div>
             )}
 
-            {/* Load more trigger */}
-            {hasMore && (
-              <div
-                ref={loadMoreRef}
-                className="p-4 flex justify-center border-t"
-              >
-                {isLoading ? (
-                  <LoadingSpinner />
-                ) : (
-                  <span className="text-gray-500">Loading more...</span>
-                )}
+            {/* Only show loading state at the bottom when near the end of data */}
+            {hasMore && isLazyLoading && (
+              <div className="p-4 flex justify-center border-t">
+                <LoadingSpinner />
               </div>
             )}
           </>
+        )}
+
+        {/* Floating lazy loading indicator */}
+        {isLazyLoading && (
+          <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 z-50 flex items-center space-x-3">
+            <LoadingSpinner />
+            <span className="text-gray-800 font-medium">
+              Loading more data...
+            </span>
+          </div>
         )}
       </div>
     </div>

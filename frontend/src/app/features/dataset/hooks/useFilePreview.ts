@@ -11,6 +11,7 @@ interface UseFilePreviewReturn {
   currentFile: DatasetFile | null;
   previewData: PreviewResponse | null;
   isLoading: boolean;
+  isLazyLoading: boolean;
   error: string | null;
   loadMore: () => Promise<void>;
   hasMore: boolean;
@@ -23,6 +24,7 @@ export function useFilePreview({
   const [currentFile, setCurrentFile] = useState<DatasetFile | null>(null);
   const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLazyLoading, setIsLazyLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -68,10 +70,16 @@ export function useFilePreview({
   };
 
   const loadMore = async () => {
-    if (!currentFile || !previewData || !previewData.has_more || isLoading)
+    if (
+      !currentFile ||
+      !previewData ||
+      !previewData.has_more ||
+      isLoading ||
+      isLazyLoading
+    )
       return;
 
-    setIsLoading(true);
+    setIsLazyLoading(true);
     try {
       const nextChunk = await getFilePreview(
         currentFile.file_id,
@@ -95,7 +103,7 @@ export function useFilePreview({
         variant: "error",
       });
     } finally {
-      setIsLoading(false);
+      setIsLazyLoading(false);
     }
   };
 
@@ -122,6 +130,7 @@ export function useFilePreview({
     currentFile,
     previewData,
     isLoading,
+    isLazyLoading,
     error,
     loadMore,
     hasMore: Boolean(previewData?.has_more),

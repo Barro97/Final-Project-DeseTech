@@ -78,8 +78,10 @@ function CollapsibleJSON({ value, depth = 0 }: CollapsibleJSONProps) {
 
 export function JSONPreview({ data }: JSONPreviewProps) {
   return (
-    <div className="p-4 font-mono text-sm">
-      <CollapsibleJSON value={data} />
+    <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden">
+      <div className="p-4 font-mono text-sm">
+        <CollapsibleJSON value={data} />
+      </div>
     </div>
   );
 }

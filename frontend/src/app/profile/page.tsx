@@ -175,7 +175,7 @@ const ProfilePage = () => {
 
       <div className="container mx-auto px-4 -mt-16 sm:-mt-24 pb-12">
         {/* Enhanced Profile Header with Gradient Background */}
-        <Card className="mb-8 overflow-hidden shadow-lg rounded-2xl">
+        <Card className="mb-8 overflow-hidden shadow-lg rounded-2xl border-gray-200 dark:border-gray-700">
           <div className="bg-gradient-to-r from-indigo-100 to-sky-100 px-6 pt-6 pb-2">
             <CardContent className="pt-0">
               <div className="flex flex-col items-center sm:flex-row sm:items-end">
@@ -227,7 +227,7 @@ const ProfilePage = () => {
           {/* Left Column (About Me, Skills) */}
           <div className="md:col-span-2 space-y-8">
             {/* Enhanced About Me Section */}
-            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg">
+            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg border-gray-200 dark:border-gray-700">
               <CardHeader className="p-6">
                 <CardTitle className="text-2xl">About Me</CardTitle>
               </CardHeader>
@@ -239,7 +239,7 @@ const ProfilePage = () => {
             </Card>
 
             {/* Enhanced Skills Section with Categories */}
-            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg">
+            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg border-gray-200 dark:border-gray-700">
               <CardHeader className="p-6">
                 <CardTitle className="text-2xl">Skills & Expertise</CardTitle>
               </CardHeader>
@@ -275,7 +275,7 @@ const ProfilePage = () => {
           {/* Right Column (Projects/Publications, Contact) */}
           <div className="space-y-8">
             {/* Enhanced Projects Section with Individual Cards */}
-            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg">
+            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg border-gray-200 dark:border-gray-700">
               <CardHeader className="p-6">
                 <CardTitle className="text-xl">
                   Projects & Publications
@@ -287,7 +287,7 @@ const ProfilePage = () => {
                     {profileData.projects.map((project) => (
                       <Card
                         key={project.id || project.name}
-                        className="shadow-sm rounded-xl p-4 hover:shadow-lg transition-shadow border border-gray-200"
+                        className="shadow-sm rounded-xl p-4 hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700"
                       >
                         <div>
                           <a
@@ -315,7 +315,7 @@ const ProfilePage = () => {
             </Card>
 
             {/* Enhanced Contact Section with Icons */}
-            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg lg:sticky lg:top-24">
+            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg lg:sticky lg:top-24 border-gray-200 dark:border-gray-700">
               <CardHeader className="p-6">
                 <CardTitle className="text-xl">Contact Information</CardTitle>
               </CardHeader>

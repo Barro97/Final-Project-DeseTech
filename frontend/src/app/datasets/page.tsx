@@ -464,7 +464,7 @@ export default function SearchDatasetsPage() {
             placeholder="Search datasets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10"
+            className="w-full pl-10 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-offset-1 focus:ring-blue-400 dark:focus:ring-blue-500 focus:outline-none"
           />
           {searchQuery && (
             <button
@@ -482,10 +482,10 @@ export default function SearchDatasetsPage() {
           <div className="relative min-w-40">
             <SortAsc className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full pl-10">
+              <SelectTrigger className="w-full pl-10 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-offset-1 focus:ring-blue-400 dark:focus:ring-blue-500 focus:outline-none">
                 <SelectValue placeholder="Sort by..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-lg">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
                 <SelectItem value="downloads">Most Downloaded</SelectItem>
@@ -499,7 +499,7 @@ export default function SearchDatasetsPage() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-offset-1 focus:ring-blue-400 dark:focus:ring-blue-500 focus:outline-none hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <Filter size={16} />
             Filters

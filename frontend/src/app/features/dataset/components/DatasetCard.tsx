@@ -1,11 +1,15 @@
 "use client";
+import React, { useState, useEffect } from "react";
 import { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { Card } from "@/app/components/molecules/card";
 import Link from "next/link";
 import {
-  Database,
   Calendar,
-  FileText,
+  DownloadIcon,
+  Tag,
+  ShieldCheck,
+  HardDrive,
+  Image as ImageIcon,
   CheckSquare,
   Square,
 } from "lucide-react";
@@ -24,6 +28,19 @@ export function DatasetCard({
   onSelect,
   showSelectionCheckbox = false,
 }: DatasetCardProps) {
+  const [imageStatus, setImageStatus] = useState<
+    "loading" | "loaded" | "error"
+  >("loading");
+
+  // Reset image status if the dataset (and thus thumbnailUrl) changes
+  useEffect(() => {
+    if (dataset.thumbnailUrl) {
+      setImageStatus("loading");
+    } else {
+      setImageStatus("loaded"); // Or 'error' if you want a specific icon for no-URL too
+    }
+  }, [dataset.thumbnailUrl]);
+
   // Format the date as DD/MM/YYYY
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -57,35 +74,104 @@ export function DatasetCard({
           )}
         </div>
       )}
-      <Link href={`/datasets/${dataset.dataset_id}`} className="block">
-        <Card className="m-2 h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300">
-          {/* Thumbnail placeholder - replace with actual thumbnail when available */}
-          <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-            <Database className="h-12 w-12 text-slate-400" />
+      <Link href={`/datasets/${dataset.dataset_id}`} className="block h-full">
+        <Card className="h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
+          {/* Thumbnail Section */}
+          <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+            {!dataset.thumbnailUrl ? (
+              <ImageIcon className="h-12 w-12 text-slate-400" />
+            ) : imageStatus === "loading" ? (
+              // Optional: You can use a Skeleton component here if you have one
+              <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 animate-pulse">
+                <ImageIcon className="h-12 w-12 text-slate-400 opacity-50" />
+              </div>
+            ) : imageStatus === "error" ? (
+              <img
+                src="/placeholders/placeholder-image.png"
+                alt={`${dataset.dataset_name} fallback thumbnail`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src={dataset.thumbnailUrl}
+                alt={`${dataset.dataset_name} thumbnail`}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onLoad={() => setImageStatus("loaded")}
+                onError={() => setImageStatus("error")}
+              />
+            )}
           </div>
 
-          <div className="p-3">
-            <h3 className="text-lg font-semibold truncate">
+          <div className="p-4 flex flex-col flex-grow">
+            <h3
+              className="text-lg font-semibold truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200"
+              title={dataset.dataset_name}
+            >
               {dataset.dataset_name}
             </h3>
 
             {dataset.dataset_description && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+              <p
+                className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2"
+                title={dataset.dataset_description}
+              >
                 {dataset.dataset_description}
               </p>
             )}
 
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center text-xs text-gray-500">
-                <Calendar className="h-3 w-3 mr-1" />
-                <span>{formatDate(dataset.date_of_creation)}</span>
+            {/* Metadata Bar */}
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50 space-y-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center">
+                <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                <span>Created: {formatDate(dataset.date_of_creation)}</span>
               </div>
-
-              <div className="flex items-center text-xs text-gray-500">
-                <FileText className="h-3 w-3 mr-1" />
+              {dataset.dataset_last_updated && (
+                <div className="flex items-center">
+                  <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-orange-500" />
+                  <span>
+                    Updated: {formatDate(dataset.dataset_last_updated)}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center">
+                <DownloadIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
                 <span>{dataset.downloads_count} downloads</span>
               </div>
+              {dataset.size && (
+                <div className="flex items-center">
+                  <HardDrive className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                  <span>Size: {dataset.size}</span>
+                </div>
+              )}
+              {dataset.license && (
+                <div className="flex items-center">
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-green-600 dark:text-green-500" />
+                  <span>License: {dataset.license}</span>
+                </div>
+              )}
             </div>
+
+            {/* Tags Section */}
+            {dataset.tags && dataset.tags.length > 0 && (
+              <div className="mt-auto pt-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {dataset.tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 bg-blue-100 dark:bg-blue-700 text-blue-700 dark:text-blue-200 rounded-full text-[10px] font-medium flex items-center"
+                    >
+                      <Tag className="h-2.5 w-2.5 mr-1" />
+                      {tag}
+                    </span>
+                  ))}
+                  {dataset.tags.length > 3 && (
+                    <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full text-[10px] font-medium">
+                      +{dataset.tags.length - 3} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </Link>

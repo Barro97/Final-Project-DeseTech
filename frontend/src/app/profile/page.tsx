@@ -212,7 +212,7 @@ const ProfilePage = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-4 sm:mt-0 sm:ml-auto flex-shrink-0 transition-all hover:shadow-md hover:-translate-y-0.5"
+                    className="mt-4 sm:mt-0 sm:ml-auto flex-shrink-0 transition-all hover:shadow-md hover:-translate-y-0.5 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200"
                     onClick={handleOpenEditModal}
                   >
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile

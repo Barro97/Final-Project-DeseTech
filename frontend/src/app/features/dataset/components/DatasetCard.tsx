@@ -15,12 +15,14 @@ interface DatasetCardProps {
   dataset: Dataset;
   isSelected: boolean;
   onSelect: () => void;
+  showSelectionCheckbox?: boolean;
 }
 
 export function DatasetCard({
   dataset,
   isSelected,
   onSelect,
+  showSelectionCheckbox = false,
 }: DatasetCardProps) {
   // Format the date as DD/MM/YYYY
   const formatDate = (dateString: string) => {
@@ -39,20 +41,22 @@ export function DatasetCard({
     <div
       className={cn(
         "relative block group",
-        isSelected && "ring-2 ring-blue-500 rounded-lg"
+        isSelected && showSelectionCheckbox && "ring-2 ring-blue-500 rounded-lg"
       )}
     >
-      <div
-        onClick={handleSelectClick}
-        className="absolute top-2 right-2 z-10 p-1 bg-white dark:bg-gray-800 rounded-full cursor-pointer group-hover:opacity-100 opacity-75 transition-opacity"
-        aria-label={isSelected ? "Deselect dataset" : "Select dataset"}
-      >
-        {isSelected ? (
-          <CheckSquare className="h-5 w-5 text-blue-600" />
-        ) : (
-          <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-        )}
-      </div>
+      {showSelectionCheckbox && (
+        <div
+          onClick={handleSelectClick}
+          className="absolute top-2 right-2 z-10 p-1 bg-white dark:bg-gray-800 rounded-full cursor-pointer group-hover:opacity-100 opacity-75 transition-opacity"
+          aria-label={isSelected ? "Deselect dataset" : "Select dataset"}
+        >
+          {isSelected ? (
+            <CheckSquare className="h-5 w-5 text-blue-600" />
+          ) : (
+            <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          )}
+        </div>
+      )}
       <Link href={`/datasets/${dataset.dataset_id}`} className="block">
         <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-md group-hover:translate-y-[-2px]">
           {/* Thumbnail placeholder - replace with actual thumbnail when available */}

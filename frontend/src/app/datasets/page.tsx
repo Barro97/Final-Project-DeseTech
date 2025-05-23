@@ -646,7 +646,8 @@ export default function SearchDatasetsPage() {
               <DatasetCard
                 dataset={dataset}
                 isSelected={false}
-                onSelect={() => {}} // No selection needed for search page
+                onSelect={() => {}}
+                showSelectionCheckbox={false}
               />
             </div>
           ))}

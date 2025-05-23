@@ -184,6 +184,7 @@ export default function MyDatasetsPage() {
               dataset={dataset}
               isSelected={selectedDatasetIds.includes(dataset.dataset_id)}
               onSelect={() => handleSelectDataset(dataset.dataset_id)}
+              showSelectionCheckbox={true}
             />
           ))}
         </div>

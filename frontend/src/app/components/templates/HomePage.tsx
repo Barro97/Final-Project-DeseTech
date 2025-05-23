@@ -128,7 +128,7 @@ function HomePage() {
       {/* Statistics Cards */}
       <h2 className="text-xl font-semibold mb-4">Overview</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-2">
             <CardDescription>Total Datasets</CardDescription>
             <CardTitle className="text-3xl flex items-center">
@@ -143,7 +143,7 @@ function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-2">
             <CardDescription>My Datasets</CardDescription>
             <CardTitle className="text-3xl flex items-center">
@@ -158,7 +158,7 @@ function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-2">
             <CardDescription>Total Downloads</CardDescription>
             <CardTitle className="text-3xl flex items-center">
@@ -173,7 +173,7 @@ function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-2">
             <CardDescription>Recent Downloads</CardDescription>
             <CardTitle className="text-3xl flex items-center">
@@ -200,7 +200,7 @@ function HomePage() {
           {mockFeaturedDatasets.map((dataset) => (
             <Card
               key={dataset.id}
-              className="transition-all hover:shadow-md hover:-translate-y-1"
+              className="transition-all hover:shadow-md hover:-translate-y-1 border-gray-200 dark:border-gray-700"
             >
               <CardHeader>
                 <CardTitle>{dataset.name}</CardTitle>
@@ -228,7 +228,7 @@ function HomePage() {
       {/* Recent Activity */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardContent className="p-0">
             <ul className="divide-y">
               {mockRecentActivity.map((activity) => (
@@ -264,7 +264,7 @@ function HomePage() {
       {/* Getting Started */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-        <Card>
+        <Card className="border-gray-200 dark:border-gray-700">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col items-center text-center">

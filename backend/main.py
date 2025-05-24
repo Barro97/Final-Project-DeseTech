@@ -21,10 +21,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # Frontend URL
     allow_credentials=True,
-    # allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 app.include_router(file_router)

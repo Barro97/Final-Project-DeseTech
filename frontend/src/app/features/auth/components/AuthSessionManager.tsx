@@ -3,7 +3,7 @@ import { useIdleTimer } from "react-idle-timer";
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 
-const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 //the idea here is to refresh the token if the user is active and if idle then to not refresh token and allow the exp time to run out.
 export default function AuthSessionManager() {

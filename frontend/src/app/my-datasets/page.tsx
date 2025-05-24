@@ -8,7 +8,6 @@ import {
 import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/app/components/atoms/button";
@@ -118,15 +117,6 @@ export default function MyDatasetsPage() {
     setIsDeleteDialogOpen(false);
   };
 
-  const handleAddDatasetClick = () => {
-    const addButton = document.querySelector(
-      '[data-testid="add-dataset-btn"]'
-    ) as HTMLElement;
-    if (addButton) {
-      addButton.click();
-    }
-  };
-
   // Show loading for auth, initial data fetch, or delete operation
   if (isUserLoading || isLoading || isFetching || deleteMutation.isPending) {
     return (
@@ -196,13 +186,6 @@ export default function MyDatasetsPage() {
           <p className="text-lg text-gray-500 mb-4">
             You haven&apos;t uploaded any datasets yet.
           </p>
-          {/* <Link
-            href="#"
-            onClick={handleAddDatasetClick}
-            className="text-blue-500 hover:underline"
-          >
-            Click here to add your first dataset
-          </Link> */}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">

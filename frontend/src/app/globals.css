@@ -249,3 +249,25 @@ main {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--primary) / 0.7) hsl(var(--secondary));
 }
+
+/* Toast z-index utilities to ensure toasts are always on top */
+.toast-container {
+  z-index: 10000 !important;
+}
+
+.toast-item {
+  z-index: 10001 !important;
+}
+
+/* Additional z-index utilities for layering */
+.z-modal {
+  z-index: 9999;
+}
+
+.z-toast {
+  z-index: 10000;
+}
+
+.z-tooltip {
+  z-index: 9998;
+}

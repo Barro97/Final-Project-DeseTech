@@ -15,25 +15,23 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(
-        ({ id, title, description, action, icon, position, ...props }) => (
-          <Toast key={id} {...props}>
-            <div className="flex">
-              {icon && <div className="mr-3 mt-0.5">{icon}</div>}
-              <div className="grid gap-1">
-                {title && <ToastTitle>{title}</ToastTitle>}
-                {description && (
-                  <ToastDescription>{description}</ToastDescription>
-                )}
-              </div>
+      {toasts.map(({ id, title, description, action, icon, ...props }) => (
+        <Toast key={id} {...props}>
+          <div className="flex">
+            {icon && <div className="mr-3 mt-0.5">{icon}</div>}
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
             </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        )
-      )}
+          </div>
+          {action}
+          <ToastClose />
+        </Toast>
+      ))}
       <ToastViewport
-        className="fixed flex flex-col gap-2 p-4 sm:max-w-[420px]"
+        className="fixed flex flex-col gap-2 p-4 sm:max-w-[420px] z-[10000] pointer-events-none"
         position={toasts[0]?.position || "bottom-right"}
       />
     </ToastProvider>

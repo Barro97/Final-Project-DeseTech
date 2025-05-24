@@ -49,7 +49,10 @@ export default function MyDatasetsPage() {
       return getUserDatasets(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: false,
   });
 
   const deleteMutation = useMutation<BatchDeleteResponse, ApiError, number[]>({
@@ -72,6 +75,7 @@ export default function MyDatasetsPage() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ["userDatasets", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["allDatasets"] });
       setSelectedDatasetIds([]);
     },
     onError: (error: ApiError, variables) => {
@@ -151,7 +155,29 @@ export default function MyDatasetsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 relative min-h-[80vh]">
-      <h1 className="text-2xl font-bold mb-6">My Datasets</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">My Datasets</h1>
+          {isFetching && !isLoading && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              <span>Updating...</span>
+            </div>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          onClick={() =>
+            queryClient.invalidateQueries({
+              queryKey: ["userDatasets", user?.id],
+            })
+          }
+          disabled={isFetching}
+          className="text-sm"
+        >
+          {isFetching ? "Refreshing..." : "Refresh"}
+        </Button>
+      </div>
 
       {selectedDatasetIds.length > 0 && (
         <div className="mb-4 flex justify-end">
@@ -170,13 +196,13 @@ export default function MyDatasetsPage() {
           <p className="text-lg text-gray-500 mb-4">
             You haven&apos;t uploaded any datasets yet.
           </p>
-          <Link
+          {/* <Link
             href="#"
             onClick={handleAddDatasetClick}
             className="text-blue-500 hover:underline"
           >
             Click here to add your first dataset
-          </Link>
+          </Link> */}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">

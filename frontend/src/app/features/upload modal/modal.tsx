@@ -15,6 +15,7 @@ import { FileItem } from "@/app/features/upload/types/file";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "../toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 
@@ -48,6 +49,7 @@ export function UploadModal({
   } = useForm<UploadFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const onSubmit = async (data: UploadFormValues) => {
     if (!user || typeof user.id === "undefined") {
@@ -99,6 +101,11 @@ export function UploadModal({
           resetUploadProgress();
           router.push(`/datasets/${result.datasetId}`);
         }, 1000);
+
+        // Invalidate the user datasets cache so my-datasets page updates
+        queryClient.invalidateQueries({
+          queryKey: ["userDatasets", user?.id],
+        });
       } else {
         // Error toast is handled by the useDatasetUpload hook
         setIsSubmitting(false);

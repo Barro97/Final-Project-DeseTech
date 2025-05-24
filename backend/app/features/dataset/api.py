@@ -116,20 +116,16 @@ class BatchDeleteRequest(BaseModel):
 
 @router.delete("/batch-delete", status_code=200)
 async def batch_delete_datasets_route(
-    request_data: BatchDeleteRequest, # Temporarily comment out
-    # payload: dict = Body(...), # Accept a raw dict for now
+    request_data: BatchDeleteRequest,
     db: Session = Depends(get_db),
     current_user_token: dict = Depends(get_current_user)
 ):
-    # Manually extract dataset_ids for now
-    if "dataset_ids" not in request_data or not isinstance(request_data["dataset_ids"], list):
-        raise HTTPException(status_code=400, detail="Invalid payload structure. 'dataset_ids' list is missing.")
+    # Extract dataset_ids from the Pydantic model
+    dataset_ids = request_data.dataset_ids
     
-    dataset_ids = request_data["dataset_ids"]
-    # Add a quick check for integer types within the list
-    if not all(isinstance(item, int) for item in dataset_ids):
-        raise HTTPException(status_code=400, detail="All dataset_ids must be integers.")
-
+    # Validate that we have dataset_ids
+    if not dataset_ids:
+        raise HTTPException(status_code=400, detail="dataset_ids list cannot be empty.")
 
     current_user_id = current_user_token.get("user_id")
     if not current_user_id:
@@ -137,12 +133,12 @@ async def batch_delete_datasets_route(
 
     result = crud.batch_delete_datasets_crud(
         db=db,
-        dataset_ids=dataset_ids, # Use manually extracted ids
+        dataset_ids=dataset_ids,
         current_user_id=current_user_id
     )
     
     if result["errors"]:
-        if result["deleted_count"] == 0 and len(result["errors"]) == len(dataset_ids): # Use dataset_ids from payload
+        if result["deleted_count"] == 0 and len(result["errors"]) == len(dataset_ids):
              raise HTTPException(status_code=400, detail={"message": "No datasets were deleted. See errors for details.", "errors": result["errors"]})
         
         return {

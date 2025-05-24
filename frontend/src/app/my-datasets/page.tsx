@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/app/components/atoms/button";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
+import { BatchDeleteConfirmationDialog } from "./BatchDeleteConfirmationDialog";
 
 interface ApiError {
   response?: {
@@ -34,6 +35,7 @@ export default function MyDatasetsPage() {
   const { toast } = useToast();
 
   const [selectedDatasetIds, setSelectedDatasetIds] = useState<number[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const {
     data: datasets = [] as Dataset[],
@@ -104,13 +106,12 @@ export default function MyDatasetsPage() {
       });
       return;
     }
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedDatasetIds.length} selected dataset(s)? This action cannot be undone.`
-      )
-    ) {
-      deleteMutation.mutate(selectedDatasetIds);
-    }
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteMutation.mutate(selectedDatasetIds);
+    setIsDeleteDialogOpen(false);
   };
 
   const handleAddDatasetClick = () => {
@@ -190,6 +191,13 @@ export default function MyDatasetsPage() {
           ))}
         </div>
       )}
+
+      <BatchDeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        selectedCount={selectedDatasetIds.length}
+      />
     </div>
   );
 }

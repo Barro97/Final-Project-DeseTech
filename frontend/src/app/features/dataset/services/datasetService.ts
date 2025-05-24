@@ -85,6 +85,22 @@ export async function downloadFile(fileId: string | number): Promise<Blob> {
   return response.data;
 }
 
+// Download entire dataset as zip file
+export async function downloadDataset(
+  datasetId: string | number
+): Promise<Blob> {
+  const response = await axios.get(
+    `${API_URL}/datasets/${datasetId}/download`,
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+      responseType: "blob",
+    }
+  );
+  return response.data;
+}
+
 // Expected response structure from the batch delete endpoint
 export interface BatchDeleteResponse {
   message: string;

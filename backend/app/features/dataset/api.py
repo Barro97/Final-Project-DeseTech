@@ -5,6 +5,11 @@ from backend.app.database.session import get_db
 from backend.app.features.authentication.utils.authorizations import permit_action, get_current_user
 from typing import List
 from pydantic import BaseModel
+import zipfile
+import io
+from fastapi.responses import StreamingResponse
+from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
+import logging
 
 from . import crud # Import the new crud module
 
@@ -165,4 +170,69 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depend
         raise HTTPException(
             status_code=500,
             detail=f"Error during dataset deletion: {str(e)}"
+        )
+
+@router.get("/{dataset_id}/download")
+def download_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Download all files in a dataset as a ZIP file."""
+    try:
+        # Get the dataset to ensure it exists
+        dataset = crud.get_dataset_crud(db=db, dataset_id=dataset_id)
+        
+        # Get all files for the dataset
+        files = crud.get_dataset_files_crud(db=db, dataset_id=dataset_id)
+        
+        if not files:
+            raise HTTPException(status_code=404, detail="No files found in this dataset")
+        
+        # Create a zip file in memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            failed_files = []
+            
+            for file_obj in files:
+                try:
+                    # Download file from Supabase storage
+                    file_bytes = client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_obj.file_url)
+                    
+                    # Add file to zip
+                    zip_file.writestr(file_obj.file_name, file_bytes)
+                    
+                    logging.info(f"Successfully added {file_obj.file_name} to zip")
+                    
+                except Exception as e:
+                    logging.error(f"Failed to download file {file_obj.file_name}: {str(e)}")
+                    failed_files.append(file_obj.file_name)
+                    continue
+            
+            # If there were failed files, add a log file to the zip
+            if failed_files:
+                error_log = f"The following files could not be downloaded:\n" + "\n".join(failed_files)
+                zip_file.writestr("download_errors.txt", error_log.encode('utf-8'))
+                logging.warning(f"Dataset {dataset_id} download completed with {len(failed_files)} failed files")
+        
+        zip_buffer.seek(0)
+        
+        # Create a safe filename for the zip
+        safe_dataset_name = "".join(c for c in dataset.dataset_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        zip_filename = f"{safe_dataset_name}_{dataset_id}.zip"
+        
+        return StreamingResponse(
+            io.BytesIO(zip_buffer.read()),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{zip_filename}"'}
+        )
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logging.error(f"Error creating dataset zip for dataset {dataset_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating dataset download: {str(e)}"
         )

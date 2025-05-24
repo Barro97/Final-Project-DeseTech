@@ -29,7 +29,7 @@ interface ApiError {
 }
 
 export default function MyDatasetsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isUserLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -122,9 +122,10 @@ export default function MyDatasetsPage() {
     }
   };
 
-  if (isLoading || isFetching || deleteMutation.isPending) {
+  // Show loading for auth, initial data fetch, or delete operation
+  if (isUserLoading || isLoading || isFetching || deleteMutation.isPending) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
+      <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-40">
         <div className="text-center">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-500">
@@ -148,7 +149,7 @@ export default function MyDatasetsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 relative min-h-[80vh]">
       <h1 className="text-2xl font-bold mb-6">My Datasets</h1>
 
       {selectedDatasetIds.length > 0 && (
@@ -163,7 +164,7 @@ export default function MyDatasetsPage() {
         </div>
       )}
 
-      {datasets.length === 0 && !isFetching ? (
+      {datasets.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500 mb-4">
             You haven&apos;t uploaded any datasets yet.

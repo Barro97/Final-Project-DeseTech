@@ -1291,14 +1291,14 @@ export default function SearchDatasetsPage() {
 
   if (isAuthLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="absolute inset-0 flex items-center justify-center bg-background z-40">
         <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-8 relative min-h-[80vh]">
       {viewMode === "landing" && (
         <>
           <div className="text-center mb-10">
@@ -1391,11 +1391,13 @@ export default function SearchDatasetsPage() {
               <Separator className="mb-6" />
 
               {isLoading && !datasets.length && (
-                <div className="flex flex-col items-center justify-center h-[30vh]">
-                  <LoadingSpinner size="lg" />
-                  <p className="mt-4 text-gray-500 dark:text-gray-400">
-                    Searching datasets...
-                  </p>
+                <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-40">
+                  <div className="text-center">
+                    <LoadingSpinner size="lg" />
+                    <p className="mt-4 text-gray-500 dark:text-gray-400">
+                      Searching datasets...
+                    </p>
+                  </div>
                 </div>
               )}
               {isError && (

@@ -76,7 +76,7 @@ export async function getDatasetFiles(
 
 // Download a file
 export async function downloadFile(fileId: string | number): Promise<Blob> {
-  const response = await axios.get(`${API_URL}/${fileId}/download`, {
+  const response = await axios.get(`${API_URL}/files/${fileId}/download`, {
     headers: {
       Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
     },
@@ -224,7 +224,7 @@ export async function getFilePreview(
   maxRows: number = 50
 ): Promise<PreviewResponse> {
   try {
-    const response = await axios.get(`${API_URL}/${fileId}/preview`, {
+    const response = await axios.get(`${API_URL}/files/${fileId}/preview`, {
       params: {
         offset,
         max_rows: maxRows,

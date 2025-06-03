@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { getFilePreview, PreviewResponse } from "../services/datasetService";
+import {
+  getFilePreview,
+  PreviewResponse,
+  PreviewData,
+} from "../services/datasetService";
 import { DatasetFile } from "../types/datasetTypes";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 
@@ -28,21 +32,43 @@ export function useFilePreview({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Find the first previewable file
+  // Handle file list changes (including deletions)
   useEffect(() => {
-    const previewableFile = files.find(
+    const previewableFiles = files.filter(
       (file) =>
         file.file_type === "text/csv" || file.file_type === "application/json"
     );
-    if (previewableFile) {
-      setCurrentFile(previewableFile);
+
+    // If no previewable files, clear everything
+    if (previewableFiles.length === 0) {
+      setCurrentFile(null);
+      setPreviewData(null);
+      setError(null);
+      return;
     }
-  }, [files]);
+
+    // Check if current file still exists in the files list
+    const currentFileStillExists =
+      currentFile &&
+      previewableFiles.some((f) => f.file_id === currentFile.file_id);
+
+    if (!currentFileStillExists) {
+      // Current file was deleted or doesn't exist, select the first available file
+      const firstPreviewableFile = previewableFiles[0];
+      setCurrentFile(firstPreviewableFile);
+      setPreviewData(null); // Clear old preview data
+      setError(null);
+    }
+  }, [files, currentFile]);
 
   // Load preview data when current file changes
   useEffect(() => {
     if (currentFile) {
       loadPreview();
+    } else {
+      // Clear preview data when no file is selected
+      setPreviewData(null);
+      setError(null);
     }
   }, [currentFile]);
 
@@ -59,6 +85,7 @@ export function useFilePreview({
       const message =
         err instanceof Error ? err.message : "Failed to load preview";
       setError(message);
+      setPreviewData(null); // Clear any existing preview data on error
       toast({
         title: "Error",
         description: message,
@@ -88,9 +115,26 @@ export function useFilePreview({
 
       setPreviewData((prev) => {
         if (!prev) return nextChunk;
+
+        // Ensure we're combining the data correctly based on file type
+        let combinedData: PreviewResponse["data"];
+        if (currentFile.file_type === "text/csv") {
+          // For CSV, data should be string[][]
+          combinedData = [
+            ...(prev.data as string[][]),
+            ...(nextChunk.data as string[][]),
+          ];
+        } else {
+          // For JSON, data should be PreviewData[]
+          combinedData = [
+            ...(prev.data as PreviewData[]),
+            ...(nextChunk.data as PreviewData[]),
+          ];
+        }
+
         return {
           ...nextChunk,
-          data: [...prev.data, ...nextChunk.data] as PreviewResponse["data"],
+          data: combinedData as PreviewResponse["data"],
           headers: prev.headers || nextChunk.headers,
         };
       });
@@ -123,6 +167,7 @@ export function useFilePreview({
       }
       setCurrentFile(file);
       setPreviewData(null); // Reset preview data for new file
+      setError(null); // Clear any existing errors
     }
   };
 

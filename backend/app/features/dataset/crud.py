@@ -176,36 +176,27 @@ def batch_delete_datasets_crud(db: Session, dataset_ids: List[int], current_user
     deleted_count = 0
     errors = []
 
+    # Get the current user to check their role
+    current_user = db.query(User).filter(User.user_id == current_user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    is_admin = current_user.role and current_user.role.role_name == "admin"
+
     for dataset_id in dataset_ids:
         # First, check if the dataset exists and if the current user is an owner or admin.
-        # The permit_action decorator in the API layer handles this for single dataset operations.
-        # For batch operations, we need to replicate a similar check here or ensure
-        # delete_dataset_crud itself performs an ownership check if it were to be called directly
-        # by something other than a permit_action-protected route.
-
         dataset_to_check = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
         if not dataset_to_check:
             errors.append({"dataset_id": dataset_id, "error": "Dataset not found"})
             continue
 
-        # Check for ownership: user must be an uploader or in the owners list for this dataset.
-        # This is a simplified check. `permit_action` might have more complex logic (e.g. admin override).
-        # For a robust solution, replicate or reuse the exact logic from `permit_action` if possible,
-        # or enhance `permit_action` to support batch checks.
+        # Check for ownership: user must be an uploader or in the owners list for this dataset, or be an admin
         is_owner = any(owner.user_id == current_user_id for owner in dataset_to_check.owners)
-        # is_uploader = dataset_to_check.uploader_id == current_user_id 
-        # Assuming admin role check is handled by a broader mechanism or not needed here for now.
-        # If we assume current_user is already validated to be an admin if they are not an owner, we can skip role check here
-        # For now, we'll simplify and assume if not an owner, it's an error for this specific function.
-        # A more comprehensive approach might involve fetching the user's role.
+        is_uploader = dataset_to_check.uploader_id == current_user_id
         
-        # A simple ownership check:
-        if not is_owner and dataset_to_check.uploader_id != current_user_id: # Or if current_user.role != 'admin'
-             # Check if the user is an admin - this requires fetching the user's role
-            user = db.query(User).filter(User.user_id == current_user_id).first()
-            if not user or user.role != "admin": # Assuming User model has a 'role' attribute
-                errors.append({"dataset_id": dataset_id, "error": "Permission denied. User is not an owner, uploader or admin."})
-                continue
+        if not (is_owner or is_uploader or is_admin):
+            errors.append({"dataset_id": dataset_id, "error": "Permission denied. User is not an owner, uploader or admin."})
+            continue
         
         try:
             delete_dataset_crud(db=db, dataset_id=dataset_id) # This already handles file deletion from storage
@@ -214,7 +205,5 @@ def batch_delete_datasets_crud(db: Session, dataset_ids: List[int], current_user
             errors.append({"dataset_id": dataset_id, "error": e.detail})
         except Exception as e: # Catch any other unexpected errors
             errors.append({"dataset_id": dataset_id, "error": f"An unexpected error occurred: {str(e)}"})
-            # Potentially rollback session if a single sub-operation fails critically
-            # db.rollback() # This might be too broad; delete_dataset_crud handles its own commit/rollback for its scope.
 
     return {"deleted_count": deleted_count, "errors": errors} 

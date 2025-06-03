@@ -3,6 +3,7 @@ from typing import AsyncIterator, Optional
 from fastapi import HTTPException
 from .upload import client, SUPABASE_STORAGE_BUCKET
 import io
+import asyncio
 
 class FileStorageProvider(ABC):
     """Abstract base class for file storage providers."""
@@ -24,8 +25,10 @@ class SupabaseStorageProvider(FileStorageProvider):
     
     async def get_byte_range(self, file_path: str, start: int, end: Optional[int] = None) -> AsyncIterator[bytes]:
         try:
-            # Download the entire file for now (will be optimized when Supabase supports range requests)
-            file_bytes = client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_path)
+            # Use asyncio to run the synchronous download in a thread pool
+            file_bytes = await asyncio.to_thread(
+                lambda: client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_path)
+            )
             
             # Create a bytes IO object for streaming
             file_io = io.BytesIO(file_bytes)
@@ -52,9 +55,10 @@ class SupabaseStorageProvider(FileStorageProvider):
     
     async def get_file_size(self, file_path: str) -> int:
         try:
-            # For now, we need to download the file to get its size
-            # This will be optimized when Supabase supports metadata queries
-            file_bytes = client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_path)
+            # Use asyncio to run the synchronous download in a thread pool
+            file_bytes = await asyncio.to_thread(
+                lambda: client.storage.from_(SUPABASE_STORAGE_BUCKET).download(file_path)
+            )
             return len(file_bytes)
         except Exception as e:
             raise HTTPException(

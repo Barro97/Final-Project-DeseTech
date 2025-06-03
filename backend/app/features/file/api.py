@@ -70,7 +70,7 @@ async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=500,detail="Record deletion failed")
 
-@router.get("/{file_id}/download")
+@router.get("/files/{file_id}/download")
 def download_file(
     file_id: int,
     db: Session = Depends(get_db),
@@ -111,7 +111,7 @@ def download_file(
         headers={"Content-Disposition": f'attachment; filename="{file_record.file_name}"'}
     )
 
-@router.get("/{file_id}/preview")
+@router.get("/files/{file_id}/preview")
 async def preview_file(
     file_id: int,
     offset: int = Query(default=0, ge=0),

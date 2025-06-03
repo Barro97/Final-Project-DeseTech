@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from backend.app.features.authentication.utils.token_creation import verify_token
 from backend.app.database.session import get_db 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")  
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  # Fixed tokenUrl to match the actual endpoint
 
 
 def verify_dataset_ownership(db: Session, dataset_id: int, current_user_id: int):
@@ -25,7 +25,8 @@ def get_current_user(
 ):
     payload = verify_token(token)
 
-    if not payload:
+    # Check if token verification failed
+    if isinstance(payload, dict) and payload.get("error_message"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
@@ -37,6 +38,15 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token payload missing user ID",
+        )
+
+    # Convert user_id to int since it's stored as string in JWT
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user ID in token",
         )
 
     user = db.query(User).filter(User.user_id == user_id).first()

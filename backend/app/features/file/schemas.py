@@ -17,4 +17,7 @@ class File(FileBase):
     file_date_of_upload: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Updated from orm_mode for Pydantic v2
+
+# Add this for the dataset API to use
+FileSchema = File

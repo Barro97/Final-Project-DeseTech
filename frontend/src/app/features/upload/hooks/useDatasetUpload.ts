@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { FileItem } from "../types/file";
 import axios from "axios";
 import { useToast } from "../../toaster/hooks/useToast";
-import { useAuth } from "../../auth/context/AuthContext";
 
 export interface DatasetFormData {
   name: string;
@@ -21,7 +20,6 @@ export interface UploadProgressInfo {
 
 export function useDatasetUpload() {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [uploadProgress, setUploadProgress] = useState<UploadProgressInfo>({
     progress: 0,
     currentFile: null,
@@ -56,7 +54,15 @@ export function useDatasetUpload() {
         {
           dataset_name: formData.name,
           dataset_description: formData.description,
-          uploader_id: user?.id,
+          downloads_count: 0,
+          uploader_id: formData.uploader_id,
+          tags: [],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -108,6 +114,7 @@ export function useDatasetUpload() {
             {
               headers: {
                 "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
               },
               onUploadProgress: (progressEvent) => {
                 const filePercentCompleted = progressEvent.progress

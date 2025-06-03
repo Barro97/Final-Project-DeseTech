@@ -1,6 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, text
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, text, Table
 from sqlalchemy.orm import relationship
 from backend.app.database.base import Base
+
+# Association table for many-to-many relationship between Dataset and User (owners)
+dataset_owner_table = Table(
+    'dataset_owner',
+    Base.metadata,
+    Column('dataset_id', Integer, ForeignKey('dataset.dataset_id'), primary_key=True),
+    Column('user_id', Integer, ForeignKey('users.user_id'), primary_key=True)
+)
 
 # database creation model for 'dataset'
 class Dataset(Base):
@@ -33,13 +41,5 @@ class DatasetTag(Base):
     dataset = relationship("Dataset", back_populates="tags")
     tag = relationship("Tag", back_populates="datasets") 
 
-# creation of the dataset-owner table for the proper relationship
-class DatasetOwner(Base):
-    __tablename__ = 'dataset_owner'
-    # Composite primary key on (dataset_id, user_id)
-    dataset_id = Column(Integer, ForeignKey('dataset.dataset_id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.user_id'), primary_key=True)
-
-    # Relationships
-    dataset = relationship("Dataset", back_populates="owner_links")
-    user = relationship("User", back_populates="dataset_links")
+# Note: The DatasetOwner class is not needed since we use the association table above
+# for the many-to-many relationship between Dataset and User

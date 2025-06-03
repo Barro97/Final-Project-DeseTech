@@ -10,6 +10,11 @@ export function CSVPreview({ data, headers }: CSVPreviewProps) {
   const stickyScrollRef = useRef<HTMLDivElement>(null);
   const [tableWidth, setTableWidth] = useState(0);
 
+  // Validate data format - ensure it's actually an array of arrays
+  const validData = Array.isArray(data)
+    ? data.filter((row) => Array.isArray(row))
+    : [];
+
   // Measure the table width and update the sticky scrollbar width
   useEffect(() => {
     const updateTableWidth = () => {
@@ -33,7 +38,7 @@ export function CSVPreview({ data, headers }: CSVPreviewProps) {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [data, headers]); // Re-measure when data or headers change
+  }, [validData, headers]); // Use validData instead of data
 
   // Synchronize scrolling between the table container and sticky scrollbar
   useEffect(() => {
@@ -82,21 +87,32 @@ export function CSVPreview({ data, headers }: CSVPreviewProps) {
             </thead>
           )}
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
-              >
-                {row.map((cell, cellIndex) => (
-                  <td
-                    key={cellIndex}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                  >
-                    {cell}
-                  </td>
-                ))}
+            {validData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={headers?.length || 1}
+                  className="px-6 py-4 text-center text-sm text-gray-500"
+                >
+                  No data to display
+                </td>
               </tr>
-            ))}
+            ) : (
+              validData.map((row, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

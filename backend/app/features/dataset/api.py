@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
-from backend.app.features.dataset.schemas import DatasetCreate, Dataset as DatasetResponse, OwnerActionRequest, FileSchema
+from backend.app.features.dataset.schemas import DatasetCreate, Dataset as DatasetResponse, OwnerActionRequest
+from backend.app.features.file.schemas import FileSchema
 from backend.app.database.session import get_db
 from backend.app.features.authentication.utils.authorizations import permit_action, get_current_user
+from backend.app.features.dataset import crud
 from typing import List
 from pydantic import BaseModel
 import zipfile
@@ -11,20 +13,18 @@ import io
 from fastapi.responses import StreamingResponse
 from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
 import logging
-from models import Dataset, Tag  # SQLAlchemy models
-from database import get_db
-from backend.app.features.user.models import User
+from backend.app.database.models import Dataset, Tag, User  # SQLAlchemy models
 
 
-router = APIRouter()
+router = APIRouter(prefix="/datasets")
 
-@router.post("/datasets/", response_model=DatasetResponse)
+@router.post("/", response_model=DatasetResponse)
 def create_dataset(dataset_in: DatasetCreate, db: Session = Depends(get_db)):
     # Create the dataset object
     db_dataset = Dataset(
-        name=dataset_in.name,
-        description=dataset_in.description,
-        download_count=dataset_in.download_count,
+        dataset_name=dataset_in.dataset_name,
+        dataset_description=dataset_in.dataset_description,
+        downloads_count=dataset_in.downloads_count,
         uploader_id=dataset_in.uploader_id,
     )
 
@@ -52,15 +52,15 @@ def create_dataset(dataset_in: DatasetCreate, db: Session = Depends(get_db)):
     return db_dataset
 
 #get for the dataset 
-@router.get("/datasets/{dataset_id}", response_model=DatasetResponse)
+@router.get("/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(dataset_id: int, db: Session = Depends(get_db)):
-    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    dataset = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
     return dataset
 
 # updating information on the dataset
-@router.put("/datasets/{dataset_id}", response_model=DatasetResponse)
+@router.put("/{dataset_id}", response_model=DatasetResponse)
 def update_dataset(
     dataset_id: int,
     dataset_in: DatasetCreate,
@@ -101,7 +101,7 @@ def update_dataset(
     return db_dataset
 
 # delete the dataset
-@router.delete("/datasets/{dataset_id}", status_code=204)
+@router.delete("/{dataset_id}", status_code=204)
 def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depends(permit_action("dataset"))):
     db_dataset = db.query(Dataset).filter_by(dataset_id=dataset_id).first()
     if not db_dataset:
@@ -112,17 +112,17 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depend
     return
 
 # api to add another owner to the dataset - allow more than one user to update and add files to the dataset
-@router.post("/datasets/{dataset_id}/add-owner")
+@router.post("/{dataset_id}/add-owner")
 def add_dataset_owner(
     dataset_id: int,
     owner_request: OwnerActionRequest,
     db: Session = Depends(get_db)
 ):
-    dataset = db.query(DatasetModel).filter(DatasetModel.id == dataset_id).first()
+    dataset = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    user = db.query(UserModel).filter(UserModel.id == owner_request.user_id).first()
+    user = db.query(User).filter(User.user_id == owner_request.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -135,16 +135,16 @@ def add_dataset_owner(
     return {"message": "Owner added successfully"}
 
 # api to remove the owner of dataset - in case a user stops working on a certain project 
-@router.post("/datasets/{dataset_id}/remove-owner")
+@router.post("/{dataset_id}/remove-owner")
 def remove_dataset_owner(
     dataset_id: int,
     owner_request: OwnerActionRequest,
     db: Session = Depends(get_db)
 ):
-    dataset = db.query(DatasetModel).filter(DatasetModel.id == dataset_id).first()
+    dataset = db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    user = db.query(UserModel).filter(UserModel.id == owner_request.user_id).first()
+    user = db.query(User).filter(User.user_id == owner_request.user_id).first()
     if not user or user not in dataset.owners:
         raise HTTPException(status_code=404, detail="User is not an owner")
 
@@ -160,6 +160,13 @@ def get_user_datasets(
     current_user = Depends(get_current_user)
 ):
     """Get all datasets where the specified user is an uploader or owner."""
+    # Convert user_id from string to int if needed
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    
+    # Check authorization - user can only access their own datasets unless they're admin
     if current_user["user_id"] != user_id and current_user["role"] != "admin":
         raise HTTPException(
             status_code=403, 
@@ -228,7 +235,7 @@ async def batch_delete_datasets_route(
     return {"message": f"Successfully deleted {result['deleted_count']} datasets.", "deleted_count": result["deleted_count"], "errors": []}
 
 @router.delete("/{dataset_id}", status_code=204)
-def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user = Depends(permit_action("dataset"))):
+def delete_dataset_single(dataset_id: int, db: Session = Depends(get_db), user = Depends(permit_action("dataset"))):
     try:
         crud.delete_dataset_crud(db=db, dataset_id=dataset_id)
         # The service now returns True/False or raises HTTPException. 

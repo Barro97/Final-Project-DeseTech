@@ -8,11 +8,11 @@ import {
 import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/app/components/atoms/button";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
+import { BatchDeleteConfirmationDialog } from "./BatchDeleteConfirmationDialog";
 
 interface ApiError {
   response?: {
@@ -29,11 +29,12 @@ interface ApiError {
 }
 
 export default function MyDatasetsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isUserLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [selectedDatasetIds, setSelectedDatasetIds] = useState<number[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const {
     data: datasets = [] as Dataset[],
@@ -47,7 +48,10 @@ export default function MyDatasetsPage() {
       return getUserDatasets(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: false,
   });
 
   const deleteMutation = useMutation<BatchDeleteResponse, ApiError, number[]>({
@@ -70,6 +74,7 @@ export default function MyDatasetsPage() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ["userDatasets", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["allDatasets"] });
       setSelectedDatasetIds([]);
     },
     onError: (error: ApiError, variables) => {
@@ -104,27 +109,18 @@ export default function MyDatasetsPage() {
       });
       return;
     }
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedDatasetIds.length} selected dataset(s)? This action cannot be undone.`
-      )
-    ) {
-      deleteMutation.mutate(selectedDatasetIds);
-    }
+    setIsDeleteDialogOpen(true);
   };
 
-  const handleAddDatasetClick = () => {
-    const addButton = document.querySelector(
-      '[data-testid="add-dataset-btn"]'
-    ) as HTMLElement;
-    if (addButton) {
-      addButton.click();
-    }
+  const handleConfirmDelete = () => {
+    deleteMutation.mutate(selectedDatasetIds);
+    setIsDeleteDialogOpen(false);
   };
 
-  if (isLoading || isFetching || deleteMutation.isPending) {
+  // Show loading for auth, initial data fetch, or delete operation
+  if (isUserLoading || isLoading || isFetching || deleteMutation.isPending) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
+      <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-40">
         <div className="text-center">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-500">
@@ -148,8 +144,30 @@ export default function MyDatasetsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">My Datasets</h1>
+    <div className="container mx-auto px-4 py-8 relative min-h-[80vh]">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">My Datasets</h1>
+          {isFetching && !isLoading && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              <span>Updating...</span>
+            </div>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          onClick={() =>
+            queryClient.invalidateQueries({
+              queryKey: ["userDatasets", user?.id],
+            })
+          }
+          disabled={isFetching}
+          className="text-sm"
+        >
+          {isFetching ? "Refreshing..." : "Refresh"}
+        </Button>
+      </div>
 
       {selectedDatasetIds.length > 0 && (
         <div className="mb-4 flex justify-end">
@@ -163,31 +181,32 @@ export default function MyDatasetsPage() {
         </div>
       )}
 
-      {datasets.length === 0 && !isFetching ? (
+      {datasets.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500 mb-4">
             You haven&apos;t uploaded any datasets yet.
           </p>
-          <Link
-            href="#"
-            onClick={handleAddDatasetClick}
-            className="text-blue-500 hover:underline"
-          >
-            Click here to add your first dataset
-          </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
           {datasets.map((dataset) => (
             <DatasetCard
               key={dataset.dataset_id}
               dataset={dataset}
               isSelected={selectedDatasetIds.includes(dataset.dataset_id)}
               onSelect={() => handleSelectDataset(dataset.dataset_id)}
+              showSelectionCheckbox={true}
             />
           ))}
         </div>
       )}
+
+      <BatchDeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        selectedCount={selectedDatasetIds.length}
+      />
     </div>
   );
 }

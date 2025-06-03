@@ -14,6 +14,8 @@ import {
 import { FileItem } from "@/app/features/upload/types/file";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "../toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 
@@ -46,6 +48,8 @@ export function UploadModal({
     reset: resetForm,
   } = useForm<UploadFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const onSubmit = async (data: UploadFormValues) => {
     if (!user || typeof user.id === "undefined") {
@@ -82,20 +86,26 @@ export function UploadModal({
       if (result.success) {
         toast({
           title: "Success!",
-          description: `Dataset "${data.name}" upload initiated.`, // Toast comes from the hook now
+          description: `Dataset "${data.name}" uploaded successfully! Redirecting to dataset page...`,
           variant: "success",
         });
-        // The hook handles its own success toast. We might want to reset things here.
+
+        // Reset form and files
         resetForm();
         setFiles([]);
-        // resetUploadProgress(); // Hook might reset progress on completion, or we do it before next upload
 
-        // Delay closing modal to show final progress or success message from indicator
+        // Small delay to show success message, then redirect and close modal
         setTimeout(() => {
           setOpen(false);
           setIsSubmitting(false);
-          resetUploadProgress(); // Reset progress after modal is closed
-        }, 1500); // Increased delay slightly
+          resetUploadProgress();
+          router.push(`/datasets/${result.datasetId}`);
+        }, 1000);
+
+        // Invalidate the user datasets cache so my-datasets page updates
+        queryClient.invalidateQueries({
+          queryKey: ["userDatasets", user?.id],
+        });
       } else {
         // Error toast is handled by the useDatasetUpload hook
         setIsSubmitting(false);

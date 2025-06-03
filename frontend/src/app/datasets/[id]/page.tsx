@@ -4,6 +4,7 @@ import {
   getDatasetFiles,
   downloadFile,
   deleteDataset,
+  downloadDataset,
 } from "@/app/features/dataset/services/datasetService";
 import type {
   Dataset,
@@ -45,6 +46,7 @@ export default function DatasetDetailPage({
   const [currentPreviewFile, setCurrentPreviewFile] = useState<string | null>(
     null
   );
+  const [isDownloadingDataset, setIsDownloadingDataset] = useState(false);
 
   // Query for dataset details
   const {
@@ -104,6 +106,47 @@ export default function DatasetDetailPage({
         description: "Failed to download file. Please try again.",
         variant: "error",
       });
+    }
+  };
+
+  const handleDownloadDataset = async () => {
+    if (!dataset) return;
+
+    setIsDownloadingDataset(true);
+    try {
+      const blob = await downloadDataset(resolvedParams.id);
+
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `${dataset.dataset_name}_${resolvedParams.id}.zip`;
+
+      // Add to the DOM and click it
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: `Dataset "${dataset.dataset_name}" downloaded successfully`,
+        variant: "success",
+      });
+    } catch (err) {
+      console.error("Error downloading dataset:", err);
+      toast({
+        title: "Error",
+        description: "Failed to download dataset. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsDownloadingDataset(false);
     }
   };
 
@@ -264,7 +307,22 @@ export default function DatasetDetailPage({
             )}
 
             <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Files</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Files</h2>
+                {datasetFiles.length > 0 && (
+                  <button
+                    onClick={handleDownloadDataset}
+                    disabled={isDownloadingDataset}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors"
+                    aria-label="Download entire dataset as zip"
+                  >
+                    <Download className="w-4 h-4" />
+                    {isDownloadingDataset
+                      ? "Preparing Download..."
+                      : "Download Dataset (ZIP)"}
+                  </button>
+                )}
+              </div>
 
               {datasetFiles.length === 0 ? (
                 <p className="text-gray-500">No files in this dataset.</p>

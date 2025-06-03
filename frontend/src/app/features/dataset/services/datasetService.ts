@@ -3,6 +3,41 @@ import { Dataset, DatasetFile } from "../types/datasetTypes";
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND}`;
 
+// Get all datasets with optional filters
+export async function getAllDatasets(
+  page: number = 1,
+  limit: number = 12,
+  search?: string,
+  sortBy?: string,
+  filters?: Record<string, string | number | boolean>
+): Promise<{ datasets: Dataset[]; total: number; hasMore: boolean }> {
+  // Build query params
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("limit", limit.toString());
+
+  if (search) params.append("search", search);
+  if (sortBy) params.append("sort_by", sortBy);
+
+  // Add any additional filters
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+  }
+
+  // Make the API request
+  const response = await axios.get(`${API_URL}/datasets?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+    },
+  });
+
+  return response.data;
+}
+
 // Get all datasets for a specific user
 export async function getUserDatasets(
   userId: string | number
@@ -47,6 +82,22 @@ export async function downloadFile(fileId: string | number): Promise<Blob> {
     },
     responseType: "blob",
   });
+  return response.data;
+}
+
+// Download entire dataset as zip file
+export async function downloadDataset(
+  datasetId: string | number
+): Promise<Blob> {
+  const response = await axios.get(
+    `${API_URL}/datasets/${datasetId}/download`,
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+      responseType: "blob",
+    }
+  );
   return response.data;
 }
 

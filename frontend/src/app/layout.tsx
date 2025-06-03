@@ -6,12 +6,14 @@ import { AuthProvider } from "@/app/features/auth/context/AuthContext";
 import {
   SidebarProvider,
   SidebarTrigger,
+  Sidebar,
+  SidebarInset,
 } from "./components/organisms/sidebar";
 import ProtectedRoute from "./components/templates/ProtectedRoute";
 import AuthSessionManager from "@/app/features/auth/components/AuthSessionManager";
 import { ModalController } from "./components/organisms/ModalController";
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
+
 export default function RootLayout({
   children,
 }: {
@@ -23,18 +25,20 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <SidebarProvider>
-              <div className="flex flex-1">
-                <ProtectedRoute>
+              <ProtectedRoute>
+                <Sidebar>
                   <ModalController />
-                  <div className="sidebar">
-                    <SidebarTrigger />
-                  </div>
+                </Sidebar>
+              </ProtectedRoute>
+              <SidebarInset>
+                <ProtectedRoute>
+                  <SidebarTrigger />
                 </ProtectedRoute>
                 <AuthSessionManager />
-                <main className="flex-1">
-                  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+                <main className="flex-1 p-4">
+                  <Suspense fallback={null}>{children}</Suspense>
                 </main>
-              </div>
+              </SidebarInset>
               <Toaster />
             </SidebarProvider>
           </AuthProvider>

@@ -7,6 +7,12 @@ export interface Dataset {
   downloads_count: number;
   uploader_id: number;
   owners: number[];
+  thumbnailUrl?: string;
+  size?: string; // e.g., "15 MB", "2 GB"
+  license?: string; // e.g., "MIT", "CC BY 4.0"
+  tags?: string[]; // e.g., ["Health", "AI"]
+  file_types?: string[]; // e.g., ["CSV", "JSON"]
+  row_count?: number; // e.g., 10000
 }
 
 export interface DatasetFile {

@@ -21,9 +21,15 @@ class Dataset(Base):
     dataset_description = Column(Text)
     downloads_count = Column(Integer, nullable=False, server_default=text("0"))
     uploader_id = Column(Integer, ForeignKey('users.user_id'))
+    
+    # Admin approval fields
+    approval_status = Column(String(20), nullable=False, server_default=text("'pending'"))
+    approved_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
+    approval_date = Column(DateTime, nullable=True)
 
     # Relationships
-    uploader = relationship("User", back_populates="datasets")
+    uploader = relationship("User", back_populates="datasets", foreign_keys=[uploader_id])
+    approver = relationship("User", foreign_keys=[approved_by])
     comments = relationship("Comment", back_populates="dataset")
     files = relationship("File", back_populates="dataset")
     likes = relationship("Like", back_populates="dataset")
@@ -39,7 +45,23 @@ class DatasetTag(Base):
 
     # Relationships
     dataset = relationship("Dataset", back_populates="tags")
-    tag = relationship("Tag", back_populates="datasets") 
+    tag = relationship("Tag", back_populates="datasets")
+
+# Admin audit trail model
+class AdminAudit(Base):
+    """Audit trail for admin actions on datasets and users."""
+    __tablename__ = 'admin_audit'
+
+    audit_id = Column(Integer, primary_key=True, autoincrement=True)
+    admin_user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    action_type = Column(String(50), nullable=False)  # approve, reject, delete, role_update, etc.
+    target_type = Column(String(20), nullable=False)  # dataset, user
+    target_id = Column(Integer, nullable=False)  # ID of the target entity
+    action_details = Column(Text, nullable=True)  # Additional details about the action
+    timestamp = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+    # Relationship to admin user
+    admin_user = relationship("User", foreign_keys=[admin_user_id])
 
 # Note: The DatasetOwner class is not needed since we use the association table above
 # for the many-to-many relationship between Dataset and User

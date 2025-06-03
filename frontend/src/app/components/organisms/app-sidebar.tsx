@@ -1,6 +1,14 @@
 "use client";
 import * as React from "react";
-import { Home, PlusCircle, Search, User, LogOut, Database } from "lucide-react";
+import {
+  Home,
+  PlusCircle,
+  Search,
+  User,
+  LogOut,
+  Database,
+  Shield,
+} from "lucide-react";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -48,6 +56,32 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
     router.push("/login");
   };
 
+  // Debug user object
+  React.useEffect(() => {
+    console.log("AppSidebar - User object:", user);
+    if (user) {
+      console.log("AppSidebar - User role:", user.role);
+      console.log("AppSidebar - User role type:", typeof user.role);
+      console.log("AppSidebar - Is admin check:", user.role === "admin");
+    }
+  }, [user]);
+
+  // Check if user is admin (case-insensitive)
+  const isAdmin = user?.role?.toLowerCase() === "admin";
+
+  // Create menu items with conditional admin link
+  const menuItems = React.useMemo(() => {
+    const baseItems = [...items];
+    if (isAdmin) {
+      baseItems.push({
+        title: "Admin Panel",
+        url: "/admin",
+        icon: Shield,
+      });
+    }
+    return baseItems;
+  }, [isAdmin]);
+
   // Custom styles for menu items
   const getMenuItemStyles = (isActive: boolean) => {
     return {
@@ -90,26 +124,37 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
             </div>
 
             <SidebarMenu className="flex flex-col space-y-1">
-              {items.map((item, index) => {
-                const isActive = pathname === item.url;
+              {menuItems.map((item, index) => {
+                const isActive =
+                  pathname === item.url ||
+                  (item.url === "/admin" && pathname.startsWith("/admin"));
+                const isAdminItem = item.url === "/admin";
                 return (
                   <React.Fragment key={item.title}>
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        className={menuItemHoverClass}
+                        className={`${menuItemHoverClass} ${isAdminItem ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800" : ""}`}
                         style={getMenuItemStyles(isActive)}
                       >
                         <Link href={item.url} className="rounded-md">
                           <item.icon
-                            className={isActive ? "text-primary" : ""}
+                            className={`${isActive ? "text-primary" : ""} ${isAdminItem ? "text-red-600 dark:text-red-400" : ""}`}
                           />
-                          <span>{item.title}</span>
+                          <span
+                            className={
+                              isAdminItem
+                                ? "text-red-700 dark:text-red-300 font-medium"
+                                : ""
+                            }
+                          >
+                            {item.title}
+                          </span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                    {index < items.length - 1 && (
+                    {index < menuItems.length - 1 && (
                       <SidebarSeparator className="my-1 opacity-30" />
                     )}
                   </React.Fragment>
@@ -127,7 +172,10 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
         {user && (
           <div className="px-4 py-2 text-sm">
             <p className="font-medium">{user.email}</p>
-            <p className="text-xs opacity-75">Role: {user.role}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs opacity-75">Role: {user.role}</p>
+              {isAdmin && <Shield className="h-3 w-3 text-red-500" />}
+            </div>
           </div>
         )}
         <SidebarMenu>

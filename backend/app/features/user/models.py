@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, text
 from sqlalchemy.orm import relationship
 from backend.app.database.base import Base
 from backend.app.features.dataset.models import dataset_owner_table
@@ -31,6 +31,11 @@ class User(Base):
     education = Column(String(255))
     organization = Column(String(255))
     role_id = Column(Integer, ForeignKey('roles.role_id'))
+    
+    # Admin management fields
+    status = Column(String(20), nullable=False, server_default=text("'active'"))
+    last_login = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)
 
     # Relationships
     role = relationship("Role", back_populates="users")
@@ -38,4 +43,5 @@ class User(Base):
     comments = relationship("Comment", back_populates="user")
     likes = relationship("Like", back_populates="user")
     datasets_owned = relationship("Dataset", secondary=dataset_owner_table, back_populates="owners")
+    created_by_user = relationship("User", remote_side=[user_id])
  

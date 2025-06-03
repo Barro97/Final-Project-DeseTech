@@ -29,6 +29,9 @@ class DatasetFilterInternal(BaseModel):
     sort_by: str = "newest"
     offset: int = 0
     limit: int = 20
+    # Admin filtering options
+    include_approval_status: Optional[List[str]] = None  # ['pending', 'approved', 'rejected']
+    is_admin_request: bool = False  # Indicates if request comes from admin
 
 
 class BatchDeleteResult(BaseModel):

@@ -6,6 +6,7 @@ import {
   deleteDataset,
   downloadDataset,
 } from "@/app/features/dataset/services/datasetService";
+import { approveDataset } from "@/app/features/admin/services/adminService";
 import type {
   Dataset,
   DatasetFile,
@@ -20,6 +21,9 @@ import {
   Trash2,
   Edit,
   Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
@@ -47,6 +51,8 @@ export default function DatasetDetailPage({
     null
   );
   const [isDownloadingDataset, setIsDownloadingDataset] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Query for dataset details
   const {
@@ -72,6 +78,46 @@ export default function DatasetDetailPage({
     // Don't fail the whole page if files don't load
     retry: 1,
   });
+
+  const handleApproval = async (
+    action: "approve" | "reject",
+    reason?: string
+  ) => {
+    if (!dataset) return;
+
+    const isApprove = action === "approve";
+    const setLoading = isApprove ? setIsApproving : setIsRejecting;
+
+    setLoading(true);
+    try {
+      await approveDataset(dataset.dataset_id, {
+        action,
+        reason,
+      });
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({
+        queryKey: ["dataset", resolvedParams.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["pendingDatasets"] });
+      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
+
+      toast({
+        title: "Success",
+        description: `Dataset ${isApprove ? "approved" : "rejected"} successfully`,
+        variant: "success",
+      });
+    } catch (error) {
+      console.error(`Error ${action}ing dataset:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${action} dataset. Please try again.`,
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDownload = async (fileId: number, fileName: string) => {
     try {
@@ -188,10 +234,51 @@ export default function DatasetDetailPage({
         (dataset.uploader_id === parseInt(user.id) ||
           dataset.owners.includes(parseInt(user.id)))));
 
+  // Check if user is admin and dataset is pending
+  const canApprove =
+    user?.role === "admin" && dataset?.approval_status === "pending";
+
   // Format date helper function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
+  // Get approval status display
+  const getApprovalStatusDisplay = () => {
+    if (!dataset?.approval_status || dataset.approval_status === "approved") {
+      return null;
+    }
+
+    const statusConfig = {
+      pending: {
+        icon: Clock,
+        text: "Pending Approval",
+        className:
+          "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+      },
+      rejected: {
+        icon: XCircle,
+        text: "Rejected",
+        className:
+          "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+      },
+    };
+
+    const config =
+      statusConfig[dataset.approval_status as keyof typeof statusConfig];
+    if (!config) return null;
+
+    const IconComponent = config.icon;
+
+    return (
+      <div
+        className={`inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium border ${config.className}`}
+      >
+        <IconComponent className="h-4 w-4" />
+        {config.text}
+      </div>
+    );
   };
 
   // Show loading spinner while either dataset or files are loading
@@ -244,10 +331,55 @@ export default function DatasetDetailPage({
       <div className="container mx-auto p-4">
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">{dataset.dataset_name}</h1>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl font-bold">{dataset.dataset_name}</h1>
+                  {getApprovalStatusDisplay()}
+                </div>
+
+                {/* Admin approval notice */}
+                {canApprove && (
+                  <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium text-blue-800 dark:text-blue-200">
+                        Admin Review Required
+                      </span>
+                    </div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                      This dataset is pending approval. Review the content and
+                      approve or reject it.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApproval("approve")}
+                        disabled={isApproving}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        {isApproving ? "Approving..." : "Approve Dataset"}
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleApproval(
+                            "reject",
+                            "Content does not meet guidelines"
+                          )
+                        }
+                        disabled={isRejecting}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        {isRejecting ? "Rejecting..." : "Reject Dataset"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {canModify && (
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 ml-4">
                   <button
                     onClick={() => setIsEditDialogOpen(true)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 transition-colors"
@@ -295,6 +427,15 @@ export default function DatasetDetailPage({
                   {datasetFiles.length !== 1 ? "s" : ""}
                 </span>
               </div>
+
+              {/* Show approval info for approved datasets */}
+              {dataset.approval_status === "approved" &&
+                dataset.approval_date && (
+                  <div className="flex items-center text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    <span>Approved: {formatDate(dataset.approval_date)}</span>
+                  </div>
+                )}
             </div>
 
             {dataset.dataset_description && (

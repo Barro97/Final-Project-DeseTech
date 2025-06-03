@@ -4,6 +4,7 @@ from backend.app.features.file.api import router as file_router
 from backend.app.features.user.api import router as user_router
 from backend.app.features.authentication.api import router as auth_router
 from backend.app.features.dataset.api import router as dataset_router
+from backend.app.features.admin.api import router as admin_router
 
 
 #############
@@ -31,6 +32,8 @@ app.include_router(file_router)
 app.include_router(user_router) 
 app.include_router(auth_router) 
 app.include_router(dataset_router)
+app.include_router(admin_router)
+
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to FastAPI backend!"} 

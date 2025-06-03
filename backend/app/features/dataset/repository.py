@@ -297,6 +297,15 @@ class DatasetRepository(DatasetRepositoryInterface):
         # START WITH BASE QUERY
         query = db.query(Dataset)
 
+        # APPLY APPROVAL STATUS FILTER - Critical for admin workflow
+        if filters.is_admin_request:
+            # Admin can see all datasets, optionally filtered by specific statuses
+            if filters.include_approval_status:
+                query = query.filter(Dataset.approval_status.in_(filters.include_approval_status))
+        else:
+            # Regular users can only see approved datasets
+            query = query.filter(Dataset.approval_status == 'approved')
+
         # APPLY TEXT SEARCH FILTER
         if filters.search_term:
             # Case-insensitive search across name and description

@@ -184,6 +184,7 @@ def get_user_datasets(
 @router.get("/search", response_model=DatasetListResponse)
 def search_datasets(
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
     search_term: str = None,
     tags: List[str] = None,
     uploader_id: int = None,
@@ -201,7 +202,7 @@ def search_datasets(
             page=page,
             limit=limit
         )
-        return dataset_service.search_datasets(db, request)
+        return dataset_service.search_datasets(db, request, current_user["user_id"])
     except DatasetError as e:
         raise handle_dataset_exception(e)
     except Exception as e:

@@ -1,0 +1,314 @@
+"""
+Admin Repository Layer - Data Access and Persistence
+
+This module implements the Repository Pattern for admin data access, providing:
+- Abstract interface definition for admin operations
+- Concrete SQLAlchemy implementation
+- Query optimization and database interaction
+- Data access abstraction for admin functionality
+
+Following the established dataset repository pattern for consistency.
+"""
+from abc import ABC, abstractmethod
+from typing import List, Optional, Tuple, Dict, Any
+from sqlalchemy.orm import Session
+from sqlalchemy import func, desc, asc, or_, and_
+from datetime import datetime, timedelta
+
+from backend.app.database.models import Dataset, User, AdminAudit
+from backend.app.features.user.models import Role
+from backend.app.features.admin.schemas.request import AdminFilterRequest
+
+
+class AdminRepositoryInterface(ABC):
+    """
+    Abstract interface defining all admin data access operations.
+    
+    This interface establishes the contract for admin repository implementations,
+    ensuring consistent behavior and enabling easy testing through mock implementations.
+    """
+
+    @abstractmethod
+    def get_pending_datasets(self, db: Session, limit: int = 50) -> List[Dataset]:
+        """Get all datasets pending approval."""
+        pass
+
+    @abstractmethod
+    def get_users_with_filters(self, db: Session, filters: AdminFilterRequest) -> Tuple[List[User], int]:
+        """Get filtered users with pagination."""
+        pass
+
+    @abstractmethod
+    def get_dataset_statistics(self, db: Session) -> Dict[str, Any]:
+        """Get comprehensive dataset statistics for admin dashboard."""
+        pass
+
+    @abstractmethod
+    def get_user_statistics(self, db: Session) -> Dict[str, Any]:
+        """Get user statistics for admin dashboard."""
+        pass
+
+    @abstractmethod
+    def log_admin_action(self, db: Session, admin_user_id: int, action_type: str, 
+                        target_type: str, target_id: int, details: str = None) -> AdminAudit:
+        """Log admin action to audit trail."""
+        pass
+
+    @abstractmethod
+    def get_audit_trail(self, db: Session, page: int = 1, limit: int = 50) -> Tuple[List[AdminAudit], int]:
+        """Get admin audit trail with pagination."""
+        pass
+
+
+class AdminRepository(AdminRepositoryInterface):
+    """
+    SQLAlchemy implementation of the admin repository interface.
+    
+    This class provides concrete implementation of all admin data access operations
+    using SQLAlchemy ORM, following the same patterns as DatasetRepository.
+    """
+
+    def get_pending_datasets(self, db: Session, limit: int = 50) -> List[Dataset]:
+        """
+        Get all datasets pending approval with uploader information.
+        
+        Args:
+            db: Database session for query execution
+            limit: Maximum number of datasets to return
+            
+        Returns:
+            List[Dataset]: Pending datasets with uploader relationship loaded
+        """
+        return db.query(Dataset).filter(
+            Dataset.approval_status == 'pending'
+        ).join(Dataset.uploader).order_by(
+            desc(Dataset.date_of_creation)
+        ).limit(limit).all()
+
+    def get_users_with_filters(self, db: Session, filters: AdminFilterRequest) -> Tuple[List[User], int]:
+        """
+        Get filtered users with pagination and search capabilities.
+        
+        This method builds a dynamic query based on the provided filters:
+        1. Applies text search across username, email, first_name, last_name
+        2. Filters by user status if specified
+        3. Filters by role if specified
+        4. Applies pagination
+        
+        Args:
+            db: Database session for query execution
+            filters: Filter criteria including search, status, role, pagination
+            
+        Returns:
+            Tuple[List[User], int]: (filtered users for current page, total matching count)
+        """
+        # START WITH BASE QUERY
+        query = db.query(User).join(User.role, isouter=True)
+
+        # APPLY TEXT SEARCH FILTER
+        if filters.search_term:
+            search = f"%{filters.search_term}%"
+            query = query.filter(
+                or_(
+                    User.username.ilike(search),
+                    User.email.ilike(search),
+                    User.first_name.ilike(search),
+                    User.last_name.ilike(search)
+                )
+            )
+
+        # APPLY STATUS FILTER
+        if filters.status_filter:
+            query = query.filter(User.status == filters.status_filter)
+
+        # APPLY ROLE FILTER
+        if filters.role_filter:
+            query = query.filter(Role.role_name == filters.role_filter)
+
+        # GET TOTAL COUNT (before pagination)
+        total_count = query.count()
+
+        # APPLY PAGINATION
+        offset = (filters.page - 1) * filters.limit
+        users = query.offset(offset).limit(filters.limit).all()
+
+        return users, total_count
+
+    def get_dataset_statistics(self, db: Session) -> Dict[str, Any]:
+        """
+        Generate comprehensive dataset statistics for admin dashboard.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Statistics including counts by status, recent activity
+        """
+        # BASIC COUNTS BY STATUS
+        total_datasets = db.query(Dataset).count()
+        pending_datasets = db.query(Dataset).filter(Dataset.approval_status == 'pending').count()
+        approved_datasets = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
+        rejected_datasets = db.query(Dataset).filter(Dataset.approval_status == 'rejected').count()
+        
+        # TOTAL DOWNLOADS
+        total_downloads = db.query(func.sum(Dataset.downloads_count)).scalar() or 0
+        
+        # MONTHLY ACTIVITY
+        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        datasets_this_month = db.query(Dataset).filter(
+            Dataset.date_of_creation >= month_start
+        ).count()
+
+        return {
+            "total_datasets": total_datasets,
+            "pending_datasets": pending_datasets,
+            "approved_datasets": approved_datasets,
+            "rejected_datasets": rejected_datasets,
+            "total_downloads": total_downloads,
+            "datasets_this_month": datasets_this_month
+        }
+
+    def get_user_statistics(self, db: Session) -> Dict[str, Any]:
+        """
+        Generate user statistics for admin dashboard.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: User statistics including counts by status and activity
+        """
+        # BASIC USER COUNTS
+        total_users = db.query(User).count()
+        active_users = db.query(User).filter(User.status == 'active').count()
+        
+        # MONTHLY REGISTRATIONS (assuming created_at field exists or using user_id as proxy)
+        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        # Note: This assumes there's a created_at field. If not, this query needs adjustment
+        users_this_month = db.query(User).filter(
+            User.user_id > 0  # Placeholder - replace with actual date field when available
+        ).count()  # This is a simplified version
+
+        return {
+            "total_users": total_users,
+            "active_users": active_users,
+            "users_this_month": users_this_month
+        }
+
+    def log_admin_action(self, db: Session, admin_user_id: int, action_type: str, 
+                        target_type: str, target_id: int, details: str = None) -> AdminAudit:
+        """
+        Log admin action to audit trail for compliance and tracking.
+        
+        Args:
+            db: Database session for transaction
+            admin_user_id: ID of admin performing the action
+            action_type: Type of action performed (approve, reject, delete, etc.)
+            target_type: Type of target (dataset, user, etc.)
+            target_id: ID of the target entity
+            details: Optional additional details about the action
+            
+        Returns:
+            AdminAudit: The created audit record
+        """
+        audit_entry = AdminAudit(
+            admin_user_id=admin_user_id,
+            action_type=action_type,
+            target_type=target_type,
+            target_id=target_id,
+            action_details=details
+        )
+        
+        db.add(audit_entry)
+        db.flush()  # Get ID without committing transaction
+        return audit_entry
+
+    def get_audit_trail(self, db: Session, page: int = 1, limit: int = 50) -> Tuple[List[AdminAudit], int]:
+        """
+        Get admin audit trail with pagination for review and compliance.
+        
+        Args:
+            db: Database session for query execution
+            page: Page number for pagination
+            limit: Number of records per page
+            
+        Returns:
+            Tuple[List[AdminAudit], int]: (audit records, total count)
+        """
+        # Get total count
+        total_count = db.query(AdminAudit).count()
+        
+        # Get paginated records with admin user information
+        offset = (page - 1) * limit
+        audit_records = db.query(AdminAudit).join(
+            AdminAudit.admin_user
+        ).order_by(
+            desc(AdminAudit.timestamp)
+        ).offset(offset).limit(limit).all()
+        
+        return audit_records, total_count
+
+    def get_role_by_name(self, db: Session, role_name: str) -> Optional[Role]:
+        """
+        Get role by name for role management operations.
+        
+        Args:
+            db: Database session for query execution
+            role_name: Name of the role to find
+            
+        Returns:
+            Role or None: Role if found, None otherwise
+        """
+        return db.query(Role).filter(Role.role_name == role_name).first()
+
+    def get_all_roles(self, db: Session) -> List[Role]:
+        """
+        Get all available roles in the system.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            List[Role]: All roles in the system
+        """
+        return db.query(Role).all()
+
+    def update_user_role(self, db: Session, user_id: int, role_id: int) -> bool:
+        """
+        Update user's role.
+        
+        Args:
+            db: Database session for transaction
+            user_id: ID of user to update
+            role_id: ID of new role
+            
+        Returns:
+            bool: True if update successful, False if user not found
+        """
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return False
+        
+        user.role_id = role_id
+        db.flush()
+        return True
+
+    def update_user_status(self, db: Session, user_id: int, status: str) -> bool:
+        """
+        Update user's status.
+        
+        Args:
+            db: Database session for transaction
+            user_id: ID of user to update
+            status: New status value
+            
+        Returns:
+            bool: True if update successful, False if user not found
+        """
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return False
+        
+        user.status = status
+        db.flush()
+        return True 

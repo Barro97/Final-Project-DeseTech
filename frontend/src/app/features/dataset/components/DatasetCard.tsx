@@ -12,6 +12,9 @@ import {
   Image as ImageIcon,
   CheckSquare,
   Square,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
@@ -54,6 +57,43 @@ export function DatasetCard({
     onSelect();
   };
 
+  // Get approval status styling
+  const getApprovalStatusDisplay = () => {
+    if (!dataset.approval_status || dataset.approval_status === "approved") {
+      return null; // Don't show anything for approved datasets
+    }
+
+    const statusConfig = {
+      pending: {
+        icon: Clock,
+        text: "Pending Approval",
+        className:
+          "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+      },
+      rejected: {
+        icon: XCircle,
+        text: "Rejected",
+        className:
+          "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+      },
+    };
+
+    const config =
+      statusConfig[dataset.approval_status as keyof typeof statusConfig];
+    if (!config) return null;
+
+    const IconComponent = config.icon;
+
+    return (
+      <div
+        className={`absolute top-2 left-2 z-10 px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1 ${config.className}`}
+      >
+        <IconComponent className="h-3 w-3" />
+        {config.text}
+      </div>
+    );
+  };
+
   return (
     <div
       className={cn(
@@ -74,6 +114,10 @@ export function DatasetCard({
           )}
         </div>
       )}
+
+      {/* Approval Status Badge */}
+      {getApprovalStatusDisplay()}
+
       <Link href={`/datasets/${dataset.dataset_id}`} className="block h-full">
         <Card className="h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
           {/* Thumbnail Section */}
@@ -149,6 +193,14 @@ export function DatasetCard({
                   <span>License: {dataset.license}</span>
                 </div>
               )}
+              {/* Show approval info for approved datasets */}
+              {dataset.approval_status === "approved" &&
+                dataset.approval_date && (
+                  <div className="flex items-center">
+                    <CheckCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-green-600 dark:text-green-500" />
+                    <span>Approved: {formatDate(dataset.approval_date)}</span>
+                  </div>
+                )}
             </div>
 
             {/* Tags Section */}

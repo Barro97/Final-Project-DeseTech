@@ -13,6 +13,9 @@ export interface Dataset {
   tags?: string[]; // e.g., ["Health", "AI"]
   file_types?: string[]; // e.g., ["CSV", "JSON"]
   row_count?: number; // e.g., 10000
+  approval_status?: string; // "pending", "approved", "rejected"
+  approved_by?: number;
+  approval_date?: string;
 }
 
 export interface DatasetFile {

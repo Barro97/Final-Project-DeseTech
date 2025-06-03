@@ -71,8 +71,8 @@ def permit_action(resource_type: str):
         db: Session = Depends(get_db),
         current_user: dict = Depends(get_current_user)
     ):
-        # Admins can always proceed
-        if current_user["role"] == "admin":
+        # Admins can always proceed (case-insensitive check)
+        if current_user["role"] and current_user["role"].lower() == "admin":
             return current_user
 
         # Ownership check

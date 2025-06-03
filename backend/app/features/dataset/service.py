@@ -158,7 +158,8 @@ class DatasetService:
                 dataset_name=request.dataset_name,
                 dataset_description=request.dataset_description,
                 uploader_id=request.uploader_id,
-                downloads_count=0  # Always start with 0 downloads
+                downloads_count=0,  # Always start with 0 downloads
+                approval_status='pending'  # New datasets require approval
             )
 
             # STEP 3: Process tags - create new ones if they don't exist
@@ -564,7 +565,7 @@ class DatasetService:
         datasets = self.repository.get_by_user(db, user_id)
         return [self._format_dataset_response(dataset) for dataset in datasets]
 
-    def search_datasets(self, db: Session, request: DatasetFilterRequest) -> DatasetListResponse:
+    def search_datasets(self, db: Session, request: DatasetFilterRequest, current_user_id: int = None) -> DatasetListResponse:
         """
         Search and filter datasets with pagination support.
         
@@ -575,16 +576,20 @@ class DatasetService:
         - Date range filtering for temporal searches
         - Multiple sorting options (newest, oldest, downloads, name)
         - Pagination for performance with large result sets
+        - Approval status filtering based on user role
         
         SEARCH BEHAVIOR:
         - Text search is case-insensitive and searches both name and description
         - Tag filtering uses AND logic (dataset must have ALL specified tags)
         - Date filtering uses inclusive ranges
         - Results are always paginated for performance
+        - Regular users only see approved datasets
+        - Admin users can see all datasets
         
         Args:
             db: Database session for query execution
             request: Search and filter criteria with pagination parameters
+            current_user_id: ID of user making the request (for permission checking)
             
         Returns:
             DatasetListResponse: Paginated search results with metadata:
@@ -601,9 +606,15 @@ class DatasetService:
             ...     page=1,
             ...     limit=20
             ... )
-            >>> results = service.search_datasets(db, request)
+            >>> results = service.search_datasets(db, request, current_user_id=123)
             >>> print(f"Found {results.total_count} datasets")
         """
+        # CHECK IF USER IS ADMIN
+        is_admin_request = False
+        if current_user_id:
+            user = db.query(User).join(User.role).filter(User.user_id == current_user_id).first()
+            is_admin_request = user and user.role and user.role.role_name == 'admin'
+        
         # CONVERT TO INTERNAL FILTER FORMAT
         # This abstraction allows the repository to focus on data access
         filters = DatasetFilterInternal(
@@ -614,7 +625,8 @@ class DatasetService:
             date_to=request.date_to,
             sort_by=request.sort_by,
             offset=(request.page - 1) * request.limit,  # Convert page-based to offset-based
-            limit=request.limit
+            limit=request.limit,
+            is_admin_request=is_admin_request  # Pass admin status to repository
         )
 
         # EXECUTE SEARCH: Repository handles the complex query logic

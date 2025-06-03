@@ -344,23 +344,6 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
-                {/* DEBUG: Approval Status Data - REMOVE IN PRODUCTION */}
-                {process.env.NODE_ENV === "development" && (
-                  <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-700 border rounded text-xs">
-                    <div>
-                      <strong>Debug - Approval Data:</strong>
-                    </div>
-                    <div>
-                      approval_status: {dataset.approval_status || "undefined"}
-                    </div>
-                    <div>
-                      approval_date: {dataset.approval_date || "undefined"}
-                    </div>
-                    <div>approved_by: {dataset.approved_by || "undefined"}</div>
-                    <div>canApprove: {canApprove ? "true" : "false"}</div>
-                  </div>
-                )}
-
                 {/* Admin approval notice */}
                 {canApprove && (
                   <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">

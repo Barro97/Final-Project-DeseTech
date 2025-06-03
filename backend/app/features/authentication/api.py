@@ -43,47 +43,6 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     # Return the token in response
     return {"access_token": access_token, "token_type": "bearer"}
 
-# TEMPORARY DEBUG ENDPOINT - Remove in production
-@router.post("/make-me-admin")
-def make_me_admin(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Temporary endpoint to make current user admin. REMOVE IN PRODUCTION!"""
-    try:
-        # Get admin role (try both cases)
-        admin_role = db.query(Role).filter(
-            Role.role_name.ilike("admin")  # Case-insensitive search
-        ).first()
-        if not admin_role:
-            raise HTTPException(status_code=500, detail="Admin role not found in database")
-        
-        # Get current user
-        user = db.query(User).filter(User.user_id == current_user["user_id"]).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Check if user is already admin
-        if user.role and user.role.role_name.lower() == "admin":
-            return {
-                "message": f"User {user.email} is already an admin",
-                "user_id": user.user_id,
-                "current_role": user.role.role_name
-            }
-        
-        # Update user role
-        user.role_id = admin_role.role_id
-        db.commit()
-        
-        return {
-            "message": f"User {user.email} is now an admin",
-            "user_id": user.user_id,
-            "new_role": admin_role.role_name
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-
 # Refresh token route - this code will allow the token to be refreshed if the user is still active. That way he will continue to gain access to app usage even after the token expiry
 @router.post("/refresh")
 async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):

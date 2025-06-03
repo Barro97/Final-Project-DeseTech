@@ -113,14 +113,14 @@ export async function deleteDatasets(
   datasetIds: number[]
 ): Promise<BatchDeleteResponse> {
   try {
-    const response = await axios.delete<BatchDeleteResponse>(
+    const response = await axios.post<BatchDeleteResponse>(
       `${API_URL}/datasets/batch-delete`,
+      { dataset_ids: datasetIds },
       {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           "Content-Type": "application/json",
         },
-        data: { dataset_ids: datasetIds },
       }
     );
     return response.data;

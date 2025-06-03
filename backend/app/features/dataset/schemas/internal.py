@@ -1,0 +1,39 @@
+from datetime import datetime
+from typing import Optional, List
+from pydantic import BaseModel
+
+
+class DatasetCreateInternal(BaseModel):
+    """Internal model for dataset creation"""
+    dataset_name: str
+    dataset_description: Optional[str] = None
+    uploader_id: int
+    tags: List[str] = []
+
+
+class DatasetUpdateInternal(BaseModel):
+    """Internal model for dataset updates"""
+    dataset_name: Optional[str] = None
+    dataset_description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    dataset_last_updated: datetime = None
+
+
+class DatasetFilterInternal(BaseModel):
+    """Internal model for dataset filtering"""
+    search_term: Optional[str] = None
+    tags: Optional[List[str]] = None
+    uploader_id: Optional[int] = None
+    date_from: Optional[datetime] = None
+    date_to: Optional[datetime] = None
+    sort_by: str = "newest"
+    offset: int = 0
+    limit: int = 20
+
+
+class BatchDeleteResult(BaseModel):
+    """Internal model for batch delete results"""
+    deleted_count: int
+    errors: List[dict] = []
+    successful_ids: List[int] = []
+    failed_ids: List[int] = [] 

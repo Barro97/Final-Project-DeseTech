@@ -3,6 +3,38 @@ from typing import Optional
 from pydantic import BaseModel
 from typing import List
 
+# Backwards compatibility imports
+from backend.app.features.dataset.schemas.request import (
+    DatasetCreateRequest as DatasetCreate,
+    DatasetUpdateRequest as DatasetUpdate,
+    OwnerActionRequest,
+    BatchDeleteRequest,
+    DatasetFilterRequest
+)
+from backend.app.features.dataset.schemas.response import (
+    DatasetResponse as Dataset,
+    DatasetDetailResponse,
+    DatasetListResponse,
+    BatchDeleteResponse,
+    OwnerActionResponse,
+    DatasetStatsResponse
+)
+
+# Re-export for backwards compatibility
+__all__ = [
+    "DatasetCreate",
+    "DatasetUpdate", 
+    "Dataset",
+    "OwnerActionRequest",
+    "BatchDeleteRequest",
+    "DatasetFilterRequest",
+    "DatasetDetailResponse",
+    "DatasetListResponse",
+    "BatchDeleteResponse", 
+    "OwnerActionResponse",
+    "DatasetStatsResponse"
+]
+
 # class init with basic fields
 class DatasetBase(BaseModel):
     dataset_name: str
@@ -10,12 +42,6 @@ class DatasetBase(BaseModel):
     downloads_count: Optional[int] = 0
     uploader_id: int
     tags: List[str] = []
-
-class DatasetCreate(DatasetBase):
-    pass
-
-class DatasetUpdate(DatasetBase):
-    pass
 
 class Dataset(BaseModel):
     dataset_id: int
@@ -29,7 +55,4 @@ class Dataset(BaseModel):
 
     class Config:
         from_attributes = True  # Updated from orm_mode for Pydantic v2
-
-class OwnerActionRequest(BaseModel):
-    user_id: int  # The ID of the user you want to add as an owner
 

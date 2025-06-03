@@ -59,8 +59,9 @@ export function DatasetCard({
 
   // Get approval status styling
   const getApprovalStatusDisplay = () => {
-    if (!dataset.approval_status || dataset.approval_status === "approved") {
-      return null; // Don't show anything for approved datasets
+    // Show approval status for all datasets except those without any status
+    if (!dataset.approval_status) {
+      return null;
     }
 
     const statusConfig = {
@@ -69,6 +70,12 @@ export function DatasetCard({
         text: "Pending Approval",
         className:
           "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+      },
+      approved: {
+        icon: CheckCircle,
+        text: "Approved",
+        className:
+          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
       },
       rejected: {
         icon: XCircle,

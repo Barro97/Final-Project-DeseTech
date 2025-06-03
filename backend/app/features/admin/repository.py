@@ -1,16 +1,18 @@
 """
-Admin Repository Layer - Data Access and Persistence
+Admin Repository Layer - Data Access and Query Management
 
-This module implements the Repository Pattern for admin data access, providing:
-- Abstract interface definition for admin operations
-- Concrete SQLAlchemy implementation
-- Query optimization and database interaction
-- Data access abstraction for admin functionality
+This module implements the Repository Pattern for admin operations, providing:
+- Clean separation between business logic and data access
+- Efficient database queries with proper indexing
+- Transaction management support
+- Type-safe data operations
+- Consistent error handling
 
-Following the established dataset repository pattern for consistency.
+Following established patterns from dataset repository for maintainability.
 """
+import json
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, asc, or_, and_
 from datetime import datetime, timedelta
@@ -211,12 +213,26 @@ class AdminRepository(AdminRepositoryInterface):
         Returns:
             AdminAudit: The created audit record
         """
+        # Handle action_details as JSON if the column expects JSON format
+        action_details_json = None
+        if details:
+            try:
+                # If details is already a dict, convert to JSON
+                if isinstance(details, dict):
+                    action_details_json = json.dumps(details)
+                else:
+                    # If details is a string, wrap it in a JSON object
+                    action_details_json = json.dumps({"message": details})
+            except (TypeError, ValueError):
+                # Fallback to plain text if JSON conversion fails
+                action_details_json = details
+        
         audit_entry = AdminAudit(
             admin_user_id=admin_user_id,
             action_type=action_type,
             target_type=target_type,
             target_id=target_id,
-            action_details=details
+            action_details=action_details_json
         )
         
         db.add(audit_entry)

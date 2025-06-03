@@ -884,5 +884,9 @@ class DatasetService:
             dataset_last_updated=dataset.dataset_last_updated,
             # RELATIONSHIP EXTRACTION: Convert objects to simple ID lists
             owners=[owner.user_id for owner in dataset.owners],
-            tags=[tag.tag_category_name for tag in dataset.tags]
+            tags=[tag.tag_category_name for tag in dataset.tags],
+            # APPROVAL FIELDS: Include approval status information
+            approval_status=dataset.approval_status,
+            approved_by=dataset.approved_by,
+            approval_date=dataset.approval_date
         ) 

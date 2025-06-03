@@ -246,7 +246,7 @@ export default function DatasetDetailPage({
 
   // Get approval status display
   const getApprovalStatusDisplay = () => {
-    if (!dataset?.approval_status || dataset.approval_status === "approved") {
+    if (!dataset?.approval_status) {
       return null;
     }
 
@@ -256,6 +256,12 @@ export default function DatasetDetailPage({
         text: "Pending Approval",
         className:
           "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+      },
+      approved: {
+        icon: CheckCircle,
+        text: "Approved",
+        className:
+          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
       },
       rejected: {
         icon: XCircle,
@@ -338,6 +344,23 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
+                {/* DEBUG: Approval Status Data - REMOVE IN PRODUCTION */}
+                {process.env.NODE_ENV === "development" && (
+                  <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-700 border rounded text-xs">
+                    <div>
+                      <strong>Debug - Approval Data:</strong>
+                    </div>
+                    <div>
+                      approval_status: {dataset.approval_status || "undefined"}
+                    </div>
+                    <div>
+                      approval_date: {dataset.approval_date || "undefined"}
+                    </div>
+                    <div>approved_by: {dataset.approved_by || "undefined"}</div>
+                    <div>canApprove: {canApprove ? "true" : "false"}</div>
+                  </div>
+                )}
+
                 {/* Admin approval notice */}
                 {canApprove && (
                   <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -376,6 +399,29 @@ export default function DatasetDetailPage({
                     </div>
                   </div>
                 )}
+
+                {/* Approved dataset notice */}
+                {dataset.approval_status === "approved" &&
+                  dataset.approval_date && (
+                    <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <span className="font-medium text-green-800 dark:text-green-200">
+                          ✅ Approved Dataset
+                        </span>
+                      </div>
+                      <div className="text-sm text-green-700 dark:text-green-300">
+                        <p>
+                          This dataset has been reviewed and approved by our
+                          administrators.
+                        </p>
+                        <p className="mt-1">
+                          <span className="font-medium">Approved on:</span>{" "}
+                          {formatDate(dataset.approval_date)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
               </div>
 
               {canModify && (

@@ -31,6 +31,10 @@ class DatasetResponse(BaseModel):
     dataset_last_updated: Optional[datetime] = None
     owners: List[int] = []
     tags: List[str] = []
+    # Approval fields
+    approval_status: Optional[str] = None  # "pending", "approved", "rejected"
+    approved_by: Optional[int] = None
+    approval_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True

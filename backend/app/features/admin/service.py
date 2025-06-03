@@ -151,9 +151,15 @@ class AdminService:
             updated_dataset = self.dataset_repository.update(db, dataset_id, updates)
             
             # STEP 5: Log admin action for audit trail
-            action_details = f"Dataset {approval_request.action}d"
+            action_details = {
+                "action": approval_request.action,
+                "dataset_id": dataset_id,
+                "dataset_name": dataset.dataset_name,
+                "previous_status": "pending",
+                "new_status": new_status
+            }
             if approval_request.reason:
-                action_details += f" - Reason: {approval_request.reason}"
+                action_details["reason"] = approval_request.reason
             
             self.repository.log_admin_action(
                 db=db,
@@ -307,13 +313,21 @@ class AdminService:
                 raise AdminActionError("Failed to update user role")
             
             # Log admin action
+            audit_details = {
+                "action": "role_update",
+                "user_id": role_request.user_id,
+                "user_email": user.email,
+                "previous_role": old_role_name,
+                "new_role": role_request.role_name
+            }
+            
             self.repository.log_admin_action(
                 db=db,
                 admin_user_id=admin_user_id,
                 action_type="user_role_update",
                 target_type="user",
                 target_id=role_request.user_id,
-                details=f"Role changed from {old_role_name} to {role_request.role_name}"
+                details=audit_details
             )
             
             db.commit()

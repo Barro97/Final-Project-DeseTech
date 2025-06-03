@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, text
 from sqlalchemy.orm import relationship
 from backend.app.database.base import Base
 
-
+# database creation model for 'comment'
 class Comment(Base):
     __tablename__ = 'comment'
 

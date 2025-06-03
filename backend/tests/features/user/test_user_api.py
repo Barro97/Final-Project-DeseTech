@@ -3,7 +3,7 @@ from fastapi import status
 import pytest
 
 # Adjust import based on your project structure
-from ...app.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
+from backend.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
 
 # Test data
 @pytest.fixture

@@ -21,6 +21,7 @@ from backend.app.features.dataset.schemas.response import (
 from backend.app.features.dataset.exceptions import DatasetError, handle_dataset_exception
 from backend.app.features.dataset.utils import create_safe_filename
 from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
+from backend.app.features.file.services.download_tracking import DownloadTrackingService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/datasets")
@@ -305,6 +306,25 @@ def download_dataset(
         
         # Create a safe filename for the zip
         zip_filename = f"{create_safe_filename(dataset.dataset_name, dataset_id)}.zip"
+        
+        # Track the download using the smart tracking service
+        try:
+            tracking_service = DownloadTrackingService()
+            tracking_result = tracking_service.track_download(
+                db=db,
+                user_id=current_user["user_id"],
+                dataset_id=dataset_id,
+                download_type="dataset"
+            )
+            
+            if tracking_result["is_first_download"]:
+                logger.info(f"User {current_user['user_id']} first download of dataset {dataset_id} (full dataset)")
+            else:
+                logger.info(f"User {current_user['user_id']} repeat download of dataset {dataset_id} (full dataset)")
+                
+        except Exception as e:
+            # Log the error but don't prevent the download
+            logger.error(f"Error tracking dataset download for user {current_user['user_id']}, dataset {dataset_id}: {str(e)}")
         
         return StreamingResponse(
             io.BytesIO(zip_buffer.read()),

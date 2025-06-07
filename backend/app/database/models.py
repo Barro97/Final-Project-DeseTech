@@ -4,7 +4,7 @@
 from backend.app.database.base import Base
 from backend.app.features.user.models import Role, User
 from backend.app.features.dataset.models import Dataset, DatasetTag, AdminAudit, dataset_owner_table as DatasetOwner
-from backend.app.features.file.models import File
+from backend.app.features.file.models import File, UserDownload
 from backend.app.features.like.models import Like
 from backend.app.features.comment.models import Comment
 from backend.app.features.tag.models import Tag
@@ -13,6 +13,6 @@ from backend.app.features.tag.models import Tag
 # you can define __all__ here:
 __all__ = [
     "Base",
-    "Role", "User", "Dataset", "DatasetTag", "AdminAudit", "File", "Like", "Comment", "Tag",
+    "Role", "User", "Dataset", "DatasetTag", "AdminAudit", "File", "UserDownload", "Like", "Comment", "Tag",
     "DatasetOwner"
 ]

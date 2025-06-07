@@ -5,6 +5,7 @@ from backend.app.features.file.schemas import FileCreate
 from backend.app.features.file.crud import create_file, get_file, delete_file_record, get_url
 from backend.app.features.file.utils.upload import save_file, delete_file_from_storage
 from backend.app.features.file.services.preview_service import preview_service, PreviewResponse
+from backend.app.features.file.services.download_tracking import DownloadTrackingService
 import os
 from fastapi.responses import FileResponse, StreamingResponse
 from pathlib import Path
@@ -13,8 +14,9 @@ from backend.app.features.authentication.utils.authorizations import get_current
 from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
 import io
 from datetime import datetime
+import logging
 
-
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -74,9 +76,9 @@ async def delete_file_route(file_id: int, db: Session = Depends(get_db)):
 def download_file(
     file_id: int,
     db: Session = Depends(get_db),
-    # current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    """Download a file from Supabase cloud storage."""
+    """Download a file from Supabase cloud storage with smart download tracking."""
     # Get the file record from the database
     file_record = db.query(File).filter(File.file_id == file_id).first()
     if not file_record:
@@ -93,16 +95,29 @@ def download_file(
 
     except Exception as e:
         # Log the specific Supabase error if possible, e.g., if e is a SupabaseStorageException
-        print(f"Error downloading file {file_record.file_url} from Supabase: {str(e)}")
+        logger.error(f"Error downloading file {file_record.file_url} from Supabase: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to download file from cloud storage: {str(e)}")
     
-    # Update download count for the dataset
-    # if file_record.dataset_id:
-    #     dataset = db.query(Dataset).filter(Dataset.dataset_id == file_record.dataset_id).first()
-    #     if dataset:
-    #         dataset.downloads_count += 1
-    #         db.commit()
-    #         db.refresh(dataset) # Refresh to get updated count if needed elsewhere in same request
+    # Track the download using the smart tracking service
+    if file_record.dataset_id and current_user:
+        try:
+            tracking_service = DownloadTrackingService()
+            tracking_result = tracking_service.track_download(
+                db=db,
+                user_id=current_user["user_id"],
+                dataset_id=file_record.dataset_id,
+                download_type="file",
+                file_id=file_id
+            )
+            
+            if tracking_result["is_first_download"]:
+                logger.info(f"User {current_user['user_id']} first download of dataset {file_record.dataset_id} via file {file_id}")
+            else:
+                logger.info(f"User {current_user['user_id']} repeat download of dataset {file_record.dataset_id} via file {file_id}")
+                
+        except Exception as e:
+            # Log the error but don't prevent the download
+            logger.error(f"Error tracking download for user {current_user['user_id']}, file {file_id}: {str(e)}")
     
     # Stream the file back to the client
     return StreamingResponse(

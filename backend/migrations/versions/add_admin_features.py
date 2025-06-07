@@ -1,7 +1,7 @@
 """Add admin features: dataset approval and audit trail
 
 Revision ID: add_admin_features
-Revises: [previous_revision_id]
+Revises: 1d87362ff58b
 Create Date: 2024-01-01 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_admin_features'
-down_revision = None  # Replace with actual previous revision ID
+down_revision = '1d87362ff58b'  # Link to initial migration
 branch_labels = None
 depends_on = None
 

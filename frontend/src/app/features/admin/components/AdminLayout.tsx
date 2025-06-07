@@ -9,8 +9,6 @@ import {
   CheckSquare,
   Menu,
   X,
-  LogOut,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
@@ -115,30 +113,6 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
               );
             })}
           </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="space-y-2">
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Settings className="h-5 w-5" />
-                <span>Settings</span>
-              </Link>
-              <button
-                onClick={() => {
-                  // Handle logout
-                  sessionStorage.removeItem("accessToken");
-                  window.location.href = "/login";
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </>

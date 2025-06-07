@@ -2,16 +2,8 @@ import QueryProvider from "@/app/providers/QueryProvider";
 import { Toaster } from "@/app/features/toaster/components/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
-
-import {
-  SidebarProvider,
-  SidebarTrigger,
-  Sidebar,
-  SidebarInset,
-} from "./components/organisms/sidebar";
-import ProtectedRoute from "./components/templates/ProtectedRoute";
 import AuthSessionManager from "@/app/features/auth/components/AuthSessionManager";
-import { ModalController } from "./components/organisms/ModalController";
+import ConditionalLayout from "./components/templates/ConditionalLayout";
 import { Suspense } from "react";
 
 export default function RootLayout({
@@ -24,23 +16,11 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col bg-background">
         <QueryProvider>
           <AuthProvider>
-            <SidebarProvider>
-              <ProtectedRoute>
-                <Sidebar>
-                  <ModalController />
-                </Sidebar>
-              </ProtectedRoute>
-              <SidebarInset>
-                <ProtectedRoute>
-                  <SidebarTrigger />
-                </ProtectedRoute>
-                <AuthSessionManager />
-                <main className="flex-1 p-4">
-                  <Suspense fallback={null}>{children}</Suspense>
-                </main>
-              </SidebarInset>
-              <Toaster />
-            </SidebarProvider>
+            <AuthSessionManager />
+            <ConditionalLayout>
+              <Suspense fallback={null}>{children}</Suspense>
+            </ConditionalLayout>
+            <Toaster />
           </AuthProvider>
         </QueryProvider>
       </body>

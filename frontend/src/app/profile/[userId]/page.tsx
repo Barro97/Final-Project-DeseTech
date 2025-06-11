@@ -88,6 +88,22 @@ const UserProfilePage = () => {
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      setError(null);
+      const profile = await profileService.getProfile(
+        userId,
+        token || undefined
+      );
+      setProfileData(profile);
+    } catch (err) {
+      console.error("Error refreshing profile:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh profile"
+      );
+    }
+  };
+
   // Loading state
   if (authLoading || loading) {
     return (
@@ -407,6 +423,7 @@ const UserProfilePage = () => {
           onClose={handleCloseEditModal}
           profileData={profileData}
           onSave={handleSaveProfile}
+          onProfilePictureUploaded={refreshProfile}
         />
       )}
     </div>

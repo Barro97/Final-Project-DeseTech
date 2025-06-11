@@ -10,6 +10,8 @@
  * - Profile updates with optimistic UI updates
  * - Error handling and type safety
  * - Integration with auth context
+ * - Automatic logout on 401 responses
+ * - Profile picture upload functionality
  */
 
 import {
@@ -21,6 +23,19 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 class ProfileService {
+  /**
+   * Handle authentication errors by clearing session storage.
+   * This helps prevent cases where frontend thinks user is logged in
+   * but backend rejects the token.
+   */
+  private handleAuthError() {
+    console.warn("Authentication failed - clearing session");
+    sessionStorage.removeItem("accessToken");
+    // Note: We can't directly call logout from auth context here
+    // The auth context will detect the missing token and update state
+    window.location.reload(); // Force reload to trigger auth context update
+  }
+
   /**
    * Get user profile data with privacy filtering.
    *
@@ -46,12 +61,16 @@ class ProfileService {
     });
 
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        // Handle authentication errors
+        if (token) {
+          this.handleAuthError();
+        }
+        throw new Error("Authentication required to view this profile");
+      } else if (response.status === 404) {
         throw new Error("Profile not found");
       } else if (response.status === 403) {
         throw new Error("Profile is private");
-      } else if (response.status === 401) {
-        throw new Error("Authentication required to view this profile");
       } else {
         throw new Error("Failed to fetch profile");
       }
@@ -126,12 +145,14 @@ class ProfileService {
     });
 
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        // Handle authentication errors
+        this.handleAuthError();
+        throw new Error("Authentication required");
+      } else if (response.status === 404) {
         throw new Error("Profile not found");
       } else if (response.status === 403) {
         throw new Error("Not authorized to update this profile");
-      } else if (response.status === 401) {
-        throw new Error("Authentication required");
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to update profile");
@@ -140,6 +161,71 @@ class ProfileService {
 
     const profileResponse: ProfileResponse = await response.json();
     return this.transformProfileResponse(profileResponse);
+  }
+
+  /**
+   * Upload a profile picture for a user.
+   *
+   * Uploads an image file to be used as the user's profile picture.
+   * Only the profile owner can upload their profile picture.
+   *
+   * @param userId - ID of the user whose profile picture to upload
+   * @param file - The image file to upload
+   * @param token - Authentication token
+   * @returns Promise resolving to upload result with new profile picture URL
+   */
+  async uploadProfilePicture(
+    userId: string,
+    file: File,
+    token: string
+  ): Promise<{
+    message: string;
+    profile_picture_url: string;
+    file_size: number;
+  }> {
+    // Validate file type on frontend
+    if (!file.type.startsWith("image/")) {
+      throw new Error("File must be an image");
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("File size must be less than 5MB");
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${API_BASE_URL}/users/${userId}/profile/picture`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Handle authentication errors
+        this.handleAuthError();
+        throw new Error("Authentication required");
+      } else if (response.status === 403) {
+        throw new Error("Not authorized to update this profile picture");
+      } else if (response.status === 404) {
+        throw new Error("User not found");
+      } else if (response.status === 400) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Invalid file");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to upload profile picture");
+      }
+    }
+
+    return response.json();
   }
 
   /**

@@ -110,6 +110,31 @@ const ProfilePage = () => {
     }
   };
 
+  const refreshProfile = async () => {
+    console.log("🔍 Debug - refreshProfile called");
+    if (!user?.id || !token) {
+      console.log("🔍 Debug - No user or token, skipping refresh");
+      return;
+    }
+
+    try {
+      setError(null);
+      console.log("🔍 Debug - Fetching fresh profile data");
+      const profile = await profileService.getProfile(user.id, token);
+      console.log("🔍 Debug - Fresh profile data received:", {
+        profilePictureUrl: profile.profilePictureUrl,
+        fullName: profile.fullName,
+      });
+      setProfileData(profile);
+      console.log("🔍 Debug - Profile data updated in state");
+    } catch (err) {
+      console.error("Error refreshing profile:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh profile"
+      );
+    }
+  };
+
   // Loading state
   if (authLoading || loading) {
     return (
@@ -209,11 +234,50 @@ const ProfilePage = () => {
               <div className="flex flex-col items-center sm:flex-row sm:items-end">
                 {/* Enhanced Avatar with Ring and Fallback */}
                 <div className="relative sm:mr-6">
+                  {(() => {
+                    console.log("🔍 Debug - Profile data:", {
+                      profilePictureUrl: profileData.profilePictureUrl,
+                      hasUrl: !!profileData.profilePictureUrl,
+                    });
+                    return null;
+                  })()}
                   {profileData.profilePictureUrl ? (
                     <img
                       src={profileData.profilePictureUrl}
                       alt={profileData.fullName}
                       className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg object-cover transition-transform hover:scale-105"
+                      onError={(e) => {
+                        console.error(
+                          "🔍 Debug - Profile picture failed to load:",
+                          e
+                        );
+                        console.error(
+                          "🔍 Debug - Failed URL:",
+                          profileData.profilePictureUrl
+                        );
+                        console.error("🔍 Debug - Event target:", e.target);
+                        // Try to access the URL directly to test if it's accessible
+                        fetch(profileData.profilePictureUrl || "")
+                          .then((response) => {
+                            console.log(
+                              "🔍 Debug - URL fetch test response:",
+                              response.status,
+                              response.statusText
+                            );
+                          })
+                          .catch((error) => {
+                            console.error(
+                              "🔍 Debug - URL fetch test failed:",
+                              error
+                            );
+                          });
+                      }}
+                      onLoad={() => {
+                        console.log(
+                          "🔍 Debug - Profile picture loaded successfully:",
+                          profileData.profilePictureUrl
+                        );
+                      }}
                     />
                   ) : (
                     <div className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
@@ -437,6 +501,7 @@ const ProfilePage = () => {
           onClose={handleCloseEditModal}
           profileData={profileData}
           onSave={handleSaveProfile}
+          onProfilePictureUploaded={refreshProfile}
         />
       )}
     </div>

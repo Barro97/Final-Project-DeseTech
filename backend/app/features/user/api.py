@@ -3,14 +3,18 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from backend.app.database.session import get_db
-from backend.app.features.authentication.utils.authorizations import permit_action
-from backend.app.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
+from backend.app.features.authentication.utils.authorizations import permit_action, get_current_user
+from backend.app.features.user.schemas import (
+    UserCreate, UserUpdate, User as UserSchema, 
+    ProfileUpdateRequest, ProfileResponse
+)
 from backend.app.features.user.crud import (
     create_user,
     get_user,
     update_user,
     delete_user,
 )
+from backend.app.features.user.services.profile_service import UserProfileService
 
 router = APIRouter(
     prefix="/users",
@@ -46,4 +50,51 @@ def delete_user_endpoint(user_id: int, db: Session = Depends(get_db),user = Depe
     """
     delete_user(db=db, user_id=user_id)
     return None
+
+
+# Profile-specific endpoints
+@router.get("/{user_id}/profile", response_model=ProfileResponse)
+def get_user_profile(
+    user_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Retrieve a user's complete profile with privacy filtering.
+    
+    Returns profile data based on privacy settings and viewer relationship.
+    Public profiles are viewable by anyone, authenticated profiles require login,
+    private profiles are only viewable by the owner.
+    """
+    service = UserProfileService()
+    viewer_user_id = current_user["user_id"] if current_user else None
+    return service.get_profile(db, user_id, viewer_user_id)
+
+@router.get("/{user_id}/profile/public", response_model=ProfileResponse)
+def get_user_profile_public(user_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a user's public profile without authentication.
+    
+    Only returns data for public profiles. Useful for anonymous browsing
+    of researcher profiles.
+    """
+    service = UserProfileService()
+    return service.get_profile(db, user_id, viewer_user_id=None)
+
+@router.put("/{user_id}/profile", response_model=ProfileResponse)
+def update_user_profile(
+    user_id: int,
+    profile_data: ProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update a user's profile information.
+    
+    Only the profile owner can update their profile. Updates can be partial -
+    only provided fields will be updated. Profile completion percentage is
+    automatically recalculated.
+    """
+    service = UserProfileService()
+    return service.update_profile(db, user_id, profile_data, current_user["user_id"])
 

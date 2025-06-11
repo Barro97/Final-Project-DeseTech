@@ -139,36 +139,17 @@ const UserProfilePage = () => {
       .slice(0, 2);
   };
 
-  // Categorize skills
-  const skillCategories = {
-    "Core Skills": [
-      "Machine Learning",
-      "Deep Learning",
-      "Data Analysis",
-      "Research",
-    ],
-    "Frameworks & Tools": ["Python", "TensorFlow", "PyTorch"],
-    Specializations: ["NLP", "Computer Vision"],
-  };
-
+  // Categorize skills - categories are now stored with each skill
   const categorizeSkills = () => {
     const categorized: { [key: string]: string[] } = {};
-    Object.keys(skillCategories).forEach((category) => {
-      categorized[category] = profileData.skills.filter((skill) =>
-        skillCategories[category as keyof typeof skillCategories].includes(
-          skill
-        )
-      );
-    });
 
-    // Add any uncategorized skills to "Other"
-    const allCategorizedSkills = Object.values(skillCategories).flat();
-    const uncategorized = profileData.skills.filter(
-      (skill) => !allCategorizedSkills.includes(skill)
-    );
-    if (uncategorized.length > 0) {
-      categorized["Other"] = uncategorized;
-    }
+    profileData.skills.forEach((skill) => {
+      const category = skill.category || "Other";
+      if (!categorized[category]) {
+        categorized[category] = [];
+      }
+      categorized[category].push(skill.name);
+    });
 
     return categorized;
   };

@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from ..models import User
-from ..schemas import ProfileData, ProfileUpdateRequest, ProfileResponse, ContactInfo, ProjectItem
+from ..schemas import ProfileData, ProfileUpdateRequest, ProfileResponse, ContactInfo, ProjectItem, SkillItem
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,14 @@ class UserProfileService:
             
             # Handle JSON fields
             if 'skills' in update_data:
-                user.skills = update_data['skills']
+                # Convert SkillItem objects to dictionaries for JSON storage
+                skills_data = []
+                for skill in update_data['skills']:
+                    if isinstance(skill, dict):
+                        skills_data.append(skill)
+                    else:
+                        skills_data.append(skill.dict())
+                user.skills = skills_data
             if 'projects' in update_data:
                 # Convert ProjectItem objects to dictionaries for JSON storage
                 projects_data = []
@@ -201,9 +208,21 @@ class UserProfileService:
             full_name = user.username
         
         # STEP 2: Handle JSON fields with defaults
-        skills = user.skills or []
+        skills_data = user.skills or []
         projects_data = user.projects or []
         contact_data = user.contact_info or {}
+        
+        # STEP 2.5: Transform skills data to SkillItem format
+        skills = []
+        for skill in skills_data:
+            if isinstance(skill, dict):
+                skills.append(SkillItem(
+                    name=skill.get('name', ''),
+                    category=skill.get('category', 'Other')
+                ))
+            else:
+                # Handle legacy string format (for backward compatibility)
+                skills.append(SkillItem(name=str(skill), category='Other'))
         
         # STEP 3: Transform projects data to ProjectItem format
         projects = []

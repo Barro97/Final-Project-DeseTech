@@ -11,13 +11,25 @@ import {
 } from "@/app/components/atoms/dialog";
 import { Input } from "@/app/components/atoms/input";
 import { Textarea } from "@/app/components/atoms/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/molecules/select";
+
+export interface SkillItem {
+  name: string;
+  category: string;
+}
 
 export interface ProfileData {
   fullName: string;
   title: string;
   bio: string;
   aboutMe: string;
-  skills: string[];
+  skills: SkillItem[];
   projects: { id: number; name: string; description: string; link: string }[];
   contact: {
     email: string;
@@ -75,14 +87,21 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   };
 
-  const handleSkillChange = (index: number, value: string) => {
+  const handleSkillChange = (
+    index: number,
+    field: "name" | "category",
+    value: string
+  ) => {
     const newSkills = [...formData.skills];
-    newSkills[index] = value;
+    newSkills[index] = { ...newSkills[index], [field]: value };
     setFormData((prev) => ({ ...prev, skills: newSkills }));
   };
 
   const addSkill = () => {
-    setFormData((prev) => ({ ...prev, skills: [...prev.skills, ""] }));
+    setFormData((prev) => ({
+      ...prev,
+      skills: [...prev.skills, { name: "", category: "Other" }],
+    }));
   };
 
   const removeSkill = (index: number) => {
@@ -121,7 +140,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const handleSubmit = () => {
     onSave(formData);
-    console.log("Updated profile data:", formData);
+    // console.log("Updated profile data:", formData);
     onClose();
   };
 
@@ -220,11 +239,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <div key={index} className="flex items-center gap-2">
                   <Input
                     type="text"
-                    value={skill}
-                    onChange={(e) => handleSkillChange(index, e.target.value)}
+                    value={skill.name}
+                    onChange={(e) =>
+                      handleSkillChange(index, "name", e.target.value)
+                    }
                     className="flex-grow"
                     placeholder={`Skill ${index + 1}`}
                   />
+                  <Select
+                    value={skill.category}
+                    onValueChange={(value) =>
+                      handleSkillChange(index, "category", value)
+                    }
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Core Skills">Core Skills</SelectItem>
+                      <SelectItem value="Frameworks & Tools">
+                        Frameworks & Tools
+                      </SelectItem>
+                      <SelectItem value="Specializations">
+                        Specializations
+                      </SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="sm"

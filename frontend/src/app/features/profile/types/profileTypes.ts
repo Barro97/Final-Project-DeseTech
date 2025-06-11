@@ -5,12 +5,17 @@
  * the profile feature, ensuring type safety and consistency.
  */
 
+export interface SkillItem {
+  name: string;
+  category: string;
+}
+
 export interface ProfileData {
   fullName: string;
   title: string;
   bio: string;
   aboutMe: string;
-  skills: string[];
+  skills: SkillItem[];
   projects: ProjectItem[];
   contact: ContactInfo;
   profilePictureUrl?: string;
@@ -44,7 +49,7 @@ export interface ProfileResponse {
   title: string;
   bio: string;
   aboutMe: string;
-  skills: string[];
+  skills: SkillItem[];
   projects: ProjectItem[];
   contact: ContactInfo;
   profilePictureUrl?: string;
@@ -59,7 +64,7 @@ export interface ProfileUpdateRequest {
   bio?: string;
   aboutMe?: string;
   coverPhotoUrl?: string;
-  skills?: string[];
+  skills?: SkillItem[];
   projects?: ProjectItem[];
   contact?: ContactInfo;
   privacy_level?: string;

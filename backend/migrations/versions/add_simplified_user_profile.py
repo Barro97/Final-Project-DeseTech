@@ -1,7 +1,7 @@
 """Add simplified user profile columns to users table
 
 Revision ID: add_simplified_user_profile
-Revises: add_user_profile_system
+Revises: 1ca5b594431e
 Create Date: 2025-01-15 14:00:00.000000
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'add_simplified_user_profile'
-down_revision: Union[str, None] = 'add_user_profile_system'
+down_revision: Union[str, None] = '1ca5b594431e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

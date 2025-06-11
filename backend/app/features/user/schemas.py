@@ -76,7 +76,7 @@ class ProfileData(BaseModel):
     title: str
     bio: str
     aboutMe: str
-    skills: List[str]
+    skills: List[SkillItem]
     projects: List[ProjectItem]
     contact: ContactInfo
     profilePictureUrl: Optional[str] = None
@@ -88,7 +88,7 @@ class ProfileUpdateRequest(BaseModel):
     bio: Optional[str] = None
     aboutMe: Optional[str] = None
     coverPhotoUrl: Optional[str] = None
-    skills: Optional[List[str]] = None
+    skills: Optional[List[SkillItem]] = None
     projects: Optional[List[ProjectItem]] = None
     contact: Optional[ContactInfo] = None
     privacy_level: Optional[PrivacyLevel] = None
@@ -119,7 +119,7 @@ class ProfileResponse(BaseModel):
     title: Optional[str] = None
     bio: Optional[str] = None
     aboutMe: Optional[str] = None
-    skills: List[str] = []
+    skills: List[SkillItem] = []
     projects: List[ProjectItem] = []
     contact: ContactInfo
     profilePictureUrl: Optional[str] = None

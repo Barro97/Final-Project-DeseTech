@@ -1,8 +1,8 @@
-"""Add user profile system with privacy controls
+"""remove_complex_profile_tables
 
-Revision ID: add_user_profile_system
-Revises: 1ca5b594431e
-Create Date: 2025-01-15 12:00:00.000000
+Revision ID: 1980940df6d4
+Revises: add_simplified_user_profile
+Create Date: 2025-06-11 16:47:05.304265
 
 """
 from typing import Sequence, Union
@@ -12,14 +12,30 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'add_user_profile_system'
-down_revision: Union[str, None] = '1ca5b594431e'
+revision: str = '1980940df6d4'
+down_revision: Union[str, None] = 'add_simplified_user_profile'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create user_profiles table for extended profile information
+    # Drop indexes first
+    op.drop_index('idx_user_projects_visible', table_name='user_projects')
+    op.drop_index('idx_user_projects_user_id', table_name='user_projects')
+    op.drop_index('idx_user_skills_visible', table_name='user_skills')
+    op.drop_index('idx_user_skills_category', table_name='user_skills')
+    op.drop_index('idx_user_skills_user_id', table_name='user_skills')
+    op.drop_index('idx_user_profiles_privacy_level', table_name='user_profiles')
+    
+    # Drop tables (in reverse order of dependencies)
+    op.drop_table('user_contacts')
+    op.drop_table('user_projects')
+    op.drop_table('user_skills')
+    op.drop_table('user_profiles')
+
+
+def downgrade() -> None:
+    # Recreate user_profiles table
     op.create_table('user_profiles',
         sa.Column('user_id', sa.Integer(), nullable=False),
         sa.Column('bio', sa.Text(), nullable=True),
@@ -34,7 +50,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('user_id')
     )
 
-    # Create user_skills table for skills with categories
+    # Recreate user_skills table
     op.create_table('user_skills',
         sa.Column('skill_id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
@@ -47,7 +63,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('skill_id')
     )
 
-    # Create user_projects table for projects/publications
+    # Recreate user_projects table
     op.create_table('user_projects',
         sa.Column('project_id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
@@ -61,7 +77,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('project_id')
     )
 
-    # Create user_contacts table for contact information with privacy controls
+    # Recreate user_contacts table
     op.create_table('user_contacts',
         sa.Column('user_id', sa.Integer(), nullable=False),
         sa.Column('linkedin', sa.String(255), nullable=True),
@@ -77,27 +93,11 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('user_id')
     )
-
-    # Add indexes for better performance
+    
+    # Recreate indexes
     op.create_index('idx_user_profiles_privacy_level', 'user_profiles', ['privacy_level'])
     op.create_index('idx_user_skills_user_id', 'user_skills', ['user_id'])
     op.create_index('idx_user_skills_category', 'user_skills', ['category'])
     op.create_index('idx_user_skills_visible', 'user_skills', ['is_visible'])
     op.create_index('idx_user_projects_user_id', 'user_projects', ['user_id'])
     op.create_index('idx_user_projects_visible', 'user_projects', ['is_visible'])
-
-
-def downgrade() -> None:
-    # Drop indexes
-    op.drop_index('idx_user_projects_visible', table_name='user_projects')
-    op.drop_index('idx_user_projects_user_id', table_name='user_projects')
-    op.drop_index('idx_user_skills_visible', table_name='user_skills')
-    op.drop_index('idx_user_skills_category', table_name='user_skills')
-    op.drop_index('idx_user_skills_user_id', table_name='user_skills')
-    op.drop_index('idx_user_profiles_privacy_level', table_name='user_profiles')
-    
-    # Drop tables
-    op.drop_table('user_contacts')
-    op.drop_table('user_projects')
-    op.drop_table('user_skills')
-    op.drop_table('user_profiles') 

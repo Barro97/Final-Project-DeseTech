@@ -20,9 +20,14 @@ import {
   Code,
   Brain,
   Zap,
+  Database,
 } from "lucide-react";
 import { EditProfileModal, ProfileData } from "./EditProfileModal";
 import { profileService } from "@/app/features/profile/services/profileService";
+import { useQuery } from "@tanstack/react-query";
+import { getUserDatasets } from "@/app/features/dataset/services/datasetService";
+import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
+import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 
 const ProfilePage = () => {
   const { user, isLoading: authLoading, token } = useAuth();
@@ -31,6 +36,17 @@ const ProfilePage = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch user datasets using React Query
+  const {
+    data: userDatasets = [] as Dataset[],
+    isLoading: isDatasetsLoading,
+    error: datasetsError,
+  } = useQuery({
+    queryKey: ["userDatasets", user?.id],
+    queryFn: () => getUserDatasets(user?.id?.toString() || ""),
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -111,22 +127,12 @@ const ProfilePage = () => {
   };
 
   const refreshProfile = async () => {
-    console.log("🔍 Debug - refreshProfile called");
-    if (!user?.id || !token) {
-      console.log("🔍 Debug - No user or token, skipping refresh");
-      return;
-    }
+    if (!user?.id || !token) return;
 
     try {
       setError(null);
-      console.log("🔍 Debug - Fetching fresh profile data");
       const profile = await profileService.getProfile(user.id, token);
-      console.log("🔍 Debug - Fresh profile data received:", {
-        profilePictureUrl: profile.profilePictureUrl,
-        fullName: profile.fullName,
-      });
       setProfileData(profile);
-      console.log("🔍 Debug - Profile data updated in state");
     } catch (err) {
       console.error("Error refreshing profile:", err);
       setError(
@@ -234,13 +240,6 @@ const ProfilePage = () => {
               <div className="flex flex-col items-center sm:flex-row sm:items-end">
                 {/* Enhanced Avatar with Ring and Fallback */}
                 <div className="relative sm:mr-6">
-                  {(() => {
-                    console.log("🔍 Debug - Profile data:", {
-                      profilePictureUrl: profileData.profilePictureUrl,
-                      hasUrl: !!profileData.profilePictureUrl,
-                    });
-                    return null;
-                  })()}
                   {profileData.profilePictureUrl ? (
                     <img
                       src={profileData.profilePictureUrl}
@@ -492,6 +491,63 @@ const ProfilePage = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* User Datasets Section - Completely Separate Full-Width Container */}
+        <div className="mt-12 bg-white rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <Database className="h-6 w-6 text-blue-600" />
+              <h2 className="text-3xl font-bold text-gray-800">My Datasets</h2>
+            </div>
+            <p className="text-gray-600 mt-2">
+              Manage and explore your uploaded datasets
+            </p>
+          </div>
+
+          <div className="p-8">
+            {isDatasetsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner size="lg" />
+                <span className="ml-3 text-gray-600">Loading datasets...</span>
+              </div>
+            ) : datasetsError ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">
+                  Failed to load datasets. Please try again later.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : userDatasets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {userDatasets.map((dataset) => (
+                  <DatasetCard
+                    key={dataset.dataset_id}
+                    dataset={dataset}
+                    isSelected={false}
+                    onSelect={() => {}}
+                    showSelectionCheckbox={false}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Database className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-600 mb-2">
+                  No datasets yet
+                </h3>
+                <p className="text-gray-500">
+                  You haven&apos;t uploaded any datasets yet. Start sharing your
+                  research!
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

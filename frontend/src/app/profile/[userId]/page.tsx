@@ -20,10 +20,15 @@ import {
   Code,
   Brain,
   Zap,
+  Database,
 } from "lucide-react";
 import { EditProfileModal } from "../EditProfileModal";
 import { ProfileData } from "@/app/features/profile/types/profileTypes";
 import { profileService } from "@/app/features/profile/services/profileService";
+import { useQuery } from "@tanstack/react-query";
+import { getUserDatasets } from "@/app/features/dataset/services/datasetService";
+import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
+import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 
 const UserProfilePage = () => {
   const { user, isLoading: authLoading, token } = useAuth();
@@ -35,6 +40,17 @@ const UserProfilePage = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch user datasets using React Query
+  const {
+    data: userDatasets = [] as Dataset[],
+    isLoading: isDatasetsLoading,
+    error: datasetsError,
+  } = useQuery({
+    queryKey: ["userDatasets", userId],
+    queryFn: () => getUserDatasets(userId),
+    enabled: !!userId,
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -414,6 +430,66 @@ const UserProfilePage = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* User Datasets Section - Completely Separate Full-Width Container */}
+        <div className="mt-12 bg-white rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <Database className="h-6 w-6 text-blue-600" />
+              <h2 className="text-3xl font-bold text-gray-800">
+                User Datasets
+              </h2>
+            </div>
+            <p className="text-gray-600 mt-2">
+              Explore the datasets uploaded by {profileData.fullName}
+            </p>
+          </div>
+
+          <div className="p-8">
+            {isDatasetsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner size="lg" />
+                <span className="ml-3 text-gray-600">Loading datasets...</span>
+              </div>
+            ) : datasetsError ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">
+                  Failed to load datasets. Please try again later.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : userDatasets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {userDatasets.map((dataset) => (
+                  <DatasetCard
+                    key={dataset.dataset_id}
+                    dataset={dataset}
+                    isSelected={false}
+                    onSelect={() => {}}
+                    showSelectionCheckbox={false}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Database className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-600 mb-2">
+                  No datasets yet
+                </h3>
+                <p className="text-gray-500">
+                  {isOwnProfile
+                    ? "You haven't uploaded any datasets yet. Start sharing your research!"
+                    : `${profileData.fullName} hasn't uploaded any datasets yet.`}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

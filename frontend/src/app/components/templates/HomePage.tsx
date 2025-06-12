@@ -24,29 +24,30 @@ import {
 import Link from "next/link";
 import { UploadModal } from "@/app/features/upload modal/modal";
 import { createPortal } from "react-dom";
+import { usePublicStats } from "@/app/features/dataset/hooks/usePublicStats";
 
 // Mock data for initial rendering - would be replaced with actual API calls
 const mockFeaturedDatasets = [
   {
     id: 1,
-    name: "Climate Change Dataset",
-    description: "Global temperature data from 1950-2023",
-    downloads: 128,
-    date: "2023-12-15",
+    name: "Climate Change Temperature Data",
+    description: "Global temperature records from 1880 to 2023",
+    downloads: 1234,
+    date: "2 days ago",
   },
   {
     id: 2,
-    name: "Neural Network Training Data",
-    description: "Labeled images for ML model training",
-    downloads: 356,
-    date: "2023-11-30",
+    name: "Urban Development Patterns",
+    description: "Satellite imagery analysis of urban growth",
+    downloads: 856,
+    date: "1 week ago",
   },
   {
     id: 3,
-    name: "Genome Sequences",
-    description: "Human genome sequences with annotations",
-    downloads: 89,
-    date: "2023-12-10",
+    name: "Renewable Energy Production",
+    description: "Solar and wind energy output statistics",
+    downloads: 432,
+    date: "3 days ago",
   },
 ];
 
@@ -54,23 +55,23 @@ const mockRecentActivity = [
   {
     id: 1,
     type: "upload",
-    dataset: "Economic Indicators 2023",
-    user: "maria_stats",
-    date: "2023-12-18",
+    dataset: "Agricultural Yield Data 2023",
+    user: "Dr. Smith",
+    date: "2 hours ago",
   },
   {
     id: 2,
     type: "download",
-    dataset: "Climate Change Dataset",
-    user: "john_researcher",
-    date: "2023-12-17",
+    dataset: "Climate Change Temperature Data",
+    user: "research_team",
+    date: "5 hours ago",
   },
   {
     id: 3,
     type: "comment",
-    dataset: "Neural Network Training Data",
-    user: "ai_enthusiast",
-    date: "2023-12-16",
+    dataset: "Urban Development Patterns",
+    user: "urbanplanner",
+    date: "1 day ago",
   },
 ];
 
@@ -78,13 +79,9 @@ function HomePage() {
   const { user, token, isLoading } = useAuth();
   const router = useRouter();
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  // State for statistics - would be populated from API in real implementation
-  const [stats] = useState({
-    totalDatasets: 124,
-    myDatasets: 8,
-    totalDownloads: 1465,
-    recentDownloads: 57,
-  });
+
+  // Fetch real statistics from backend
+  const { stats, loading: statsLoading, error: statsError } = usePublicStats();
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -108,38 +105,39 @@ function HomePage() {
     );
   }
 
-  // In a real implementation, these would be API calls to fetch data
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     // Fetch statistics, featured datasets, recent activity, etc.
-  //   }
-  //   fetchData();
-  // }, [user.id]);
-
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 rounded-3xl mb-12 p-8 md:p-12 lg:p-16">
+        <div className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950/50 dark:via-slate-900 dark:to-purple-950/50 rounded-3xl px-8 py-16 overflow-hidden">
           {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-200/30 to-purple-200/30 dark:from-blue-500/10 dark:to-purple-500/10 rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-indigo-200/40 to-blue-200/40 dark:from-indigo-500/10 dark:to-blue-500/10 rounded-full translate-y-24 -translate-x-24 animate-pulse animation-delay-1000"></div>
+          <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="w-96 h-96 rounded-full bg-gradient-to-br from-blue-500 to-purple-600" />
+          </div>
+          <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 opacity-[0.03] dark:opacity-[0.05]">
+            <div className="w-80 h-80 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500" />
+          </div>
 
           <div className="relative z-10 text-center max-w-4xl mx-auto">
-            {/* Welcome back message */}
+            {/* Greeting */}
             <div className="mb-6 animate-in fade-in-50 slide-in-up duration-700">
-              <p className="text-lg text-blue-600 dark:text-blue-400 font-medium">
-                Welcome back, {user.email.split("@")[0]}!
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
+                Welcome back,{" "}
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                  {user.email.split("@")[0]}
+                </span>
               </p>
             </div>
 
             {/* Main Tagline */}
             <div className="mb-6 animate-in fade-in-50 slide-in-up duration-700 animation-delay-200">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent leading-tight mb-4">
-                Your Gateway to
-                <span className="inline-flex items-center ml-3">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+                <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Your Gateway to
+                </span>
+                <br />
+                <span className="text-gray-900 dark:text-white">
                   Research Data
-                  <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 ml-2 animate-pulse" />
                 </span>
               </h1>
             </div>
@@ -158,67 +156,79 @@ function HomePage() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in-50 slide-in-up duration-700 animation-delay-600">
-              <Button
-                size="lg"
-                className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 text-lg font-semibold rounded-xl border-0 transform hover:scale-105"
-                asChild
-              >
-                <Link href="/datasets" className="flex items-center">
-                  Explore Datasets
-                  <Search className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-
-              <Button
-                size="lg"
-                variant="outline"
-                className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-2 border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 text-lg font-semibold rounded-xl transform hover:scale-105"
-                onClick={() => setUploadModalOpen(true)}
-              >
-                <span className="flex items-center">
+            <div className="mb-12 animate-in fade-in-50 slide-in-up duration-700 animation-delay-600">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button
+                  size="lg"
+                  className="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  asChild
+                >
+                  <Link href="/datasets">
+                    <Search className="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    Explore Datasets
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="group border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 hover:scale-105"
+                  onClick={() => setUploadModalOpen(true)}
+                >
+                  <Upload className="mr-2 h-5 w-5 transition-transform group-hover:-translate-y-1" />
                   Upload Dataset
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Button>
+                  <Sparkles className="ml-2 h-5 w-5 transition-transform group-hover:rotate-12" />
+                </Button>
+              </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in-50 slide-in-up duration-700 animation-delay-800">
-              <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
-                <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                  {stats.totalDatasets}+
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Total Datasets
-                </div>
-              </div>
-
-              <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
-                <div className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
-                  {stats.myDatasets}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Your Datasets
-                </div>
-              </div>
-
-              <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
-                <div className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                  {stats.totalDownloads.toLocaleString()}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Total Downloads
-                </div>
-              </div>
-
-              <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
-                <div className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                  {stats.recentDownloads}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Recent Activity
-                </div>
+            {/* Platform Statistics */}
+            <div className="animate-in fade-in-50 slide-in-up duration-700 animation-delay-800">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+                {statsLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="text-center">
+                      <div className="bg-gray-200 dark:bg-gray-700 animate-pulse rounded h-8 w-20 mx-auto mb-2"></div>
+                      <div className="bg-gray-200 dark:bg-gray-700 animate-pulse rounded h-4 w-24 mx-auto"></div>
+                    </div>
+                  ))
+                ) : statsError ? (
+                  // Error state
+                  <div className="col-span-1 md:col-span-3 text-center">
+                    <p className="text-red-500 dark:text-red-400 text-sm">
+                      Unable to load statistics
+                    </p>
+                  </div>
+                ) : stats ? (
+                  // Real statistics
+                  <>
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                        {stats.total_datasets.toLocaleString()}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        Total Datasets
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                        {stats.total_researchers.toLocaleString()}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        Total Researchers
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
+                        {stats.total_downloads.toLocaleString()}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        Total Downloads
+                      </p>
+                    </div>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>

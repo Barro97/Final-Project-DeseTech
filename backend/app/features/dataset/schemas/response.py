@@ -90,6 +90,13 @@ class DatasetStatsResponse(BaseModel):
     top_tags: List[dict] = []  # [{"tag": "name", "count": 10}, ...]
 
 
+class PublicStatsResponse(BaseModel):
+    """Response for public homepage statistics"""
+    total_datasets: int
+    total_researchers: int  # Users who have uploaded at least one dataset
+    total_downloads: int
+
+
 class OwnerActionResponse(BaseModel):
     """Response for owner add/remove operations"""
     message: str

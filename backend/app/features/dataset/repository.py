@@ -528,11 +528,14 @@ class DatasetRepository(DatasetRepositoryInterface):
 
         # TOP TAGS ANALYSIS
         # Join datasets with tags and count usage frequency
+        from backend.app.features.dataset.models import DatasetTag
         top_tags = db.query(
             Tag.tag_category_name,
             func.count(Dataset.dataset_id).label('count')
         ).join(
-            Dataset.tags  # Many-to-many relationship
+            DatasetTag, Tag.tag_id == DatasetTag.tag_id
+        ).join(
+            Dataset, DatasetTag.dataset_id == Dataset.dataset_id
         ).group_by(Tag.tag_category_name).order_by(
             desc('count')  # Most popular first
         ).limit(10).all()  # Top 10 only
@@ -542,4 +545,51 @@ class DatasetRepository(DatasetRepositoryInterface):
             "total_downloads": total_downloads,
             "datasets_this_month": datasets_this_month,
             "top_tags": [{"tag": tag.tag_category_name, "count": tag.count} for tag in top_tags]
+        }
+
+    def get_public_stats(self, db: Session) -> dict:
+        """
+        Generate public statistics for homepage display.
+        
+        This method provides key platform metrics suitable for public display
+        without exposing sensitive admin information.
+        
+        STATISTICS CALCULATED:
+        - **Total Datasets**: Count of approved datasets only
+        - **Total Researchers**: Count of users who have uploaded at least one dataset
+        - **Total Downloads**: Sum of download counts across all approved datasets
+        - **Research Fields**: Count of unique tags used in approved datasets
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            dict: Public statistics dictionary with keys:
+                - total_datasets: int
+                - total_researchers: int
+                - total_downloads: int
+                - research_fields: int
+                
+        Example:
+            >>> stats = repository.get_public_stats(db)
+            >>> print(f"Public stats: {stats['total_datasets']} datasets, {stats['total_researchers']} researchers")
+        """
+        # APPROVED DATASETS ONLY (public-facing)
+        approved_datasets_query = db.query(Dataset).filter(Dataset.approval_status == 'approved')
+        total_datasets = approved_datasets_query.count()
+        
+        # TOTAL DOWNLOADS FROM APPROVED DATASETS
+        total_downloads = db.query(func.sum(Dataset.downloads_count)).filter(
+            Dataset.approval_status == 'approved'
+        ).scalar() or 0
+        
+        # TOTAL RESEARCHERS (users who have uploaded at least one approved dataset)
+        total_researchers = db.query(func.count(func.distinct(Dataset.uploader_id))).filter(
+            Dataset.approval_status == 'approved'
+        ).scalar() or 0
+        
+        return {
+            "total_datasets": total_datasets,
+            "total_researchers": total_researchers, 
+            "total_downloads": total_downloads
         } 

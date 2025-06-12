@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Dataset, DatasetFile } from "../types/datasetTypes";
+import { Dataset, DatasetFile, PublicStats } from "../types/datasetTypes";
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND}`;
 
@@ -238,4 +238,23 @@ export async function getFilePreview(
     console.error("Error getting file preview:", error);
     throw error;
   }
+}
+
+/**
+ * Get public statistics for homepage display
+ * No authentication required
+ */
+export async function getPublicStats(): Promise<PublicStats> {
+  const response = await fetch(`${API_URL}/datasets/public-stats`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch public stats: ${response.statusText}`);
+  }
+
+  return response.json();
 }

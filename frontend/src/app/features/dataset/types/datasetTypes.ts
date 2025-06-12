@@ -21,6 +21,12 @@ export interface Dataset {
   data_time_period?: string; // e.g., "2020-2023", "Growing season 2022", "January-March 2024"
 }
 
+export interface PublicStats {
+  total_datasets: number;
+  total_researchers: number;
+  total_downloads: number;
+}
+
 export interface DatasetFile {
   file_id: number;
   file_date_of_upload: string;

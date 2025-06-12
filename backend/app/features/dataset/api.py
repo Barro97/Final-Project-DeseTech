@@ -16,7 +16,7 @@ from backend.app.features.dataset.schemas.request import (
 from backend.app.features.dataset.schemas.response import (
     DatasetResponse, DatasetDetailResponse, DatasetListResponse,
     BatchDeleteResponse, OwnerActionResponse, DatasetStatsResponse,
-    DatasetFileResponse
+    DatasetFileResponse, PublicStatsResponse
 )
 from backend.app.features.dataset.exceptions import DatasetError, handle_dataset_exception
 from backend.app.features.dataset.utils import create_safe_filename
@@ -47,6 +47,26 @@ def create_dataset(
         raise handle_dataset_exception(e)
     except Exception as e:
         logger.error(f"Unexpected error creating dataset: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/stats", response_model=DatasetStatsResponse)
+def get_dataset_stats(db: Session = Depends(get_db)):
+    """Get dataset statistics."""
+    try:
+        return dataset_service.get_dataset_stats(db)
+    except Exception as e:
+        logger.error(f"Unexpected error getting dataset stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/public-stats", response_model=PublicStatsResponse)
+def get_public_stats(db: Session = Depends(get_db)):
+    """Get public statistics for homepage display (no authentication required)."""
+    try:
+        return dataset_service.get_public_stats(db)
+    except Exception as e:
+        logger.error(f"Unexpected error getting public stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -208,16 +228,6 @@ def search_datasets(
         raise handle_dataset_exception(e)
     except Exception as e:
         logger.error(f"Unexpected error searching datasets: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/stats", response_model=DatasetStatsResponse)
-def get_dataset_stats(db: Session = Depends(get_db)):
-    """Get dataset statistics."""
-    try:
-        return dataset_service.get_dataset_stats(db)
-    except Exception as e:
-        logger.error(f"Unexpected error getting dataset stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

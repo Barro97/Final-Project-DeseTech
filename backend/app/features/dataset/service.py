@@ -45,7 +45,7 @@ from backend.app.features.dataset.schemas.request import (
 )
 from backend.app.features.dataset.schemas.response import (
     DatasetResponse, DatasetDetailResponse, DatasetListResponse,
-    BatchDeleteResponse, OwnerActionResponse, DatasetStatsResponse
+    BatchDeleteResponse, OwnerActionResponse, DatasetStatsResponse, PublicStatsResponse
 )
 from backend.app.features.dataset.schemas.internal import (
     DatasetCreateInternal, DatasetUpdateInternal, DatasetFilterInternal,
@@ -824,6 +824,38 @@ class DatasetService:
         # DELEGATE TO REPOSITORY: Statistics queries are data-access concerns
         stats = self.repository.get_stats(db)
         return DatasetStatsResponse(**stats)
+
+    def get_public_stats(self, db: Session) -> PublicStatsResponse:
+        """
+        Generate public homepage statistics for display to all users.
+        
+        This method provides key platform metrics suitable for public display
+        without exposing sensitive administrative information. It focuses on
+        approved datasets only to maintain data quality for public consumption.
+        
+        STATISTICS INCLUDED:
+        - **Total Datasets**: Count of approved datasets (quality assured)
+        - **Total Researchers**: Unique users who have contributed datasets
+        - **Total Downloads**: Download activity across approved datasets
+        - **Research Fields**: Diversity of research areas (unique tags)
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            PublicStatsResponse: Public statistics including:
+                - total_datasets: Count of approved datasets
+                - total_researchers: Unique dataset contributors
+                - total_downloads: Total download activity
+                - research_fields: Number of unique research areas
+                
+        Example:
+            >>> stats = service.get_public_stats(db)
+            >>> print(f"Platform: {stats.total_datasets} datasets from {stats.total_researchers} researchers")
+        """
+        # DELEGATE TO REPOSITORY: Public statistics queries
+        stats = self.repository.get_public_stats(db)
+        return PublicStatsResponse(**stats)
 
     def _user_can_modify_dataset(self, dataset: Dataset, user_id: int) -> bool:
         """

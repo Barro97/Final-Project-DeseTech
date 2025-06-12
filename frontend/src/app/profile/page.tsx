@@ -121,7 +121,6 @@ const ProfilePage = () => {
         token
       );
       setProfileData(updated);
-      // console.log("Profile updated successfully:", updated);
     } catch (err) {
       console.error("Error updating profile:", err);
       setError(err instanceof Error ? err.message : "Failed to update profile");
@@ -239,38 +238,6 @@ const ProfilePage = () => {
                       src={profileData.profilePictureUrl}
                       alt={profileData.fullName}
                       className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg object-cover transition-transform hover:scale-105"
-                      onError={(e) => {
-                        console.error(
-                          "🔍 Debug - Profile picture failed to load:",
-                          e
-                        );
-                        console.error(
-                          "🔍 Debug - Failed URL:",
-                          profileData.profilePictureUrl
-                        );
-                        console.error("🔍 Debug - Event target:", e.target);
-                        // Try to access the URL directly to test if it's accessible
-                        fetch(profileData.profilePictureUrl || "")
-                          .then((response) => {
-                            console.log(
-                              "🔍 Debug - URL fetch test response:",
-                              response.status,
-                              response.statusText
-                            );
-                          })
-                          .catch((error) => {
-                            console.error(
-                              "🔍 Debug - URL fetch test failed:",
-                              error
-                            );
-                          });
-                      }}
-                      onLoad={() => {
-                        console.log(
-                          "🔍 Debug - Profile picture loaded successfully:",
-                          profileData.profilePictureUrl
-                        );
-                      }}
                     />
                   ) : (
                     <div className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">

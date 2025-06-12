@@ -131,6 +131,8 @@ class UserProfileService:
             
             if 'title' in update_data:
                 user.title = update_data['title']
+            if 'organization' in update_data:
+                user.organization = update_data['organization']
             if 'bio' in update_data:
                 user.bio = update_data['bio']
             if 'aboutMe' in update_data:
@@ -249,6 +251,7 @@ class UserProfileService:
             username=user.username,
             fullName=full_name,
             title=user.title or '',
+            organization=user.organization or '',
             bio=user.bio or '',
             aboutMe=user.about_me or '',
             skills=skills,

@@ -85,6 +85,7 @@ class ProfileData(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     """Schema for updating profile information."""
     title: Optional[str] = None
+    organization: Optional[str] = None
     bio: Optional[str] = None
     aboutMe: Optional[str] = None
     coverPhotoUrl: Optional[str] = None
@@ -111,12 +112,19 @@ class ProfileUpdateRequest(BaseModel):
             raise ValueError('Title must be 255 characters or less')
         return v
 
+    @validator('organization')
+    def validate_organization(cls, v):
+        if v is not None and len(v) > 255:
+            raise ValueError('Organization must be 255 characters or less')
+        return v
+
 class ProfileResponse(BaseModel):
     """Schema for profile API responses."""
     user_id: int
     username: str
     fullName: str
     title: Optional[str] = None
+    organization: Optional[str] = None
     bio: Optional[str] = None
     aboutMe: Optional[str] = None
     skills: List[SkillItem] = []

@@ -30,6 +30,7 @@ export interface SkillItem {
 export interface ProfileData {
   fullName: string;
   title: string;
+  organization?: string;
   bio: string;
   aboutMe: string;
   skills: SkillItem[];
@@ -406,6 +407,22 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   value={formData.title}
                   onChange={handleChange}
                   className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label
+                  htmlFor="organization"
+                  className="text-right col-span-1 text-sm"
+                >
+                  Organization
+                </label>
+                <Input
+                  id="organization"
+                  name="organization"
+                  value={formData.organization || ""}
+                  onChange={handleChange}
+                  className="col-span-3"
+                  placeholder="Your organization or company"
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">

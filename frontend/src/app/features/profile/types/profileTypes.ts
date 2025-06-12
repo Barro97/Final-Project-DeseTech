@@ -13,6 +13,7 @@ export interface SkillItem {
 export interface ProfileData {
   fullName: string;
   title: string;
+  organization?: string;
   bio: string;
   aboutMe: string;
   skills: SkillItem[];
@@ -47,6 +48,7 @@ export interface ProfileResponse {
   username: string;
   fullName: string;
   title: string;
+  organization?: string;
   bio: string;
   aboutMe: string;
   skills: SkillItem[];
@@ -61,6 +63,7 @@ export interface ProfileResponse {
 
 export interface ProfileUpdateRequest {
   title?: string;
+  organization?: string;
   bio?: string;
   aboutMe?: string;
   coverPhotoUrl?: string;

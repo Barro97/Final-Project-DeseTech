@@ -230,9 +230,14 @@ const UserProfilePage = () => {
                   <h1 className="text-4xl font-bold text-gray-800 mb-2">
                     {profileData.fullName}
                   </h1>
-                  <p className="text-lg text-gray-600 mb-3">
+                  <p className="text-lg text-gray-600 mb-1">
                     {profileData.title}
                   </p>
+                  {profileData.organization && (
+                    <p className="text-md text-blue-600 font-medium mb-3">
+                      {profileData.organization}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 max-w-2xl leading-relaxed">
                     {profileData.bio}
                   </p>

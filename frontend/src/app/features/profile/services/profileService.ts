@@ -243,6 +243,7 @@ class ProfileService {
     return {
       fullName: profileResponse.fullName,
       title: profileResponse.title || "",
+      organization: profileResponse.organization || "",
       bio: profileResponse.bio || "",
       aboutMe: profileResponse.aboutMe || "",
       skills: profileResponse.skills || [],
@@ -281,6 +282,9 @@ class ProfileService {
 
     if (profileData.title !== undefined) {
       updatePayload.title = profileData.title;
+    }
+    if (profileData.organization !== undefined) {
+      updatePayload.organization = profileData.organization;
     }
     if (profileData.bio !== undefined) {
       updatePayload.bio = profileData.bio;

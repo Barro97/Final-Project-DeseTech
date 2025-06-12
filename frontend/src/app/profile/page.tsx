@@ -22,7 +22,8 @@ import {
   Zap,
   Database,
 } from "lucide-react";
-import { EditProfileModal, ProfileData } from "./EditProfileModal";
+import { EditProfileModal } from "./EditProfileModal";
+import { ProfileData } from "@/app/features/profile/types/profileTypes";
 import { profileService } from "@/app/features/profile/services/profileService";
 import { useQuery } from "@tanstack/react-query";
 import { getUserDatasets } from "@/app/features/dataset/services/datasetService";
@@ -73,6 +74,7 @@ const ProfilePage = () => {
           const defaultProfile: ProfileData = {
             fullName: user.email.split("@")[0] || "User", // Use email prefix as fallback
             title: "",
+            organization: "",
             bio: "",
             aboutMe: "",
             skills: [],
@@ -282,9 +284,14 @@ const ProfilePage = () => {
                   <h1 className="text-4xl font-bold text-gray-800 mb-2">
                     {profileData.fullName}
                   </h1>
-                  <p className="text-lg text-gray-600 mb-3">
+                  <p className="text-lg text-gray-600 mb-1">
                     {profileData.title || "Add your professional title"}
                   </p>
+                  {profileData.organization && (
+                    <p className="text-md text-blue-600 font-medium mb-3">
+                      {profileData.organization}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 max-w-2xl leading-relaxed">
                     {profileData.bio ||
                       "Add a short bio to tell others about yourself"}

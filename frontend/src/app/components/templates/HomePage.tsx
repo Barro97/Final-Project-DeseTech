@@ -20,6 +20,8 @@ import {
   Download,
   Upload,
   Search,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -115,18 +117,113 @@ function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Welcome Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">
-          Welcome back, {user.email.split("@")[0]}!
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Discover, share and manage your datasets all in one place.
-        </p>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 rounded-3xl mb-12 p-8 md:p-12 lg:p-16">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-200/30 to-purple-200/30 dark:from-blue-500/10 dark:to-purple-500/10 rounded-full -translate-y-32 translate-x-32 animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-indigo-200/40 to-blue-200/40 dark:from-indigo-500/10 dark:to-blue-500/10 rounded-full translate-y-24 -translate-x-24 animate-pulse animation-delay-1000"></div>
+
+        <div className="relative z-10 text-center max-w-4xl mx-auto">
+          {/* Welcome back message */}
+          <div className="mb-6 animate-in fade-in-50 slide-in-up duration-700">
+            <p className="text-lg text-blue-600 dark:text-blue-400 font-medium">
+              Welcome back, {user.email.split("@")[0]}!
+            </p>
+          </div>
+
+          {/* Main Tagline */}
+          <div className="mb-6 animate-in fade-in-50 slide-in-up duration-700 animation-delay-200">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent leading-tight mb-4">
+              Your Gateway to
+              <span className="inline-flex items-center ml-3">
+                Research Data
+                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-yellow-500 ml-2 animate-pulse" />
+              </span>
+            </h1>
+          </div>
+
+          {/* Description */}
+          <div className="mb-8 animate-in fade-in-50 slide-in-up duration-700 animation-delay-400">
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mx-auto">
+              Discover, share, and collaborate with the world's most
+              comprehensive
+              <span className="font-semibold text-gray-800 dark:text-gray-200">
+                {" "}
+                research dataset repository
+              </span>
+              . Empowering researchers to accelerate scientific discovery.
+            </p>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in-50 slide-in-up duration-700 animation-delay-600">
+            <Button
+              size="lg"
+              className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 text-lg font-semibold rounded-xl border-0 transform hover:scale-105"
+              asChild
+            >
+              <Link href="/datasets" className="flex items-center">
+                Explore Datasets
+                <Search className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-2 border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 text-lg font-semibold rounded-xl transform hover:scale-105"
+              asChild
+            >
+              <Link href="/upload" className="flex items-center">
+                Upload Dataset
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in-50 slide-in-up duration-700 animation-delay-800">
+            <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
+              <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                {stats.totalDatasets}+
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Total Datasets
+              </div>
+            </div>
+
+            <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
+              <div className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
+                {stats.myDatasets}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Your Datasets
+              </div>
+            </div>
+
+            <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
+              <div className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                {stats.totalDownloads.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Total Downloads
+              </div>
+            </div>
+
+            <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:scale-105">
+              <div className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                {stats.recentDownloads}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Recent Activity
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Statistics Cards */}
-      <h2 className="text-xl font-semibold mb-4">Overview</h2>
+      <h2 className="text-xl font-semibold mb-4">Platform Overview</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader className="pb-2">

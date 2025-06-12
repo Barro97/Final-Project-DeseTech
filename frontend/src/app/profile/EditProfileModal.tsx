@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/app/components/atoms/button";
 import {
   Dialog,
@@ -11,13 +11,29 @@ import {
 } from "@/app/components/atoms/dialog";
 import { Input } from "@/app/components/atoms/input";
 import { Textarea } from "@/app/components/atoms/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/molecules/select";
+import { Upload, X, Camera } from "lucide-react";
+import { profileService } from "@/app/features/profile/services/profileService";
+import { useAuth } from "@/app/features/auth/context/AuthContext";
+
+export interface SkillItem {
+  name: string;
+  category: string;
+}
 
 export interface ProfileData {
   fullName: string;
   title: string;
+  organization?: string;
   bio: string;
   aboutMe: string;
-  skills: string[];
+  skills: SkillItem[];
   projects: { id: number; name: string; description: string; link: string }[];
   contact: {
     email: string;
@@ -27,6 +43,8 @@ export interface ProfileData {
   };
   profilePictureUrl?: string;
   coverPhotoUrl?: string;
+  userId?: number;
+  username?: string;
 }
 
 interface EditProfileModalProps {
@@ -34,6 +52,7 @@ interface EditProfileModalProps {
   onClose: () => void;
   profileData: ProfileData;
   onSave: (updatedData: ProfileData) => void;
+  onProfilePictureUploaded?: () => void;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -41,11 +60,25 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onClose,
   profileData,
   onSave,
+  onProfilePictureUploaded,
 }) => {
+  const { user, token } = useAuth();
   const [formData, setFormData] = useState<ProfileData>(profileData);
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(
+    null
+  );
+  const [profilePicturePreview, setProfilePicturePreview] = useState<
+    string | null
+  >(null);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setFormData(profileData);
+    setProfilePictureFile(null);
+    setProfilePicturePreview(null);
+    setUploadError(null);
   }, [profileData, isOpen]); // Also reset form when modal is reopened with new data
 
   const handleChange = (
@@ -75,14 +108,21 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   };
 
-  const handleSkillChange = (index: number, value: string) => {
+  const handleSkillChange = (
+    index: number,
+    field: "name" | "category",
+    value: string
+  ) => {
     const newSkills = [...formData.skills];
-    newSkills[index] = value;
+    newSkills[index] = { ...newSkills[index], [field]: value };
     setFormData((prev) => ({ ...prev, skills: newSkills }));
   };
 
   const addSkill = () => {
-    setFormData((prev) => ({ ...prev, skills: [...prev.skills, ""] }));
+    setFormData((prev) => ({
+      ...prev,
+      skills: [...prev.skills, { name: "", category: "Other" }],
+    }));
   };
 
   const removeSkill = (index: number) => {
@@ -119,10 +159,120 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setFormData((prev) => ({ ...prev, projects: newProjects }));
   };
 
+  const handleProfilePictureChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File size must be less than 5MB");
+      return;
+    }
+
+    setUploadError(null);
+    setProfilePictureFile(file);
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setProfilePicturePreview(previewUrl);
+  };
+
+  const handleUploadProfilePicture = async () => {
+    if (!profilePictureFile || !user?.id || !token) return;
+
+    try {
+      setIsUploadingPicture(true);
+      setUploadError(null);
+
+      const result = await profileService.uploadProfilePicture(
+        user.id,
+        profilePictureFile,
+        token
+      );
+
+      console.log("🔍 Debug - Upload result:", result);
+      console.log(
+        "🔍 Debug - Profile picture URL:",
+        result.profile_picture_url
+      );
+      console.log("🔍 Debug - URL length:", result.profile_picture_url?.length);
+      console.log(
+        "🔍 Debug - URL ends with ?:",
+        result.profile_picture_url?.endsWith("?")
+      );
+
+      // Clean the URL on frontend as well
+      let cleanUrl = result.profile_picture_url;
+      if (cleanUrl && cleanUrl.endsWith("?")) {
+        cleanUrl = cleanUrl.slice(0, -1);
+        console.log("🔍 Debug - Cleaned URL on frontend:", cleanUrl);
+      }
+
+      // Update form data with new profile picture URL
+      setFormData((prev) => ({
+        ...prev,
+        profilePictureUrl: cleanUrl,
+      }));
+
+      // Clear the file input and preview
+      setProfilePictureFile(null);
+      setProfilePicturePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      console.log("Profile picture uploaded successfully:", result);
+
+      // Call the callback to refresh profile data if provided
+      if (onProfilePictureUploaded) {
+        console.log("🔍 Debug - Calling onProfilePictureUploaded callback");
+        onProfilePictureUploaded();
+      } else {
+        console.log("🔍 Debug - No onProfilePictureUploaded callback provided");
+      }
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload profile picture"
+      );
+    } finally {
+      setIsUploadingPicture(false);
+    }
+  };
+
+  const handleRemoveProfilePicturePreview = () => {
+    setProfilePictureFile(null);
+    setProfilePicturePreview(null);
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = () => {
     onSave(formData);
-    console.log("Updated profile data:", formData);
+    // console.log("Updated profile data:", formData);
     onClose();
+  };
+
+  // Helper function to get user initials for avatar fallback
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   if (!isOpen) return null;
@@ -146,6 +296,86 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
         <div className="overflow-y-auto flex-1 p-1 custom-scrollbar">
           <div className="grid gap-6 py-4">
+            {/* Profile Picture Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium leading-none">
+                Profile Picture
+              </h3>
+
+              <div className="flex items-center gap-4">
+                {/* Current Profile Picture */}
+                <div className="relative">
+                  {profilePicturePreview || formData.profilePictureUrl ? (
+                    <img
+                      src={profilePicturePreview || formData.profilePictureUrl}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-200"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold ring-2 ring-gray-200">
+                      {getUserInitials(formData.fullName)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="flex-1">
+                  <div className="flex gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPicture}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Choose Photo
+                    </Button>
+
+                    {profilePictureFile && (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleUploadProfilePicture}
+                          disabled={isUploadingPicture}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isUploadingPicture ? "Uploading..." : "Upload"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveProfilePicturePreview}
+                          disabled={isUploadingPicture}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureChange}
+                    className="hidden"
+                  />
+
+                  {uploadError && (
+                    <p className="text-sm text-red-600">{uploadError}</p>
+                  )}
+
+                  <p className="text-xs text-gray-500">
+                    JPG, PNG, GIF or WebP. Max size 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* General Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium leading-none">General</h3>
@@ -177,6 +407,22 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   value={formData.title}
                   onChange={handleChange}
                   className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label
+                  htmlFor="organization"
+                  className="text-right col-span-1 text-sm"
+                >
+                  Organization
+                </label>
+                <Input
+                  id="organization"
+                  name="organization"
+                  value={formData.organization || ""}
+                  onChange={handleChange}
+                  className="col-span-3"
+                  placeholder="Your organization or company"
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
@@ -220,11 +466,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <div key={index} className="flex items-center gap-2">
                   <Input
                     type="text"
-                    value={skill}
-                    onChange={(e) => handleSkillChange(index, e.target.value)}
+                    value={skill.name}
+                    onChange={(e) =>
+                      handleSkillChange(index, "name", e.target.value)
+                    }
                     className="flex-grow"
                     placeholder={`Skill ${index + 1}`}
                   />
+                  <Select
+                    value={skill.category}
+                    onValueChange={(value) =>
+                      handleSkillChange(index, "category", value)
+                    }
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Core Skills">Core Skills</SelectItem>
+                      <SelectItem value="Frameworks & Tools">
+                        Frameworks & Tools
+                      </SelectItem>
+                      <SelectItem value="Specializations">
+                        Specializations
+                      </SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="sm"

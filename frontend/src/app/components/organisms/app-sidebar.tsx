@@ -56,16 +56,6 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
     router.push("/login");
   };
 
-  // Debug user object
-  React.useEffect(() => {
-    console.log("AppSidebar - User object:", user);
-    if (user) {
-      console.log("AppSidebar - User role:", user.role);
-      console.log("AppSidebar - User role type:", typeof user.role);
-      console.log("AppSidebar - Is admin check:", user.role === "admin");
-    }
-  }, [user]);
-
   // Check if user is admin (case-insensitive)
   const isAdmin = user?.role?.toLowerCase() === "admin";
 

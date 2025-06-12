@@ -1,5 +1,12 @@
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, validator
+from enum import Enum
+
+class PrivacyLevel(str, Enum):
+    """Enumeration of available privacy levels for user profiles."""
+    PUBLIC = "public"
+    AUTHENTICATED = "authenticated"
+    PRIVATE = "private"
 
 class UserBase(BaseModel):
     """Base schema for user attributes, shared by other user-related schemas."""
@@ -42,3 +49,92 @@ class User(UserBase):
     class Config:
         """Pydantic configuration to allow ORM mode for mapping from SQLAlchemy models."""
         orm_mode = True
+
+# Profile-specific schemas
+class SkillItem(BaseModel):
+    """Schema for individual skill with category."""
+    name: str
+    category: Optional[str] = "Other"
+
+class ProjectItem(BaseModel):
+    """Schema for individual project/publication."""
+    id: int
+    name: str
+    description: str
+    link: str
+
+class ContactInfo(BaseModel):
+    """Schema for contact information with privacy controls."""
+    email: str
+    linkedin: str
+    twitter: str
+    orcid: str
+
+class ProfileData(BaseModel):
+    """Complete profile data schema matching frontend interface."""
+    fullName: str
+    title: str
+    bio: str
+    aboutMe: str
+    skills: List[SkillItem]
+    projects: List[ProjectItem]
+    contact: ContactInfo
+    profilePictureUrl: Optional[str] = None
+    coverPhotoUrl: Optional[str] = None
+
+class ProfileUpdateRequest(BaseModel):
+    """Schema for updating profile information."""
+    title: Optional[str] = None
+    organization: Optional[str] = None
+    bio: Optional[str] = None
+    aboutMe: Optional[str] = None
+    coverPhotoUrl: Optional[str] = None
+    skills: Optional[List[SkillItem]] = None
+    projects: Optional[List[ProjectItem]] = None
+    contact: Optional[ContactInfo] = None
+    privacy_level: Optional[PrivacyLevel] = None
+
+    @validator('bio')
+    def validate_bio(cls, v):
+        if v is not None and len(v) > 500:
+            raise ValueError('Bio must be 500 characters or less')
+        return v
+
+    @validator('aboutMe')
+    def validate_about_me(cls, v):
+        if v is not None and len(v) > 2000:
+            raise ValueError('About me must be 2000 characters or less')
+        return v
+
+    @validator('title')
+    def validate_title(cls, v):
+        if v is not None and len(v) > 255:
+            raise ValueError('Title must be 255 characters or less')
+        return v
+
+    @validator('organization')
+    def validate_organization(cls, v):
+        if v is not None and len(v) > 255:
+            raise ValueError('Organization must be 255 characters or less')
+        return v
+
+class ProfileResponse(BaseModel):
+    """Schema for profile API responses."""
+    user_id: int
+    username: str
+    fullName: str
+    title: Optional[str] = None
+    organization: Optional[str] = None
+    bio: Optional[str] = None
+    aboutMe: Optional[str] = None
+    skills: List[SkillItem] = []
+    projects: List[ProjectItem] = []
+    contact: ContactInfo
+    profilePictureUrl: Optional[str] = None
+    coverPhotoUrl: Optional[str] = None
+    privacy_level: str = "public"
+    profile_completion_percentage: int = 0
+    is_own_profile: bool = False
+
+    class Config:
+        from_attributes = True

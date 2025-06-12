@@ -1,21 +1,81 @@
-from fastapi import APIRouter, Depends,  status
+from fastapi import APIRouter, Depends, status, HTTPException, Request, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from backend.app.database.session import get_db
-from backend.app.features.authentication.utils.authorizations import permit_action
-from backend.app.features.user.schemas import UserCreate, UserUpdate, User as UserSchema
+from backend.app.features.authentication.utils.authorizations import permit_action, get_current_user, oauth2_scheme
+from backend.app.features.user.schemas import (
+    UserCreate, UserUpdate, User as UserSchema, 
+    ProfileUpdateRequest, ProfileResponse
+)
 from backend.app.features.user.crud import (
     create_user,
     get_user,
     update_user,
     delete_user,
 )
+from backend.app.features.user.services.profile_service import UserProfileService
+from backend.app.features.file.utils.upload import save_file
+from backend.app.database.models import User
 
 router = APIRouter(
     prefix="/users",
     tags=["users"]
 )
+
+async def get_optional_current_user(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Optional[dict]:
+    """
+    Get current user from Authorization header, but return None if no token or invalid token.
+    This allows for optional authentication on endpoints.
+    """
+    from fastapi.security.utils import get_authorization_scheme_param
+    
+    # Get token from Authorization header
+    authorization: str = request.headers.get("Authorization")
+    if not authorization:
+        return None
+    
+    scheme, token = get_authorization_scheme_param(authorization)
+    if scheme.lower() != "bearer" or not token:
+        return None
+    
+    try:
+        # Use existing get_current_user logic
+        from backend.app.features.authentication.utils.token_creation import verify_token
+        from backend.app.database.models import User
+        
+        payload = verify_token(token)
+        
+        # Check if token verification failed
+        if isinstance(payload, dict) and payload.get("error_message"):
+            return None
+        
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+            
+        # Convert user_id to int since it's stored as string in JWT
+        try:
+            user_id = int(user_id)
+        except (ValueError, TypeError):
+            return None
+        
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return None
+            
+        # Return a dictionary instead of the user object
+        return {
+            "user_id": user.user_id,
+            "email": user.email,
+            "role": user.role.role_name if user.role else None
+        }
+    except Exception:
+        # If token is invalid, return None instead of raising error
+        return None
 
 @router.post("/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
@@ -46,4 +106,220 @@ def delete_user_endpoint(user_id: int, db: Session = Depends(get_db),user = Depe
     """
     delete_user(db=db, user_id=user_id)
     return None
+
+
+# Profile-specific endpoints
+@router.get("/{user_id}/profile", response_model=ProfileResponse)
+async def get_user_profile(
+    user_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Optional[dict] = Depends(get_optional_current_user)
+):
+    """
+    Retrieve a user's complete profile with privacy filtering.
+    
+    Returns profile data based on privacy settings and viewer relationship.
+    Public profiles are viewable by anyone, authenticated profiles require login,
+    private profiles are only viewable by the owner.
+    
+    Authentication is optional - if no token is provided, only public profiles are accessible.
+    """
+    service = UserProfileService()
+    viewer_user_id = current_user["user_id"] if current_user else None
+    return service.get_profile(db, user_id, viewer_user_id)
+
+@router.get("/{user_id}/profile/public", response_model=ProfileResponse)
+def get_user_profile_public(user_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a user's public profile without authentication.
+    
+    Only returns data for public profiles. Useful for anonymous browsing
+    of researcher profiles.
+    """
+    service = UserProfileService()
+    return service.get_profile(db, user_id, viewer_user_id=None)
+
+@router.put("/{user_id}/profile", response_model=ProfileResponse)
+def update_user_profile(
+    user_id: int,
+    profile_data: ProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update a user's profile information.
+    
+    Only the profile owner can update their profile. Updates can be partial -
+    only provided fields will be updated. Profile completion percentage is
+    automatically recalculated.
+    
+    Authentication is required for profile updates.
+    """
+    service = UserProfileService()
+    return service.update_profile(db, user_id, profile_data, current_user["user_id"])
+
+@router.post("/{user_id}/profile/picture")
+async def upload_profile_picture(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Upload a profile picture for a user.
+    
+    Only the profile owner can update their profile picture.
+    Accepts image files (jpg, jpeg, png, gif, webp) up to a reasonable size.
+    Returns the URL of the uploaded image.
+    """
+    # Permission check - only profile owner can upload
+    if user_id != current_user["user_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Can only update your own profile picture"
+        )
+    
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be an image (jpg, jpeg, png, gif, webp)"
+        )
+    
+    # Validate file size (5MB limit)
+    file.file.seek(0, 2)  # Seek to end
+    file_size = file.file.tell()
+    file.file.seek(0)  # Seek back to start
+    
+    if file_size > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size must be less than 5MB"
+        )
+    
+    # Get user from database
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="User not found"
+        )
+    
+    try:
+        # Upload file using existing infrastructure
+        file_path, size = save_file(file)
+        
+        # List files in bucket to verify upload
+        from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
+        try:
+            bucket_files = client.storage.from_(SUPABASE_STORAGE_BUCKET).list()
+            print(f"🔍 Debug - Files in bucket: {len(bucket_files) if bucket_files else 0}")
+            # Check if our file exists
+            file_found = any(f.get('name', '').endswith(file.filename) for f in bucket_files) if bucket_files else False
+            print(f"🔍 Debug - Our file found in bucket: {file_found}")
+        except Exception as list_error:
+            print(f"🔍 Debug - Failed to list bucket files: {list_error}")
+        
+        # Get public URL for the uploaded file
+        from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
+        
+        # The file_path is actually the storage key/path, get the public URL
+        public_url_response = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(file_path)
+        
+
+        
+        print(f"🔍 Debug - file_path: {file_path}")
+        print(f"🔍 Debug - public_url_response type: {type(public_url_response)}")
+        print(f"🔍 Debug - public_url_response: {public_url_response}")
+        
+        # Try using signed URL instead of public URL for better compatibility
+        try:
+            # Create a long-term signed URL (1 year)
+            signed_url_result = client.storage.from_(SUPABASE_STORAGE_BUCKET).create_signed_url(file_path, 60*60*24*365)
+            print(f"🔍 Debug - signed_url_result: {signed_url_result}")
+            
+            if isinstance(signed_url_result, dict) and 'signedURL' in signed_url_result:
+                file_url = signed_url_result['signedURL']
+                print(f"🔍 Debug - Using signed URL: {file_url}")
+            else:
+                print(f"🔍 Debug - Signed URL failed, falling back to public URL")
+                # Fallback to public URL approach
+                if isinstance(public_url_response, dict):
+                    file_url = public_url_response.get('publicUrl') or public_url_response.get('publicURL') or public_url_response.get('url')
+                elif hasattr(public_url_response, 'url'):
+                    file_url = public_url_response.url
+                elif hasattr(public_url_response, 'publicUrl'):
+                    file_url = public_url_response.publicUrl
+                else:
+                    file_url = str(public_url_response)
+                    
+                print(f"🔍 Debug - extracted public file_url: {file_url}")
+                
+                # Clean up the URL - remove trailing query parameters if empty
+                if file_url and file_url.endswith('?'):
+                    file_url = file_url.rstrip('?')
+                    print(f"🔍 Debug - Cleaned URL (removed trailing ?): {file_url}")
+                
+        except Exception as signed_error:
+            print(f"🔍 Debug - Signed URL creation failed: {signed_error}")
+            # Fallback to public URL approach
+            if isinstance(public_url_response, dict):
+                file_url = public_url_response.get('publicUrl') or public_url_response.get('publicURL') or public_url_response.get('url')
+            elif hasattr(public_url_response, 'url'):
+                file_url = public_url_response.url
+            elif hasattr(public_url_response, 'publicUrl'):
+                file_url = public_url_response.publicUrl
+            else:
+                file_url = str(public_url_response)
+                
+            print(f"🔍 Debug - extracted fallback file_url: {file_url}")
+            
+            # Clean up the URL - remove trailing query parameters if empty
+            if file_url and file_url.endswith('?'):
+                file_url = file_url.rstrip('?')
+                print(f"🔍 Debug - Cleaned URL (removed trailing ?): {file_url}")
+        
+        # Final validation and manual construction if needed
+        if not file_url or not file_url.startswith('http'):
+            print(f"🔍 Debug - URL doesn't look valid, constructing manually")
+            # Fallback: construct URL manually
+            from backend.app.core.config import SUPABASE_URL
+            file_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_STORAGE_BUCKET}/{file_path}"
+            print(f"🔍 Debug - manual URL: {file_url}")
+        
+        print(f"🔍 Debug - Final URL being saved: {file_url}")
+        
+        # Test the URL by making a HEAD request to check if it's accessible
+        import urllib.request
+        try:
+            request = urllib.request.Request(file_url, method='HEAD')
+            with urllib.request.urlopen(request, timeout=10) as response:
+                print(f"🔍 Debug - URL accessibility test: {response.status} {response.reason}")
+                if response.status != 200:
+                    print(f"🔍 Debug - URL headers: {dict(response.headers)}")
+        except Exception as test_error:
+            print(f"🔍 Debug - URL accessibility test failed: {test_error}")
+            # Try with GET request
+            try:
+                with urllib.request.urlopen(file_url, timeout=10) as response:
+                    print(f"🔍 Debug - GET request test: {response.status} {response.reason}")
+            except Exception as get_error:
+                print(f"🔍 Debug - GET request also failed: {get_error}")
+        
+        # Update user's profile picture URL
+        user.profile_picture = file_url
+        db.commit()
+        
+        return {
+            "message": "Profile picture uploaded successfully",
+            "profile_picture_url": file_url,
+            "file_size": size
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload profile picture: {str(e)}"
+        )
 

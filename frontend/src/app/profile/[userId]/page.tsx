@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/app/components/atoms/button";
 import {
   Card,
@@ -22,7 +22,7 @@ import {
   Zap,
   Database,
 } from "lucide-react";
-import { EditProfileModal } from "./EditProfileModal";
+import { EditProfileModal } from "../EditProfileModal";
 import { ProfileData } from "@/app/features/profile/types/profileTypes";
 import { profileService } from "@/app/features/profile/services/profileService";
 import { useQuery } from "@tanstack/react-query";
@@ -30,9 +30,12 @@ import { getUserDatasets } from "@/app/features/dataset/services/datasetService"
 import type { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 
-const ProfilePage = () => {
+const UserProfilePage = () => {
   const { user, isLoading: authLoading, token } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const userId = params.userId as string;
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,62 +47,35 @@ const ProfilePage = () => {
     isLoading: isDatasetsLoading,
     error: datasetsError,
   } = useQuery({
-    queryKey: ["userDatasets", user?.id],
-    queryFn: () => getUserDatasets(user?.id?.toString() || ""),
-    enabled: !!user?.id,
+    queryKey: ["userDatasets", userId],
+    queryFn: () => getUserDatasets(userId),
+    enabled: !!userId,
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-      return;
-    }
-
     const fetchProfile = async () => {
-      if (!user?.id || !token) return;
-
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch user's own profile
-        const profile = await profileService.getProfile(user.id, token);
+        // Fetch profile data
+        const profile = await profileService.getProfile(
+          userId,
+          token || undefined
+        );
         setProfileData(profile);
       } catch (err) {
         console.error("Error fetching profile:", err);
         setError(err instanceof Error ? err.message : "Failed to load profile");
-
-        // If profile doesn't exist, create a default one
-        if (err instanceof Error && err.message.includes("Profile not found")) {
-          const defaultProfile: ProfileData = {
-            fullName: user.email.split("@")[0] || "User", // Use email prefix as fallback
-            title: "",
-            organization: "",
-            bio: "",
-            aboutMe: "",
-            skills: [],
-            projects: [],
-            contact: {
-              email: user.email || "",
-              linkedin: "",
-              twitter: "",
-              orcid: "",
-            },
-            profilePictureUrl: undefined,
-            coverPhotoUrl: undefined,
-          };
-          setProfileData(defaultProfile);
-          setError(null);
-        }
       } finally {
         setLoading(false);
       }
     };
 
-    if (!authLoading && user) {
+    if (!authLoading) {
       fetchProfile();
     }
-  }, [user, authLoading, token, router]);
+  }, [userId, user, token, authLoading]);
 
   const handleOpenEditModal = () => {
     setIsEditModalOpen(true);
@@ -111,17 +87,17 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async (updatedData: ProfileData) => {
     try {
-      if (!user?.id || !token) {
+      if (!token) {
         throw new Error("Authentication required");
       }
 
       const updated = await profileService.updateProfile(
-        user.id,
+        userId,
         updatedData,
         token
       );
       setProfileData(updated);
-      // console.log("Profile updated successfully:", updated);
+      console.log("Profile updated successfully:", updated);
     } catch (err) {
       console.error("Error updating profile:", err);
       setError(err instanceof Error ? err.message : "Failed to update profile");
@@ -129,11 +105,12 @@ const ProfilePage = () => {
   };
 
   const refreshProfile = async () => {
-    if (!user?.id || !token) return;
-
     try {
       setError(null);
-      const profile = await profileService.getProfile(user.id, token);
+      const profile = await profileService.getProfile(
+        userId,
+        token || undefined
+      );
       setProfileData(profile);
     } catch (err) {
       console.error("Error refreshing profile:", err);
@@ -152,15 +129,15 @@ const ProfilePage = () => {
     );
   }
 
-  // Error state (only show if not a "profile not found" error)
-  if (error && !profileData) {
+  // Error state
+  if (error) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold mb-2">Error</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
+            <Button onClick={() => router.back()}>Go Back</Button>
           </CardContent>
         </Card>
       </div>
@@ -173,14 +150,16 @@ const ProfilePage = () => {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-4">Unable to load your profile.</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <p className="text-gray-600 mb-4">
+            The requested profile could not be found.
+          </p>
+          <Button onClick={() => router.back()}>Go Back</Button>
         </div>
       </div>
     );
   }
 
-  const isOwnProfile = true; // This is always the user's own profile on this page
+  const isOwnProfile = profileData.isOwnProfile;
 
   // Helper function to get user initials for avatar fallback
   const getUserInitials = (name: string) => {
@@ -193,7 +172,6 @@ const ProfilePage = () => {
   };
 
   // Categorize skills - categories are now stored with each skill
-
   const categorizeSkills = () => {
     const categorized: { [key: string]: string[] } = {};
 
@@ -239,38 +217,6 @@ const ProfilePage = () => {
                       src={profileData.profilePictureUrl}
                       alt={profileData.fullName}
                       className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg object-cover transition-transform hover:scale-105"
-                      onError={(e) => {
-                        console.error(
-                          "🔍 Debug - Profile picture failed to load:",
-                          e
-                        );
-                        console.error(
-                          "🔍 Debug - Failed URL:",
-                          profileData.profilePictureUrl
-                        );
-                        console.error("🔍 Debug - Event target:", e.target);
-                        // Try to access the URL directly to test if it's accessible
-                        fetch(profileData.profilePictureUrl || "")
-                          .then((response) => {
-                            console.log(
-                              "🔍 Debug - URL fetch test response:",
-                              response.status,
-                              response.statusText
-                            );
-                          })
-                          .catch((error) => {
-                            console.error(
-                              "🔍 Debug - URL fetch test failed:",
-                              error
-                            );
-                          });
-                      }}
-                      onLoad={() => {
-                        console.log(
-                          "🔍 Debug - Profile picture loaded successfully:",
-                          profileData.profilePictureUrl
-                        );
-                      }}
                     />
                   ) : (
                     <div className="w-32 h-32 rounded-full ring-4 ring-white shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
@@ -285,7 +231,7 @@ const ProfilePage = () => {
                     {profileData.fullName}
                   </h1>
                   <p className="text-lg text-gray-600 mb-1">
-                    {profileData.title || "Add your professional title"}
+                    {profileData.title}
                   </p>
                   {profileData.organization && (
                     <p className="text-md text-blue-600 font-medium mb-3">
@@ -293,8 +239,7 @@ const ProfilePage = () => {
                     </p>
                   )}
                   <p className="text-sm text-gray-500 max-w-2xl leading-relaxed">
-                    {profileData.bio ||
-                      "Add a short bio to tell others about yourself"}
+                    {profileData.bio}
                   </p>
                 </div>
 
@@ -324,8 +269,7 @@ const ProfilePage = () => {
               </CardHeader>
               <CardContent className="px-6 pb-6">
                 <p className="text-gray-700 leading-relaxed max-w-prose">
-                  {profileData.aboutMe ||
-                    "Tell visitors about yourself! Add information about your background, research interests, and goals."}
+                  {profileData.aboutMe || "No additional information provided."}
                 </p>
               </CardContent>
             </Card>
@@ -336,37 +280,30 @@ const ProfilePage = () => {
                 <CardTitle className="text-2xl">Skills & Expertise</CardTitle>
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                {profileData.skills.length > 0 ? (
-                  <div className="space-y-6">
-                    {Object.entries(categorizedSkills).map(
-                      ([category, skills]) => (
-                        <div key={category}>
-                          <div className="flex items-center gap-2 mb-3">
-                            {getCategoryIcon(category)}
-                            <h3 className="font-semibold text-gray-800">
-                              {category}
-                            </h3>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {skills.map((skill) => (
-                              <span
-                                key={skill}
-                                className="bg-muted text-sm rounded-full px-3 py-1 font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-default"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
+                <div className="space-y-6">
+                  {Object.entries(categorizedSkills).map(
+                    ([category, skills]) => (
+                      <div key={category}>
+                        <div className="flex items-center gap-2 mb-3">
+                          {getCategoryIcon(category)}
+                          <h3 className="font-semibold text-gray-800">
+                            {category}
+                          </h3>
                         </div>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">
-                    Add your skills to showcase your expertise to other
-                    researchers.
-                  </p>
-                )}
+                        <div className="flex flex-wrap gap-2">
+                          {skills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="bg-muted text-sm rounded-full px-3 py-1 font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-default"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -407,7 +344,7 @@ const ProfilePage = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    Showcase your research projects and publications here.
+                    No projects or publications listed yet.
                   </p>
                 )}
               </CardContent>
@@ -498,10 +435,12 @@ const ProfilePage = () => {
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Database className="h-6 w-6 text-blue-600" />
-              <h2 className="text-3xl font-bold text-gray-800">My Datasets</h2>
+              <h2 className="text-3xl font-bold text-gray-800">
+                User Datasets
+              </h2>
             </div>
             <p className="text-gray-600 mt-2">
-              Manage and explore your uploaded datasets
+              Explore the datasets uploaded by {profileData.fullName}
             </p>
           </div>
 
@@ -542,8 +481,9 @@ const ProfilePage = () => {
                   No datasets yet
                 </h3>
                 <p className="text-gray-500">
-                  You haven&apos;t uploaded any datasets yet. Start sharing your
-                  research!
+                  {isOwnProfile
+                    ? "You haven't uploaded any datasets yet. Start sharing your research!"
+                    : `${profileData.fullName} hasn't uploaded any datasets yet.`}
                 </p>
               </div>
             )}
@@ -563,4 +503,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default UserProfilePage;

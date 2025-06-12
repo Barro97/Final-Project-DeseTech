@@ -9,6 +9,7 @@ import {
   CheckSquare,
   Menu,
   X,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
@@ -41,6 +42,12 @@ const navigation: NavItem[] = [
     label: "User Management",
     icon: <Users className="h-5 w-5" />,
     description: "Manage users and roles",
+  },
+  {
+    href: "/admin/tags",
+    label: "Tag Management",
+    icon: <Tag className="h-5 w-5" />,
+    description: "Manage dataset tags",
   },
 ];
 

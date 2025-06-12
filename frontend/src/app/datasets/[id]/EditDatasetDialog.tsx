@@ -24,6 +24,7 @@ import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileUpload } from "@/app/features/upload/components/organisms/FileUpload";
 import { FileItem } from "@/app/features/upload/types/file";
+import { TagSelector } from "@/app/features/tag/components/TagSelector";
 import "./editDatasetStyles.css";
 
 interface EditDatasetDialogProps {
@@ -58,6 +59,7 @@ export function EditDatasetDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newFiles, setNewFiles] = useState<FileItem[]>([]);
   const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Reset form when dialog opens (to fix the visual bug)
   useEffect(() => {
@@ -66,6 +68,7 @@ export function EditDatasetDialog({
       setDescription(dataset.dataset_description || "");
       setGeographicLocation(dataset.geographic_location || "");
       setDataTimePeriod(dataset.data_time_period || "");
+      setSelectedTags(dataset.tags || []);
       setNewFiles([]);
       setFilesToDelete([]);
     }
@@ -84,6 +87,7 @@ export function EditDatasetDialog({
     setDescription(dataset.dataset_description || "");
     setGeographicLocation(dataset.geographic_location || "");
     setDataTimePeriod(dataset.data_time_period || "");
+    setSelectedTags(dataset.tags || []);
     setNewFiles([]);
     setFilesToDelete([]);
   };
@@ -103,7 +107,8 @@ export function EditDatasetDialog({
         name !== dataset.dataset_name ||
         description !== dataset.dataset_description ||
         geographicLocation !== (dataset.geographic_location || "") ||
-        dataTimePeriod !== (dataset.data_time_period || "");
+        dataTimePeriod !== (dataset.data_time_period || "") ||
+        JSON.stringify(selectedTags) !== JSON.stringify(dataset.tags || []);
 
       if (hasMetadataChanges) {
         await updateDataset(datasetId, {
@@ -113,6 +118,7 @@ export function EditDatasetDialog({
           data_time_period: dataTimePeriod || undefined,
           uploader_id: dataset.uploader_id,
           downloads_count: dataset.downloads_count,
+          tags: selectedTags,
         });
       }
 
@@ -248,6 +254,18 @@ export function EditDatasetDialog({
                   Specify when the data was collected (different from upload
                   date)
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tags <span className="text-gray-500">(Optional)</span>
+                </label>
+                <TagSelector
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  placeholder="Select tags for your dataset..."
+                  disabled={isSubmitting}
+                />
               </div>
 
               {/* Existing Files */}

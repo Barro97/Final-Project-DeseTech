@@ -9,5 +9,5 @@ class Tag(Base):
     tag_id = Column(Integer, primary_key=True, autoincrement=True)
     tag_category_name = Column(String(255), nullable=False)
 
-    # Relationship to DatasetTag
-    datasets = relationship("DatasetTag", back_populates="tag") 
+    # Relationships
+    datasets = relationship("Dataset", secondary="dataset_tag", back_populates="tags") 

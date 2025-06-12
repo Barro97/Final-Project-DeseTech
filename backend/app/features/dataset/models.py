@@ -37,7 +37,7 @@ class Dataset(Base):
     comments = relationship("Comment", back_populates="dataset")
     files = relationship("File", back_populates="dataset")
     likes = relationship("Like", back_populates="dataset")
-    tags = relationship("DatasetTag", back_populates="dataset")
+    tags = relationship("Tag", secondary="dataset_tag", back_populates="datasets")
     owners = relationship("User", secondary=dataset_owner_table, back_populates="datasets_owned")
 
 # creation of the dataset-tag table for the proper relationship
@@ -47,9 +47,9 @@ class DatasetTag(Base):
     dataset_id = Column(Integer, ForeignKey('dataset.dataset_id'), primary_key=True)
     tag_id = Column(Integer, ForeignKey('tag.tag_id'), primary_key=True)
 
-    # Relationships
-    dataset = relationship("Dataset", back_populates="tags")
-    tag = relationship("Tag", back_populates="datasets")
+    # Relationships (without back_populates since we're using secondary table for many-to-many)
+    dataset = relationship("Dataset")
+    tag = relationship("Tag")
 
 # Admin audit trail model
 class AdminAudit(Base):

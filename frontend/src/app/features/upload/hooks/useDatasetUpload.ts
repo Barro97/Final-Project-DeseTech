@@ -9,6 +9,7 @@ export interface DatasetFormData {
   uploader_id: number;
   geographic_location?: string;
   data_time_period?: string;
+  tags?: string[];
 }
 
 export interface UploadProgressInfo {
@@ -58,7 +59,7 @@ export function useDatasetUpload() {
           dataset_description: formData.description,
           downloads_count: 0,
           uploader_id: formData.uploader_id,
-          tags: [],
+          tags: formData.tags || [],
           geographic_location: formData.geographic_location || null,
           data_time_period: formData.data_time_period || null,
         },

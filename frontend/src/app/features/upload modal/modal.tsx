@@ -23,6 +23,7 @@ import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { DatasetMetadataForm } from "./components/DatasetMetadataForm";
 import { DatasetFileUploadArea } from "./components/DatasetFileUploadArea";
 import { UploadProgressIndicator } from "./components/UploadProgressIndicator";
+import { TagSelector } from "@/app/features/tag/components/TagSelector";
 
 // Form values managed by react-hook-form
 interface UploadFormValues {
@@ -30,6 +31,7 @@ interface UploadFormValues {
   description: string;
   geographic_location?: string;
   data_time_period?: string;
+  tags?: string[];
 }
 
 export function UploadModal({
@@ -52,6 +54,7 @@ export function UploadModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const onSubmit = async (data: UploadFormValues) => {
     if (!user || typeof user.id === "undefined") {
@@ -82,6 +85,7 @@ export function UploadModal({
       const datasetPayload: DatasetFormData = {
         ...data,
         uploader_id: parseInt(user.id, 10),
+        tags: selectedTags,
       };
       const result = await uploadDataset(datasetPayload, files);
 
@@ -95,6 +99,7 @@ export function UploadModal({
         // Reset form and files
         resetForm();
         setFiles([]);
+        setSelectedTags([]);
 
         // Small delay to show success message, then redirect and close modal
         setTimeout(() => {
@@ -149,6 +154,7 @@ export function UploadModal({
       setFiles([]);
       resetUploadProgress();
       resetForm();
+      setSelectedTags([]);
     }
   }, [open, isSubmitting, resetForm, resetUploadProgress]);
 
@@ -177,6 +183,18 @@ export function UploadModal({
               errors={errors}
               isSubmitting={isSubmitting}
             />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Tags <span className="text-gray-500">(Optional)</span>
+              </label>
+              <TagSelector
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                placeholder="Select tags for your dataset..."
+                disabled={isSubmitting}
+              />
+            </div>
 
             <DatasetFileUploadArea
               files={files}

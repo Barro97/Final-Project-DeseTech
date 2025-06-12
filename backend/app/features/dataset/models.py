@@ -22,6 +22,10 @@ class Dataset(Base):
     downloads_count = Column(Integer, nullable=False, server_default=text("0"))
     uploader_id = Column(Integer, ForeignKey('users.user_id'))
     
+    # Agricultural research context fields
+    geographic_location = Column(Text, nullable=True)  # Location where data was collected (country, region, farm, coordinates, etc.)
+    data_time_period = Column(String(100), nullable=True)  # Time period when data was relevant (e.g., "2020-2023", "Growing season 2022")
+    
     # Admin approval fields
     approval_status = Column(String(20), nullable=False, server_default=text("'pending'"))
     approved_by = Column(Integer, ForeignKey('users.user_id'), nullable=True)

@@ -31,6 +31,9 @@ class DatasetResponse(BaseModel):
     dataset_last_updated: Optional[datetime] = None
     owners: List[int] = []
     tags: List[str] = []
+    # Agricultural research context fields
+    geographic_location: Optional[str] = None
+    data_time_period: Optional[str] = None
     # Approval fields
     approval_status: Optional[str] = None  # "pending", "approved", "rejected"
     approved_by: Optional[int] = None

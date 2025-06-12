@@ -16,6 +16,9 @@ export interface Dataset {
   approval_status?: string; // "pending", "approved", "rejected"
   approved_by?: number;
   approval_date?: string;
+  // Agricultural research context fields
+  geographic_location?: string; // e.g., "Kenya, Nairobi County", "Farm XYZ, coordinates: 1.2921, 36.8219"
+  data_time_period?: string; // e.g., "2020-2023", "Growing season 2022", "January-March 2024"
 }
 
 export interface DatasetFile {

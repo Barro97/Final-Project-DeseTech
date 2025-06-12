@@ -9,6 +9,8 @@ class DatasetCreateInternal(BaseModel):
     dataset_description: Optional[str] = None
     uploader_id: int
     tags: List[str] = []
+    geographic_location: Optional[str] = None
+    data_time_period: Optional[str] = None
 
 
 class DatasetUpdateInternal(BaseModel):
@@ -17,6 +19,8 @@ class DatasetUpdateInternal(BaseModel):
     dataset_description: Optional[str] = None
     tags: Optional[List[str]] = None
     dataset_last_updated: datetime = None
+    geographic_location: Optional[str] = None
+    data_time_period: Optional[str] = None
 
 
 class DatasetFilterInternal(BaseModel):

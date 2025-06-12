@@ -28,6 +28,8 @@ import { UploadProgressIndicator } from "./components/UploadProgressIndicator";
 interface UploadFormValues {
   name: string;
   description: string;
+  geographic_location?: string;
+  data_time_period?: string;
 }
 
 export function UploadModal({

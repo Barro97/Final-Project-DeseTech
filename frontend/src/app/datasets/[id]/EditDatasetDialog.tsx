@@ -49,6 +49,12 @@ export function EditDatasetDialog({
   const [description, setDescription] = useState(
     dataset.dataset_description || ""
   );
+  const [geographicLocation, setGeographicLocation] = useState(
+    dataset.geographic_location || ""
+  );
+  const [dataTimePeriod, setDataTimePeriod] = useState(
+    dataset.data_time_period || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newFiles, setNewFiles] = useState<FileItem[]>([]);
   const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
@@ -58,6 +64,8 @@ export function EditDatasetDialog({
     if (isOpen) {
       setName(dataset.dataset_name);
       setDescription(dataset.dataset_description || "");
+      setGeographicLocation(dataset.geographic_location || "");
+      setDataTimePeriod(dataset.data_time_period || "");
       setNewFiles([]);
       setFilesToDelete([]);
     }
@@ -74,6 +82,8 @@ export function EditDatasetDialog({
   const resetForm = () => {
     setName(dataset.dataset_name);
     setDescription(dataset.dataset_description || "");
+    setGeographicLocation(dataset.geographic_location || "");
+    setDataTimePeriod(dataset.data_time_period || "");
     setNewFiles([]);
     setFilesToDelete([]);
   };
@@ -91,12 +101,16 @@ export function EditDatasetDialog({
       // 1. Update dataset metadata
       const hasMetadataChanges =
         name !== dataset.dataset_name ||
-        description !== dataset.dataset_description;
+        description !== dataset.dataset_description ||
+        geographicLocation !== (dataset.geographic_location || "") ||
+        dataTimePeriod !== (dataset.data_time_period || "");
 
       if (hasMetadataChanges) {
         await updateDataset(datasetId, {
           dataset_name: name,
           dataset_description: description,
+          geographic_location: geographicLocation || undefined,
+          data_time_period: dataTimePeriod || undefined,
           uploader_id: dataset.uploader_id,
           downloads_count: dataset.downloads_count,
         });
@@ -188,6 +202,52 @@ export function EditDatasetDialog({
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full p-2 border rounded-md h-24 dark:bg-gray-800"
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="geographic_location"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Geographic Location{" "}
+                  <span className="text-gray-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="geographic_location"
+                  value={geographicLocation}
+                  onChange={(e) => setGeographicLocation(e.target.value)}
+                  className="w-full p-2 border rounded-md dark:bg-gray-800"
+                  placeholder="e.g., Kenya, Nairobi County; Farm coordinates: 1.2921, 36.8219"
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Specify where the data was collected (country, region, farm,
+                  coordinates, etc.)
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="data_time_period"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Data Time Period{" "}
+                  <span className="text-gray-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="data_time_period"
+                  value={dataTimePeriod}
+                  onChange={(e) => setDataTimePeriod(e.target.value)}
+                  className="w-full p-2 border rounded-md dark:bg-gray-800"
+                  placeholder="e.g., 2020-2023, Growing season 2022, January-March 2024"
+                  maxLength={100}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Specify when the data was collected (different from upload
+                  date)
+                </p>
               </div>
 
               {/* Existing Files */}

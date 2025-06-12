@@ -9,6 +9,9 @@ class DatasetCreateRequest(BaseModel):
     dataset_description: Optional[str] = Field(None, max_length=2000)
     uploader_id: int = Field(..., gt=0)
     tags: List[str] = Field(default_factory=list, max_items=20)
+    # Agricultural research context fields (optional but recommended)
+    geographic_location: Optional[str] = Field(None, max_length=500)
+    data_time_period: Optional[str] = Field(None, max_length=100)
 
     @validator('dataset_name')
     def validate_name(cls, v):
@@ -17,6 +20,24 @@ class DatasetCreateRequest(BaseModel):
     @validator('dataset_description')
     def validate_description(cls, v):
         return validate_dataset_description(v)
+
+    @validator('geographic_location')
+    def validate_geographic_location(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) > 500:
+                raise ValueError('Geographic location cannot exceed 500 characters')
+            return v if v else None
+        return v
+
+    @validator('data_time_period')
+    def validate_data_time_period(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) > 100:
+                raise ValueError('Data time period cannot exceed 100 characters')
+            return v if v else None
+        return v
 
     @validator('tags')
     def validate_tags(cls, v):
@@ -31,6 +52,9 @@ class DatasetUpdateRequest(BaseModel):
     dataset_name: Optional[str] = Field(None, min_length=3, max_length=200)
     dataset_description: Optional[str] = Field(None, max_length=2000)
     tags: Optional[List[str]] = Field(None, max_items=20)
+    # Agricultural research context fields (optional)
+    geographic_location: Optional[str] = Field(None, max_length=500)
+    data_time_period: Optional[str] = Field(None, max_length=100)
 
     @validator('dataset_name')
     def validate_name(cls, v):
@@ -42,6 +66,24 @@ class DatasetUpdateRequest(BaseModel):
     def validate_description(cls, v):
         if v is not None:
             return validate_dataset_description(v)
+        return v
+
+    @validator('geographic_location')
+    def validate_geographic_location(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) > 500:
+                raise ValueError('Geographic location cannot exceed 500 characters')
+            return v if v else None
+        return v
+
+    @validator('data_time_period')
+    def validate_data_time_period(cls, v):
+        if v is not None:
+            v = v.strip()
+            if len(v) > 100:
+                raise ValueError('Data time period cannot exceed 100 characters')
+            return v if v else None
         return v
 
     @validator('tags')

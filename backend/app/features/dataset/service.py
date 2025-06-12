@@ -159,7 +159,9 @@ class DatasetService:
                 dataset_description=request.dataset_description,
                 uploader_id=request.uploader_id,
                 downloads_count=0,  # Always start with 0 downloads
-                approval_status='pending'  # New datasets require approval
+                approval_status='pending',  # New datasets require approval
+                geographic_location=request.geographic_location,
+                data_time_period=request.data_time_period
             )
 
             # STEP 3: Process tags - create new ones if they don't exist
@@ -321,6 +323,13 @@ class DatasetService:
             
             if request.dataset_description is not None:
                 updates['dataset_description'] = request.dataset_description
+            
+            # Agricultural research context fields (optional)
+            if request.geographic_location is not None:
+                updates['geographic_location'] = request.geographic_location
+            
+            if request.data_time_period is not None:
+                updates['data_time_period'] = request.data_time_period
             
             # Always update the last modified timestamp on any change
             updates['dataset_last_updated'] = datetime.now()
@@ -888,5 +897,8 @@ class DatasetService:
             # APPROVAL FIELDS: Include approval status information
             approval_status=dataset.approval_status,
             approved_by=dataset.approved_by,
-            approval_date=dataset.approval_date
+            approval_date=dataset.approval_date,
+            # AGRICULTURAL RESEARCH CONTEXT FIELDS: Include location and time period
+            geographic_location=dataset.geographic_location,
+            data_time_period=dataset.data_time_period
         ) 

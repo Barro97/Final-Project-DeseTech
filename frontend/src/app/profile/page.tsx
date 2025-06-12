@@ -224,15 +224,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Cover Photo */}
-      <div
-        className="h-48 md:h-64 bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${profileData.coverPhotoUrl || "https://via.placeholder.com/1000x300"})`,
-        }}
-      ></div>
-
-      <div className="container mx-auto px-4 -mt-16 sm:-mt-24 pb-12">
+      <div className="container mx-auto px-4 pt-8 pb-12">
         {/* Enhanced Profile Header with Gradient Background */}
         <Card className="mb-8 overflow-hidden shadow-lg rounded-2xl border-gray-200 dark:border-gray-700">
           <div className="bg-gradient-to-r from-indigo-100 to-sky-100 px-6 pt-6 pb-2">
@@ -415,7 +407,7 @@ const ProfilePage = () => {
             </Card>
 
             {/* Enhanced Contact Section with Icons */}
-            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg lg:sticky lg:top-24 border-gray-200 dark:border-gray-700">
+            <Card className="shadow-md rounded-2xl transition-shadow hover:shadow-lg border-gray-200 dark:border-gray-700">
               <CardHeader className="p-6">
                 <CardTitle className="text-xl">Contact Information</CardTitle>
               </CardHeader>

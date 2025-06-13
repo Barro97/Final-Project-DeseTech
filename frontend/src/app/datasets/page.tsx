@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import {
   Search as SearchIcon,
@@ -123,10 +123,12 @@ const DatasetCarouselSectionPlaceholder = ({
   title,
   onSeeAll,
   datasets,
+  isLoading,
 }: {
   title: string;
   onSeeAll: () => void;
   datasets: Dataset[];
+  isLoading?: boolean;
 }) => (
   <div className="p-4 my-6">
     <div className="flex justify-between items-center mb-3">
@@ -141,17 +143,27 @@ const DatasetCarouselSectionPlaceholder = ({
         See all &rarr;
       </Button>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {datasets.map((dataset) => (
-        <DatasetCard
-          key={dataset.dataset_id}
-          dataset={dataset}
-          isSelected={false}
-          onSelect={() => {}}
-          showSelectionCheckbox={false}
-        />
-      ))}
-    </div>
+    {isLoading ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, index) => (
+          <div key={index} className="animate-pulse">
+            <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {datasets.map((dataset) => (
+          <DatasetCard
+            key={dataset.dataset_id}
+            dataset={dataset}
+            isSelected={false}
+            onSelect={() => {}}
+            showSelectionCheckbox={false}
+          />
+        ))}
+      </div>
+    )}
   </div>
 );
 
@@ -429,388 +441,6 @@ const SearchControlsToolbar = ({
   );
 };
 
-const DUMMY_DATASETS: Dataset[] = [
-  {
-    dataset_id: 1,
-    dataset_name: "Climate Change Data 2023",
-    date_of_creation: "2023-01-15",
-    dataset_last_updated: "2023-06-20",
-    dataset_description:
-      "Global temperature and CO2 measurements from 2000-2023",
-    downloads_count: 235,
-    uploader_id: 1,
-    owners: [1],
-    thumbnailUrl: "/placeholders/climate-data-thumb.png",
-    size: "150 MB",
-    license: "CC BY 4.0",
-    tags: ["Climate", "Environment", "Temperature"],
-    file_types: ["CSV", "TXT"],
-    row_count: 150000,
-  },
-  {
-    dataset_id: 2,
-    dataset_name: "COVID-19 Statistics",
-    date_of_creation: "2022-03-10",
-    dataset_description: "Worldwide COVID-19 cases, recoveries, and fatalities",
-    downloads_count: 782,
-    uploader_id: 2,
-    owners: [2, 3],
-    thumbnailUrl: "/placeholders/covid-stats-thumb.png",
-    size: "50 MB",
-    license: "Public Domain",
-    tags: ["Health", "COVID-19", "Statistics"],
-    file_types: ["JSON", "CSV"],
-    row_count: 500000,
-  },
-  {
-    dataset_id: 3,
-    dataset_name: "Stock Market Analysis 2022",
-    date_of_creation: "2022-12-05",
-    dataset_description:
-      "Historical stock data for major indices and tech companies",
-    downloads_count: 547,
-    uploader_id: 1,
-    owners: [1, 4],
-    thumbnailUrl: "/placeholders/stock-market-thumb.png",
-    size: "320 MB",
-    license: "Proprietary",
-    tags: ["Finance", "Stocks", "Analysis"],
-    file_types: ["Parquet", "CSV"],
-    row_count: 1200000,
-  },
-  {
-    dataset_id: 4,
-    dataset_name: "Global Population Trends",
-    date_of_creation: "2023-02-18",
-    dataset_description:
-      "Population data by country with growth rates and demographics",
-    downloads_count: 329,
-    uploader_id: 3,
-    owners: [3],
-    thumbnailUrl: "/placeholders/population-thumb.png",
-    size: "75 MB",
-    license: "Open Data Commons",
-    tags: ["Demographics", "Population", "Global"],
-    file_types: ["XML"],
-    row_count: 80000,
-  },
-  {
-    dataset_id: 5,
-    dataset_name: "Renewable Energy Projects",
-    date_of_creation: "2023-05-22",
-    dataset_description: "Data on solar, wind, and hydro projects worldwide",
-    downloads_count: 156,
-    uploader_id: 2,
-    owners: [2],
-    thumbnailUrl: "/placeholders/renewable-energy-thumb.png",
-    size: "45 MB",
-    license: "CC BY-SA 4.0",
-    tags: ["Energy", "Renewable", "Projects"],
-    file_types: ["JSON"],
-    row_count: 10000,
-  },
-  {
-    dataset_id: 6,
-    dataset_name: "Healthcare Spending Analysis",
-    date_of_creation: "2022-09-14",
-    dataset_description:
-      "Comparative analysis of healthcare spending across countries",
-    downloads_count: 413,
-    uploader_id: 4,
-    owners: [4, 1],
-    thumbnailUrl: "/placeholders/healthcare-spending-thumb.png",
-    size: "120 MB",
-    license: "CC BY-NC 4.0",
-    tags: ["Health", "Economics", "Healthcare"],
-    file_types: ["CSV", "JSON"],
-    row_count: 250000,
-  },
-  {
-    dataset_id: 7,
-    dataset_name: "Educational Outcomes Research",
-    date_of_creation: "2023-04-03",
-    dataset_description:
-      "Student performance metrics across various educational systems",
-    downloads_count: 287,
-    uploader_id: 3,
-    owners: [3, 2],
-    thumbnailUrl: "/placeholders/education-outcomes-thumb.png",
-    size: "90 MB",
-    license: "CC BY 4.0",
-    tags: ["Education", "Research", "Social Science"],
-    file_types: ["CSV"],
-    row_count: 100000,
-  },
-  {
-    dataset_id: 8,
-    dataset_name: "Urban Transportation Data",
-    date_of_creation: "2022-11-29",
-    dataset_description:
-      "Public transit usage and traffic patterns in major cities",
-    downloads_count: 198,
-    uploader_id: 1,
-    owners: [1],
-    thumbnailUrl: "/placeholders/urban-transport-thumb.png",
-    size: "200 MB",
-    license: "Open Data Commons",
-    tags: ["Transportation", "Urban", "Smart City"],
-    file_types: ["CSV"],
-    row_count: 100000,
-  },
-  {
-    dataset_id: 9,
-    dataset_name: "E-commerce Consumer Behavior",
-    date_of_creation: "2023-03-17",
-    dataset_description:
-      "Shopping patterns and consumer preferences in online retail",
-    downloads_count: 376,
-    uploader_id: 2,
-    owners: [2],
-    thumbnailUrl: "/placeholders/ecommerce-thumb.png",
-    size: "65 MB",
-    license: "Proprietary",
-    tags: ["Business", "E-commerce", "Consumer Behavior"],
-    file_types: ["CSV"],
-    row_count: 50000,
-  },
-  {
-    dataset_id: 10,
-    dataset_name: "Satellite Imagery Collection",
-    date_of_creation: "2022-08-05",
-    dataset_description:
-      "High-resolution satellite images for environmental monitoring",
-    downloads_count: 524,
-    uploader_id: 4,
-    owners: [4],
-    thumbnailUrl: "/placeholders/satellite-imagery-thumb.png",
-    size: "1.2 GB",
-    license: "CC BY-NC-ND 4.0",
-    tags: ["Environment", "Remote Sensing", "Geography"],
-    row_count: 5000,
-  },
-  {
-    dataset_id: 11,
-    dataset_name: "Social Media Usage Patterns",
-    date_of_creation: "2023-01-30",
-    dataset_description:
-      "Analysis of user engagement across major social platforms",
-    downloads_count: 632,
-    uploader_id: 3,
-    owners: [3, 1],
-    thumbnailUrl: "/placeholders/social-media-thumb.png",
-    size: "30 MB",
-    license: "CC BY 4.0",
-    tags: ["Social Media", "Analytics", "Digital Trends"],
-    file_types: ["CSV"],
-    row_count: 20000,
-  },
-  {
-    dataset_id: 12,
-    dataset_name: "Agricultural Yield Data",
-    date_of_creation: "2022-10-12",
-    dataset_description:
-      "Crop yields and farming practices across different regions",
-    downloads_count: 245,
-    uploader_id: 2,
-    owners: [2, 4],
-    thumbnailUrl: "/placeholders/agri-yield-thumb.png",
-    size: "180 MB",
-    license: "Open Data Commons",
-    tags: ["Agriculture", "Food Security", "Farming"],
-    file_types: ["CSV", "Parquet"],
-    row_count: 300000,
-  },
-  {
-    dataset_id: 13,
-    dataset_name: "Ocean Temperature Readings",
-    date_of_creation: "2023-06-08",
-    dataset_description: "Oceanic temperature measurements from buoy networks",
-    downloads_count: 189,
-    uploader_id: 1,
-    owners: [1],
-    thumbnailUrl: "/placeholders/ocean-temp-thumb.png",
-    size: "95 MB",
-    license: "CC BY 4.0",
-    tags: ["Oceanography", "Climate", "Marine Science"],
-    file_types: ["CSV"],
-    row_count: 50000,
-  },
-  {
-    dataset_id: 14,
-    dataset_name: "Mental Health Statistics",
-    date_of_creation: "2022-07-20",
-    dataset_description:
-      "Survey data on mental health conditions and treatments",
-    downloads_count: 421,
-    uploader_id: 3,
-    owners: [3],
-    thumbnailUrl: "/placeholders/mental-health-thumb.png",
-    size: "40 MB",
-    license: "Public Domain",
-    tags: ["Health", "Psychology", "Well-being"],
-    file_types: ["CSV"],
-    row_count: 20000,
-  },
-  {
-    dataset_id: 15,
-    dataset_name: "Renewable Energy Adoption",
-    date_of_creation: "2023-02-14",
-    dataset_description:
-      "Trends in renewable energy adoption across industries",
-    downloads_count: 356,
-    uploader_id: 4,
-    owners: [4, 2],
-    thumbnailUrl: "/placeholders/renewable-adoption-thumb.png",
-    size: "60 MB",
-    license: "CC BY-SA 4.0",
-    tags: ["Energy", "Sustainability", "Economics"],
-    file_types: ["CSV"],
-    row_count: 100000,
-  },
-  {
-    dataset_id: 16,
-    dataset_name: "Housing Market Trends",
-    date_of_creation: "2022-11-05",
-    dataset_description:
-      "Real estate prices and market activity in major cities",
-    downloads_count: 508,
-    uploader_id: 1,
-    owners: [1, 3],
-    thumbnailUrl: "/placeholders/housing-market-thumb.png",
-    size: "250 MB",
-    license: "Proprietary",
-    tags: ["Real Estate", "Finance", "Urban Development"],
-    file_types: ["CSV"],
-    row_count: 1000000,
-  },
-  {
-    dataset_id: 17,
-    dataset_name: "Air Quality Measurements",
-    date_of_creation: "2023-04-22",
-    dataset_description:
-      "Pollution levels and air quality indices from urban areas",
-    downloads_count: 274,
-    uploader_id: 2,
-    owners: [2],
-    thumbnailUrl: "/placeholders/air-quality-thumb.png",
-    size: "110 MB",
-    license: "CC BY-NC 4.0",
-    tags: ["Environment", "Public Health", "Pollution"],
-    file_types: ["CSV"],
-    row_count: 50000,
-  },
-  {
-    dataset_id: 18,
-    dataset_name: "Cybersecurity Incidents",
-    date_of_creation: "2022-12-18",
-    dataset_description:
-      "Anonymized data on major cybersecurity breaches and attacks",
-    downloads_count: 693,
-    uploader_id: 4,
-    owners: [4],
-    thumbnailUrl: "/placeholders/cybersecurity-thumb.png",
-    size: "25 MB",
-    license: "Open Data Commons",
-    tags: ["Security", "Technology", "Cybercrime"],
-    file_types: ["JSON", "TXT"],
-    row_count: 15000,
-  },
-  {
-    dataset_id: 19,
-    dataset_name: "Remote Work Productivity",
-    date_of_creation: "2023-03-05",
-    dataset_description:
-      "Comparative analysis of productivity in remote vs. office settings",
-    downloads_count: 312,
-    uploader_id: 3,
-    owners: [3, 1],
-    thumbnailUrl: "/placeholders/remote-work-thumb.png",
-    size: "35 MB",
-    license: "CC BY 4.0",
-    tags: ["Work", "Productivity", "Future of Work"],
-    file_types: ["CSV"],
-    row_count: 20000,
-  },
-  {
-    dataset_id: 20,
-    dataset_name: "Biodiversity Surveys",
-    date_of_creation: "2022-09-30",
-    dataset_description:
-      "Species diversity and ecosystem health across various biomes",
-    downloads_count: 267,
-    uploader_id: 2,
-    owners: [2, 4],
-    thumbnailUrl: "/placeholders/biodiversity-thumb.png",
-    size: "300 MB",
-    license: "CC BY-NC-SA 4.0",
-    tags: ["Biology", "Ecology", "Conservation"],
-    file_types: ["CSV"],
-    row_count: 1000000,
-  },
-  {
-    dataset_id: 21,
-    dataset_name: "Vaccine Efficacy Studies",
-    date_of_creation: "2023-05-11",
-    dataset_description:
-      "Comparative analysis of vaccine efficacy and side effects",
-    downloads_count: 529,
-    uploader_id: 1,
-    owners: [1],
-    thumbnailUrl: "/placeholders/vaccine-efficacy-thumb.png",
-    size: "80 MB",
-    license: "Public Domain",
-    tags: ["Health", "Medicine", "Vaccines"],
-    file_types: ["CSV"],
-    row_count: 50000,
-  },
-  {
-    dataset_id: 22,
-    dataset_name: "Consumer Price Index Data",
-    date_of_creation: "2022-10-24",
-    dataset_description: "Historical CPI data with regional comparisons",
-    downloads_count: 345,
-    uploader_id: 3,
-    owners: [3],
-    thumbnailUrl: "/placeholders/cpi-data-thumb.png",
-    size: "130 MB",
-    license: "Open Data Commons",
-    tags: ["Economics", "Finance", "Inflation"],
-    file_types: ["CSV"],
-    row_count: 100000,
-  },
-  {
-    dataset_id: 23,
-    dataset_name: "Digital Literacy Survey",
-    date_of_creation: "2023-01-19",
-    dataset_description:
-      "Assessment of digital skills across different demographics",
-    downloads_count: 216,
-    uploader_id: 2,
-    owners: [2, 1],
-    thumbnailUrl: "/placeholders/digital-literacy-thumb.png",
-    size: "20 MB",
-    license: "CC BY 4.0",
-    tags: ["Education", "Technology", "Social Equity"],
-    file_types: ["CSV"],
-    row_count: 20000,
-  },
-  {
-    dataset_id: 24,
-    dataset_name: "Renewable Water Resources",
-    date_of_creation: "2022-08-17",
-    dataset_description: "Freshwater availability and usage patterns globally",
-    downloads_count: 183,
-    uploader_id: 4,
-    owners: [4],
-    thumbnailUrl: "/placeholders/water-resources-thumb.png",
-    size: "220 MB",
-    license: "CC BY-NC 4.0",
-    tags: ["Environment", "Water", "Sustainability"],
-    file_types: ["CSV"],
-    row_count: 1000000,
-  },
-];
-
 // Real API call function to replace the mock
 const fetchDatasets = async (
   page: number,
@@ -831,7 +461,7 @@ const fetchDatasets = async (
 };
 
 export default function SearchDatasetsPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
   const { ref: loadMoreRef, inView } = useInView();
 
@@ -841,6 +471,57 @@ export default function SearchDatasetsPage() {
   const [currentSort, setCurrentSort] = useState("newest");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // Calculate date filters for meaningful sections
+  const getFirstDayOfMonth = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    return firstDay.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+  };
+
+  const getSevenDaysAgo = () => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return sevenDaysAgo.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+  };
+
+  // Fetch data for landing page carousels
+  const { data: mostDownloadedData, isLoading: isLoadingMostDownloaded } =
+    useQuery({
+      queryKey: ["datasets", "most-downloaded"],
+      queryFn: () => searchDatasets({ sort_by: "downloads", limit: 4 }),
+      enabled: !isAuthLoading,
+    });
+
+  const { data: recentlyAddedData, isLoading: isLoadingRecentlyAdded } =
+    useQuery({
+      queryKey: ["datasets", "recently-added"],
+      queryFn: () => searchDatasets({ sort_by: "newest", limit: 4 }),
+      enabled: !isAuthLoading,
+    });
+
+  const { data: thisMonthData, isLoading: isLoadingThisMonth } = useQuery({
+    queryKey: ["datasets", "this-month"],
+    queryFn: () =>
+      searchDatasets({
+        date_from: getFirstDayOfMonth(),
+        sort_by: "newest",
+        limit: 4,
+      }),
+    enabled: !isAuthLoading,
+  });
+
+  const { data: popularThisWeekData, isLoading: isLoadingPopularThisWeek } =
+    useQuery({
+      queryKey: ["datasets", "popular-this-week"],
+      queryFn: () =>
+        searchDatasets({
+          date_from: getSevenDaysAgo(),
+          sort_by: "downloads",
+          limit: 4,
+        }),
+      enabled: !isAuthLoading,
+    });
 
   const {
     data,
@@ -874,7 +555,7 @@ export default function SearchDatasetsPage() {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length + 1 : undefined,
     initialPageParam: 1,
-    enabled: !isAuthLoading,
+    enabled: !isAuthLoading && viewMode === "results",
   });
 
   useEffect(() => {
@@ -898,16 +579,16 @@ export default function SearchDatasetsPage() {
         setCurrentSort("newest");
         setAppliedFilters({});
         break;
-      case "Trending Tags":
-        setAppliedFilters({ tags: ["AI", "Health"] });
-        setCurrentSort("relevance");
+      case "This Month's Uploads":
+        setAppliedFilters({ date_from: getFirstDayOfMonth() });
+        setCurrentSort("newest");
         break;
-      case "Recommended":
-        setAppliedFilters({ tags: ["Climate"] });
-        setCurrentSort("relevance");
+      case "Popular This Week":
+        setAppliedFilters({ date_from: getSevenDaysAgo() });
+        setCurrentSort("downloads");
         break;
       default:
-        setCurrentSort("relevance");
+        setCurrentSort("newest");
         setAppliedFilters({});
     }
   }, []);
@@ -1055,37 +736,27 @@ export default function SearchDatasetsPage() {
           <DatasetCarouselSectionPlaceholder
             title="Most Downloaded"
             onSeeAll={() => handleCarouselSeeAll("Most Downloaded")}
-            datasets={DUMMY_DATASETS.slice()
-              .sort((a, b) => b.downloads_count - a.downloads_count)
-              .slice(0, 4)}
+            datasets={mostDownloadedData?.datasets || []}
+            isLoading={isLoadingMostDownloaded}
           />
           <DatasetCarouselSectionPlaceholder
             title="Recently Added"
             onSeeAll={() => handleCarouselSeeAll("Recently Added")}
-            datasets={DUMMY_DATASETS.slice()
-              .sort(
-                (a, b) =>
-                  new Date(b.date_of_creation).getTime() -
-                  new Date(a.date_of_creation).getTime()
-              )
-              .slice(0, 4)}
+            datasets={recentlyAddedData?.datasets || []}
+            isLoading={isLoadingRecentlyAdded}
           />
           <DatasetCarouselSectionPlaceholder
-            title="Explore Health & AI"
-            onSeeAll={() => handleCarouselSeeAll("Trending Tags")}
-            datasets={DUMMY_DATASETS.filter(
-              (d) => d.tags?.includes("Health") || d.tags?.includes("AI")
-            ).slice(0, 4)}
+            title="This Month's Uploads"
+            onSeeAll={() => handleCarouselSeeAll("This Month's Uploads")}
+            datasets={thisMonthData?.datasets || []}
+            isLoading={isLoadingThisMonth}
           />
-          {user && (
-            <DatasetCarouselSectionPlaceholder
-              title="Recommended For You (Climate)"
-              onSeeAll={() => handleCarouselSeeAll("Recommended")}
-              datasets={DUMMY_DATASETS.filter((d) =>
-                d.tags?.includes("Climate")
-              ).slice(0, 4)}
-            />
-          )}
+          <DatasetCarouselSectionPlaceholder
+            title="Popular This Week"
+            onSeeAll={() => handleCarouselSeeAll("Popular This Week")}
+            datasets={popularThisWeekData?.datasets || []}
+            isLoading={isLoadingPopularThisWeek}
+          />
         </>
       )}
 

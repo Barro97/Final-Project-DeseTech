@@ -17,7 +17,11 @@ import { Input } from "@/app/components/atoms/input";
 import { Button } from "@/app/components/atoms/button";
 import { Separator } from "@/app/components/atoms/separator";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
-import { Dataset } from "@/app/features/dataset/types/datasetTypes";
+import {
+  Dataset,
+  SearchFilters,
+} from "@/app/features/dataset/types/datasetTypes";
+import { searchDatasets } from "@/app/features/dataset/services/datasetService";
 import {
   Select,
   SelectContent,
@@ -33,17 +37,6 @@ import {
   SheetDescription,
 } from "@/app/components/molecules/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-
-interface SearchFilters {
-  date_from?: string;
-  date_to?: string;
-  license?: string | string[];
-  tags?: string[];
-  size_range?: Array<"small" | "medium" | "large">;
-  file_type?: string[];
-  custom_field_contains?: string;
-  row_count_min?: number;
-}
 
 const EnhancedSearchBarPlaceholder = ({
   onSearch,
@@ -173,7 +166,6 @@ const FilterPanelPlaceholder = ({
   ) => void;
 }) => {
   const filterOptions = {
-    file_type: ["CSV", "JSON", "Parquet", "XML", "TXT"],
     tags: [
       "Health",
       "AI",
@@ -183,22 +175,10 @@ const FilterPanelPlaceholder = ({
       "Education",
       "Energy",
     ],
-    license: [
-      "CC BY 4.0",
-      "MIT",
-      "Public Domain",
-      "Open Data Commons",
-      "Proprietary",
-    ],
-    size_range: ["small", "medium", "large"],
-    updated_date: ["last_week", "last_month", "last_year"],
   };
 
   const handleCheckboxChange = (
-    filterKey: Extract<
-      keyof SearchFilters,
-      "file_type" | "tags" | "license" | "size_range"
-    >,
+    filterKey: "tags",
     value: string,
     checked: boolean
   ) => {
@@ -223,16 +203,16 @@ const FilterPanelPlaceholder = ({
     onFilterChange(filterKey, newValuesArray);
   };
 
-  const handleDateChange = (filterKey: keyof SearchFilters, value: string) => {
+  const handleDateChange = (
+    filterKey: "date_from" | "date_to",
+    value: string
+  ) => {
     onFilterChange(filterKey, value);
   };
 
   const renderFilterGroup = (
     title: string,
-    filterKey: Extract<
-      keyof SearchFilters,
-      "file_type" | "tags" | "license" | "size_range"
-    >,
+    filterKey: "tags",
     options: ReadonlyArray<string>
   ) => (
     <div className="mb-4">
@@ -244,13 +224,7 @@ const FilterPanelPlaceholder = ({
           const currentSelected = appliedFilters[filterKey];
           let isChecked = false;
           if (Array.isArray(currentSelected)) {
-            if (filterKey === "size_range") {
-              isChecked = (
-                currentSelected as Array<"small" | "medium" | "large">
-              ).includes(option as "small" | "medium" | "large");
-            } else {
-              isChecked = (currentSelected as string[]).includes(option);
-            }
+            isChecked = (currentSelected as string[]).includes(option);
           }
           return (
             <label
@@ -275,13 +249,10 @@ const FilterPanelPlaceholder = ({
 
   return (
     <div className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-      {renderFilterGroup("File Type", "file_type", filterOptions.file_type)}
       {renderFilterGroup("Tags", "tags", filterOptions.tags)}
-      {renderFilterGroup("License", "license", filterOptions.license)}
-      {renderFilterGroup("Size Range", "size_range", filterOptions.size_range)}
       <div className="mb-4">
         <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Updated Date
+          Creation Date Range
         </h3>
         <Input
           type="date"
@@ -309,7 +280,7 @@ const FilterChipsDisplayPlaceholder = ({
   activeFilters: SearchFilters;
   onRemoveFilter: (
     filterKey: keyof SearchFilters,
-    valueToRemove?: string | "small" | "medium" | "large"
+    valueToRemove?: string
   ) => void;
 }) => (
   <div className="py-2 my-2 flex flex-wrap gap-2 items-center">
@@ -378,11 +349,10 @@ const SearchControlsToolbar = ({
   viewType: "landing" | "results";
 }) => {
   const sortOptions = [
-    { value: "relevance", label: "Relevance" },
     { value: "newest", label: "Newest First" },
     { value: "oldest", label: "Oldest First" },
     { value: "downloads", label: "Most Downloaded" },
-    { value: "name_asc", label: "Name (A-Z)" },
+    { value: "name", label: "Name (A-Z)" },
   ];
 
   return (
@@ -841,158 +811,23 @@ const DUMMY_DATASETS: Dataset[] = [
   },
 ];
 
-const simulateDatasetFetch = (
+// Real API call function to replace the mock
+const fetchDatasets = async (
   page: number,
   limit: number,
   search?: string,
   sortBy?: string,
   filters?: SearchFilters
 ): Promise<{ datasets: Dataset[]; total: number; hasMore: boolean }> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let filteredData = [...DUMMY_DATASETS];
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredData = filteredData.filter(
-          (dataset) =>
-            dataset.dataset_name.toLowerCase().includes(searchLower) ||
-            (dataset.dataset_description &&
-              dataset.dataset_description.toLowerCase().includes(searchLower))
-        );
-      }
+  const searchFilters: SearchFilters = {
+    search_term: search,
+    sort_by: sortBy as "newest" | "oldest" | "downloads" | "name",
+    page,
+    limit,
+    ...filters,
+  };
 
-      if (filters) {
-        if (filters.date_from) {
-          const dateFrom = new Date(filters.date_from);
-          if (!isNaN(dateFrom.getTime())) {
-            filteredData = filteredData.filter(
-              (dataset) => new Date(dataset.date_of_creation) >= dateFrom
-            );
-          }
-        }
-        if (filters.date_to) {
-          const dateTo = new Date(filters.date_to);
-          if (!isNaN(dateTo.getTime())) {
-            filteredData = filteredData.filter(
-              (dataset) => new Date(dataset.date_of_creation) <= dateTo
-            );
-          }
-        }
-        if (filters.license && filters.license.length > 0) {
-          const licenseFilters = Array.isArray(filters.license)
-            ? filters.license.map((l) => l.toLowerCase())
-            : [filters.license.toLowerCase()];
-          filteredData = filteredData.filter(
-            (dataset) =>
-              dataset.license &&
-              licenseFilters.includes(dataset.license.toLowerCase())
-          );
-        }
-        if (filters.tags && filters.tags.length > 0) {
-          filteredData = filteredData.filter((dataset) =>
-            dataset.tags?.some((tag) =>
-              filters
-                .tags!.map((t) => t.toLowerCase())
-                .includes(tag.toLowerCase())
-            )
-          );
-        }
-        if (filters.size_range && filters.size_range.length > 0) {
-          filteredData = filteredData.filter((dataset) => {
-            if (!dataset.size) return false;
-            const sizeParts = dataset.size.toLowerCase().split(" ");
-            if (sizeParts.length !== 2) return false;
-            const value = parseFloat(sizeParts[0]);
-            const unit = sizeParts[1];
-            let sizeInMB = value;
-            if (unit === "gb") sizeInMB = value * 1024;
-            else if (unit === "kb") sizeInMB = value / 1024;
-
-            return filters.size_range!.some((range) => {
-              switch (range) {
-                case "small":
-                  return sizeInMB < 100;
-                case "medium":
-                  return sizeInMB >= 100 && sizeInMB <= 500;
-                case "large":
-                  return sizeInMB > 500;
-                default:
-                  return false;
-              }
-            });
-          });
-        }
-        if (filters.file_type && filters.file_type.length > 0) {
-          const fileTypeFiltersLower = filters.file_type.map((ft) =>
-            ft.toLowerCase()
-          );
-          filteredData = filteredData.filter((dataset) =>
-            dataset.file_types?.some((ft) =>
-              fileTypeFiltersLower.includes(ft.toLowerCase())
-            )
-          );
-        }
-        if (
-          filters.custom_field_contains &&
-          typeof filters.custom_field_contains === "string"
-        ) {
-          const customSearchLower = filters.custom_field_contains.toLowerCase();
-          filteredData = filteredData.filter(
-            (dataset) =>
-              dataset.dataset_name.toLowerCase().includes(customSearchLower) ||
-              (dataset.dataset_description &&
-                dataset.dataset_description
-                  .toLowerCase()
-                  .includes(customSearchLower))
-          );
-        }
-        if (
-          filters.row_count_min &&
-          typeof filters.row_count_min === "number"
-        ) {
-          filteredData = filteredData.filter(
-            (dataset) =>
-              dataset.row_count !== undefined &&
-              dataset.row_count >= filters.row_count_min!
-          );
-        }
-      }
-
-      if (sortBy) {
-        switch (sortBy) {
-          case "newest":
-          case "relevance":
-            filteredData.sort(
-              (a, b) =>
-                new Date(b.date_of_creation).getTime() -
-                new Date(a.date_of_creation).getTime()
-            );
-            break;
-          case "oldest":
-            filteredData.sort(
-              (a, b) =>
-                new Date(a.date_of_creation).getTime() -
-                new Date(b.date_of_creation).getTime()
-            );
-            break;
-          case "downloads":
-            filteredData.sort((a, b) => b.downloads_count - a.downloads_count);
-            break;
-          case "name_asc":
-            filteredData.sort((a, b) =>
-              a.dataset_name.localeCompare(b.dataset_name)
-            );
-            break;
-        }
-      }
-      const total = filteredData.length;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-      const hasMore = endIndex < filteredData.length;
-      resolve({ datasets: paginatedData, total, hasMore });
-    }, 300);
-  });
+  return await searchDatasets(searchFilters);
 };
 
 export default function SearchDatasetsPage() {
@@ -1003,7 +838,7 @@ export default function SearchDatasetsPage() {
   const [viewMode, setViewMode] = useState<"landing" | "results">("landing");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({});
-  const [currentSort, setCurrentSort] = useState("relevance");
+  const [currentSort, setCurrentSort] = useState("newest");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
@@ -1019,7 +854,7 @@ export default function SearchDatasetsPage() {
     queryKey: ["allDatasets", activeSearchQuery, currentSort, appliedFilters],
     queryFn: async ({ pageParam = 1 }) => {
       try {
-        return await simulateDatasetFetch(
+        return await fetchDatasets(
           pageParam,
           12,
           activeSearchQuery,
@@ -1091,23 +926,19 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "custom_field_contains") {
+        } else if (filterKey === "search_term") {
           if (typeof value === "string" && value) {
             newFilters[filterKey] = value;
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "row_count_min") {
+        } else if (filterKey === "uploader_id") {
           if (typeof value === "number") {
             newFilters[filterKey] = value;
           } else {
             delete newFilters[filterKey];
           }
-        } else if (
-          filterKey === "tags" ||
-          filterKey === "license" ||
-          filterKey === "file_type"
-        ) {
+        } else if (filterKey === "tags") {
           if (
             Array.isArray(value) &&
             value.every((v) => typeof v === "string")
@@ -1122,25 +953,16 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "size_range") {
+        } else if (filterKey === "sort_by") {
           if (
-            Array.isArray(value) &&
-            value.every((v) => ["small", "medium", "large"].includes(v))
-          ) {
-            if (value.length > 0) {
-              newFilters[filterKey] = value as Array<
-                "small" | "medium" | "large"
-              >;
-            } else {
-              delete newFilters[filterKey];
-            }
-          } else if (
             typeof value === "string" &&
-            ["small", "medium", "large"].includes(value)
+            ["newest", "oldest", "downloads", "name"].includes(value)
           ) {
-            newFilters[filterKey] = [value] as Array<
-              "small" | "medium" | "large"
-            >;
+            newFilters[filterKey] = value as
+              | "newest"
+              | "oldest"
+              | "downloads"
+              | "name";
           } else {
             delete newFilters[filterKey];
           }
@@ -1153,34 +975,21 @@ export default function SearchDatasetsPage() {
   );
 
   const handleRemoveFilterChip = useCallback(
-    (
-      filterKey: keyof SearchFilters,
-      valueToRemove?: string | "small" | "medium" | "large"
-    ) => {
+    (filterKey: keyof SearchFilters, valueToRemove?: string) => {
       setAppliedFilters((prev) => {
         const newFilters = { ...prev };
         const currentFilterValue = newFilters[filterKey];
 
         if (valueToRemove && Array.isArray(currentFilterValue)) {
-          const updatedArray = (
-            currentFilterValue as Array<string | "small" | "medium" | "large">
-          ).filter((v) => v !== valueToRemove);
+          const updatedArray = (currentFilterValue as string[]).filter(
+            (v) => v !== valueToRemove
+          );
 
           if (updatedArray.length === 0) {
             delete newFilters[filterKey];
           } else {
-            if (
-              filterKey === "tags" ||
-              filterKey === "license" ||
-              filterKey === "file_type"
-            ) {
-              newFilters[filterKey] = updatedArray.filter(
-                (v) => typeof v === "string"
-              ) as string[];
-            } else if (filterKey === "size_range") {
-              newFilters[filterKey] = updatedArray.filter((v) =>
-                ["small", "medium", "large"].includes(v)
-              ) as Array<"small" | "medium" | "large">;
+            if (filterKey === "tags") {
+              newFilters[filterKey] = updatedArray;
             }
           }
         } else {
@@ -1195,7 +1004,7 @@ export default function SearchDatasetsPage() {
   const resetAllFiltersAndSearch = useCallback(() => {
     setActiveSearchQuery("");
     setAppliedFilters({});
-    setCurrentSort("relevance");
+    setCurrentSort("newest");
     refetch();
   }, [refetch]);
 

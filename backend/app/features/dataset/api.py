@@ -70,6 +70,67 @@ def get_public_stats(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/search", response_model=DatasetListResponse)
+def search_datasets(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    search_term: str = None,
+    tags: List[str] = None,
+    uploader_id: int = None,
+    sort_by: str = "newest",
+    page: int = 1,
+    limit: int = 20
+):
+    """Search and filter datasets."""
+    try:
+        request = DatasetFilterRequest(
+            search_term=search_term,
+            tags=tags,
+            uploader_id=uploader_id,
+            sort_by=sort_by,
+            page=page,
+            limit=limit
+        )
+        return dataset_service.search_datasets(db, request, current_user["user_id"])
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error searching datasets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/batch-delete", response_model=BatchDeleteResponse)
+def batch_delete_datasets(
+    request_data: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete multiple datasets."""
+    try:
+        return dataset_service.batch_delete_datasets(db, request_data, current_user["user_id"])
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error in batch delete: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/user/{user_id}", response_model=List[DatasetResponse])
+def get_user_datasets(
+    user_id: int = Path(..., gt=0),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all datasets where the specified user is an uploader or owner."""
+    try:
+        return dataset_service.get_user_datasets(db, user_id, current_user["user_id"])
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error getting user datasets for user {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(
     dataset_id: int = Path(..., gt=0),
@@ -136,22 +197,6 @@ def delete_dataset(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/batch-delete", response_model=BatchDeleteResponse)
-def batch_delete_datasets(
-    request_data: BatchDeleteRequest,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Delete multiple datasets."""
-    try:
-        return dataset_service.batch_delete_datasets(db, request_data, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error in batch delete: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 @router.post("/{dataset_id}/add-owner", response_model=OwnerActionResponse)
 def add_dataset_owner(
     owner_request: OwnerActionRequest,
@@ -183,51 +228,6 @@ def remove_dataset_owner(
         raise handle_dataset_exception(e)
     except Exception as e:
         logger.error(f"Unexpected error removing owner from dataset {dataset_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/user/{user_id}", response_model=List[DatasetResponse])
-def get_user_datasets(
-    user_id: int = Path(..., gt=0),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Get all datasets where the specified user is an uploader or owner."""
-    try:
-        return dataset_service.get_user_datasets(db, user_id, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error getting user datasets for user {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/search", response_model=DatasetListResponse)
-def search_datasets(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-    search_term: str = None,
-    tags: List[str] = None,
-    uploader_id: int = None,
-    sort_by: str = "newest",
-    page: int = 1,
-    limit: int = 20
-):
-    """Search and filter datasets."""
-    try:
-        request = DatasetFilterRequest(
-            search_term=search_term,
-            tags=tags,
-            uploader_id=uploader_id,
-            sort_by=sort_by,
-            page=page,
-            limit=limit
-        )
-        return dataset_service.search_datasets(db, request, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error searching datasets: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

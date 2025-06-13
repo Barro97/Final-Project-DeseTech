@@ -1,5 +1,12 @@
 import axios from "axios";
-import { Dataset, DatasetFile, PublicStats } from "../types/datasetTypes";
+import {
+  Dataset,
+  DatasetFile,
+  PublicStats,
+  SearchFilters,
+  SearchResponse,
+  SearchResult,
+} from "../types/datasetTypes";
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND}`;
 
@@ -257,4 +264,57 @@ export async function getPublicStats(): Promise<PublicStats> {
   }
 
   return response.json();
+}
+
+// Search datasets using the backend search endpoint
+export async function searchDatasets(
+  filters: SearchFilters
+): Promise<SearchResult> {
+  try {
+    // Build query params from filters
+    const params = new URLSearchParams();
+
+    if (filters.search_term) params.append("search_term", filters.search_term);
+    if (filters.tags && filters.tags.length > 0) {
+      filters.tags.forEach((tag) => params.append("tags", tag));
+    }
+    if (filters.uploader_id)
+      params.append("uploader_id", filters.uploader_id.toString());
+    if (filters.date_from) params.append("date_from", filters.date_from);
+    if (filters.date_to) params.append("date_to", filters.date_to);
+    if (filters.sort_by) {
+      // Only send valid sort values to the backend
+      const validSortValues = ["newest", "oldest", "downloads", "name"];
+      if (validSortValues.includes(filters.sort_by)) {
+        params.append("sort_by", filters.sort_by);
+      }
+    }
+
+    // Default pagination values
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+
+    // Make the API request to the search endpoint
+    const response = await axios.get<SearchResponse>(
+      `${API_URL}/datasets/search?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+
+    // Transform backend response to frontend format
+    const backendData = response.data;
+    return {
+      datasets: backendData.datasets,
+      total: backendData.total_count,
+      hasMore: backendData.has_next,
+    };
+  } catch (error) {
+    console.error("Error searching datasets:", error);
+    throw error;
+  }
 }

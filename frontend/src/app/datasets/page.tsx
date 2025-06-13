@@ -17,6 +17,7 @@ import { Input } from "@/app/components/atoms/input";
 import { Button } from "@/app/components/atoms/button";
 import { Separator } from "@/app/components/atoms/separator";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
+import { useTags } from "@/app/features/tag/hooks/useTags";
 import {
   Dataset,
   SearchFilters,
@@ -174,23 +175,28 @@ const FilterPanelPlaceholder = ({
   appliedFilters: SearchFilters;
   onFilterChange: (
     filterKey: keyof SearchFilters,
-    value: string | string[]
+    value: string | string[] | boolean | number | undefined
   ) => void;
 }) => {
-  const filterOptions = {
-    tags: [
-      "Health",
-      "AI",
-      "Agriculture",
-      "Finance",
-      "Climate",
-      "Education",
-      "Energy",
-    ],
-  };
+  // Fetch real tags from database
+  const { data: tagsData, isLoading: isLoadingTags } = useTags();
+  const availableTags = tagsData?.tags || [];
+
+  // Common file types for filtering
+  const fileTypeOptions = [
+    "csv",
+    "json",
+    "xlsx",
+    "pdf",
+    "txt",
+    "xml",
+    "zip",
+    "sql",
+    "parquet",
+  ];
 
   const handleCheckboxChange = (
-    filterKey: "tags",
+    filterKey: "tags" | "file_types",
     value: string,
     checked: boolean
   ) => {
@@ -222,46 +228,118 @@ const FilterPanelPlaceholder = ({
     onFilterChange(filterKey, value);
   };
 
+  const handleNumberChange = (
+    filterKey: "min_downloads" | "max_downloads",
+    value: string
+  ) => {
+    const numValue = value === "" ? undefined : parseInt(value, 10);
+    if (numValue !== undefined && !isNaN(numValue)) {
+      onFilterChange(filterKey, numValue);
+    } else if (value === "") {
+      onFilterChange(filterKey, undefined);
+    }
+  };
+
+  const handleLocationToggle = (checked: boolean) => {
+    onFilterChange("has_location", checked);
+  };
+
   const renderFilterGroup = (
     title: string,
-    filterKey: "tags",
-    options: ReadonlyArray<string>
+    filterKey: "tags" | "file_types",
+    options: ReadonlyArray<string>,
+    isLoading?: boolean
   ) => (
     <div className="mb-4">
       <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
         {title}
       </h3>
-      <div className="space-y-1">
-        {options.map((option) => {
-          const currentSelected = appliedFilters[filterKey];
-          let isChecked = false;
-          if (Array.isArray(currentSelected)) {
-            isChecked = (currentSelected as string[]).includes(option);
-          }
-          return (
-            <label
-              key={option}
-              className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
-            >
-              <input
-                type="checkbox"
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:checked:bg-blue-500"
-                checked={isChecked}
-                onChange={(e) =>
-                  handleCheckboxChange(filterKey, option, e.target.checked)
-                }
-              />
-              <span>{option}</span>
-            </label>
-          );
-        })}
-      </div>
+      {isLoading ? (
+        <div className="text-sm text-gray-500">Loading...</div>
+      ) : (
+        <div className="space-y-1 max-h-40 overflow-y-auto">
+          {options.map((option) => {
+            const currentSelected = appliedFilters[filterKey];
+            let isChecked = false;
+            if (Array.isArray(currentSelected)) {
+              isChecked = (currentSelected as string[]).includes(option);
+            }
+            return (
+              <label
+                key={option}
+                className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
+              >
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:checked:bg-blue-500"
+                  checked={isChecked}
+                  onChange={(e) =>
+                    handleCheckboxChange(filterKey, option, e.target.checked)
+                  }
+                />
+                <span className="capitalize">{option}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 
   return (
     <div className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-      {renderFilterGroup("Tags", "tags", filterOptions.tags)}
+      {renderFilterGroup(
+        "Tags",
+        "tags",
+        availableTags.map((tag) => tag.tag_category_name),
+        isLoadingTags
+      )}
+
+      {renderFilterGroup("File Types", "file_types", fileTypeOptions)}
+
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Geographic Data
+        </h3>
+        <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+          <input
+            type="checkbox"
+            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:checked:bg-blue-500"
+            checked={appliedFilters.has_location || false}
+            onChange={(e) => handleLocationToggle(e.target.checked)}
+          />
+          <span>Has location data</span>
+        </label>
+      </div>
+
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Download Count Range
+        </h3>
+        <div className="space-y-2">
+          <Input
+            type="number"
+            placeholder="Min downloads"
+            className="w-full"
+            min="0"
+            value={appliedFilters.min_downloads || ""}
+            onChange={(e) =>
+              handleNumberChange("min_downloads", e.target.value)
+            }
+          />
+          <Input
+            type="number"
+            placeholder="Max downloads"
+            className="w-full"
+            min="0"
+            value={appliedFilters.max_downloads || ""}
+            onChange={(e) =>
+              handleNumberChange("max_downloads", e.target.value)
+            }
+          />
+        </div>
+      </div>
+
       <div className="mb-4">
         <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
           Creation Date Range
@@ -619,7 +697,7 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "tags") {
+        } else if (filterKey === "tags" || filterKey === "file_types") {
           if (
             Array.isArray(value) &&
             value.every((v) => typeof v === "string")
@@ -647,6 +725,21 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
+        } else if (filterKey === "has_location") {
+          if (typeof value === "boolean") {
+            newFilters[filterKey] = value;
+          } else {
+            delete newFilters[filterKey];
+          }
+        } else if (
+          filterKey === "min_downloads" ||
+          filterKey === "max_downloads"
+        ) {
+          if (typeof value === "number" && value >= 0) {
+            newFilters[filterKey] = value;
+          } else if (value === undefined) {
+            delete newFilters[filterKey];
+          }
         }
         return newFilters;
       });
@@ -669,7 +762,7 @@ export default function SearchDatasetsPage() {
           if (updatedArray.length === 0) {
             delete newFilters[filterKey];
           } else {
-            if (filterKey === "tags") {
+            if (filterKey === "tags" || filterKey === "file_types") {
               newFilters[filterKey] = updatedArray;
             }
           }

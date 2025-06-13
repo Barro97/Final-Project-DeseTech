@@ -79,9 +79,14 @@ def search_datasets(
     uploader_id: int = None,
     sort_by: str = "newest",
     page: int = 1,
-    limit: int = 20
+    limit: int = 20,
+    # Tier 1 filters
+    file_types: List[str] = None,
+    has_location: bool = None,
+    min_downloads: int = None,
+    max_downloads: int = None
 ):
-    """Search and filter datasets."""
+    """Search and filter datasets with enhanced filtering capabilities."""
     try:
         request = DatasetFilterRequest(
             search_term=search_term,
@@ -89,7 +94,11 @@ def search_datasets(
             uploader_id=uploader_id,
             sort_by=sort_by,
             page=page,
-            limit=limit
+            limit=limit,
+            file_types=file_types,
+            has_location=has_location,
+            min_downloads=min_downloads,
+            max_downloads=max_downloads
         )
         return dataset_service.search_datasets(db, request, current_user["user_id"])
     except DatasetError as e:

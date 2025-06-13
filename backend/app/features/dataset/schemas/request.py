@@ -126,6 +126,12 @@ class DatasetFilterRequest(BaseModel):
     sort_by: Optional[str] = Field("newest", pattern="^(newest|oldest|downloads|name)$")
     page: int = Field(1, ge=1)
     limit: int = Field(20, ge=1, le=100)
+    
+    # Tier 1 filters
+    file_types: Optional[List[str]] = Field(None, max_items=20)
+    has_location: Optional[bool] = None
+    min_downloads: Optional[int] = Field(None, ge=0)
+    max_downloads: Optional[int] = Field(None, ge=0)
 
     @validator('search_term')
     def validate_search_term(cls, v):
@@ -137,4 +143,18 @@ class DatasetFilterRequest(BaseModel):
     def validate_filter_tags(cls, v):
         if v:
             return [tag.strip().lower() for tag in v if tag and isinstance(tag, str)]
+        return v
+    
+    @validator('file_types')
+    def validate_file_types(cls, v):
+        if v:
+            # Normalize file types to lowercase and remove empty strings
+            return [ft.strip().lower() for ft in v if ft and isinstance(ft, str)]
+        return v
+    
+    @validator('max_downloads')
+    def validate_download_range(cls, v, values):
+        if v is not None and 'min_downloads' in values and values['min_downloads'] is not None:
+            if v < values['min_downloads']:
+                raise ValueError('max_downloads must be greater than or equal to min_downloads')
         return v 

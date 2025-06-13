@@ -31,6 +31,11 @@ export interface SearchFilters {
   sort_by?: "newest" | "oldest" | "downloads" | "name";
   page?: number;
   limit?: number;
+  // Tier 1 filters
+  file_types?: string[];
+  has_location?: boolean;
+  min_downloads?: number;
+  max_downloads?: number;
 }
 
 // Backend response format for search

@@ -290,6 +290,22 @@ export async function searchDatasets(
       }
     }
 
+    // Tier 1 filters
+    if (filters.file_types && filters.file_types.length > 0) {
+      filters.file_types.forEach((fileType) =>
+        params.append("file_types", fileType)
+      );
+    }
+    if (filters.has_location !== undefined) {
+      params.append("has_location", filters.has_location.toString());
+    }
+    if (filters.min_downloads !== undefined) {
+      params.append("min_downloads", filters.min_downloads.toString());
+    }
+    if (filters.max_downloads !== undefined) {
+      params.append("max_downloads", filters.max_downloads.toString());
+    }
+
     // Default pagination values
     const page = filters.page || 1;
     const limit = filters.limit || 20;

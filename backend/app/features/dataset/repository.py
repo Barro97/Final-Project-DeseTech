@@ -334,6 +334,70 @@ class DatasetRepository(DatasetRepositoryInterface):
         if filters.date_to:
             query = query.filter(Dataset.date_of_creation <= filters.date_to)
 
+        # APPLY TIER 1 FILTERS
+        
+        # File types filter - datasets must have files of specified types
+        if filters.file_types:
+            # Create mapping from file extensions to MIME types
+            extension_to_mime = {
+                'csv': ['text/csv', 'application/csv'],
+                'json': ['application/json', 'text/json'],
+                'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+                'xls': ['application/vnd.ms-excel'],
+                'pdf': ['application/pdf'],
+                'txt': ['text/plain'],
+                'xml': ['application/xml', 'text/xml'],
+                'zip': ['application/zip'],
+                'sql': ['application/sql', 'text/sql'],
+                'parquet': ['application/octet-stream'],
+                'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                'doc': ['application/msword'],
+                'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+                'ppt': ['application/vnd.ms-powerpoint']
+            }
+            
+            # Convert file extensions to MIME types and include extensions for fallback
+            search_values = []
+            for ext in filters.file_types:
+                ext_lower = ext.lower()
+                # Add the extension itself (in case it's stored as extension)
+                search_values.append(ext_lower)
+                search_values.append(ext.upper())
+                # Add corresponding MIME types
+                if ext_lower in extension_to_mime:
+                    search_values.extend(extension_to_mime[ext_lower])
+            
+            # Remove duplicates
+            search_values = list(set(search_values))
+            
+            # Filter by both MIME types and extensions (case-insensitive)
+            query = query.filter(
+                or_(
+                    Dataset.files.any(File.file_type.in_(search_values)),
+                    Dataset.files.any(func.lower(File.file_type).in_([v.lower() for v in search_values]))
+                )
+            )
+        
+        # Geographic location filter - datasets with/without location data
+        if filters.has_location is not None:
+            if filters.has_location:
+                query = query.filter(Dataset.geographic_location.isnot(None))
+                query = query.filter(Dataset.geographic_location != '')
+            else:
+                query = query.filter(
+                    or_(
+                        Dataset.geographic_location.is_(None),
+                        Dataset.geographic_location == ''
+                    )
+                )
+        
+        # Download count range filters
+        if filters.min_downloads is not None:
+            query = query.filter(Dataset.downloads_count >= filters.min_downloads)
+            
+        if filters.max_downloads is not None:
+            query = query.filter(Dataset.downloads_count <= filters.max_downloads)
+
         # GET TOTAL COUNT (before pagination for UI)
         total_count = query.count()
 

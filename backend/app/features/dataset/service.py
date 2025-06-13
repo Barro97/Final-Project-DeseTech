@@ -635,7 +635,12 @@ class DatasetService:
             sort_by=request.sort_by,
             offset=(request.page - 1) * request.limit,  # Convert page-based to offset-based
             limit=request.limit,
-            is_admin_request=is_admin_request  # Pass admin status to repository
+            is_admin_request=is_admin_request,  # Pass admin status to repository
+            # Tier 1 filters
+            file_types=request.file_types,
+            has_location=request.has_location,
+            min_downloads=request.min_downloads,
+            max_downloads=request.max_downloads
         )
 
         # EXECUTE SEARCH: Repository handles the complex query logic

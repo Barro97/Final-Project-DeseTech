@@ -165,14 +165,12 @@ const DatasetCarouselSectionPlaceholder = ({
 const FilterPanelPlaceholder = ({
   appliedFilters,
   onFilterChange,
-  onAdvancedFilterToggle,
 }: {
   appliedFilters: SearchFilters;
   onFilterChange: (
     filterKey: keyof SearchFilters,
     value: string | string[]
   ) => void;
-  onAdvancedFilterToggle: () => void;
 }) => {
   const filterOptions = {
     file_type: ["CSV", "JSON", "Parquet", "XML", "TXT"],
@@ -300,13 +298,6 @@ const FilterPanelPlaceholder = ({
           value={appliedFilters.date_to || ""}
         />
       </div>
-      <Button
-        variant="outline"
-        onClick={onAdvancedFilterToggle}
-        className="w-full mt-4 flex items-center justify-center gap-2"
-      >
-        <SlidersHorizontal size={16} /> Show Advanced Filters
-      </Button>
     </div>
   );
 };
@@ -463,79 +454,6 @@ const SearchControlsToolbar = ({
             </Button>
           </>
         )}
-      </div>
-    </div>
-  );
-};
-
-const AdvancedFiltersDrawerPlaceholder = ({
-  isOpen,
-  onClose,
-  onApply,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onApply: (
-    advFilters: Pick<SearchFilters, "custom_field_contains" | "row_count_min">
-  ) => void;
-}) => {
-  const [customField, setCustomField] = useState("");
-  const [rowCount, setRowCount] = useState<number | string>("");
-
-  if (!isOpen) return null;
-  return (
-    <div
-      className="fixed inset-0 bg-black/30 z-40 flex justify-end"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-gray-800 h-full p-6 shadow-xl overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Advanced Filters</h2>
-          <Button variant="ghost" onClick={onClose}>
-            <X size={20} />
-          </Button>
-        </div>
-        <p className="text-sm text-gray-500">(Mock UI for advanced filters)</p>
-        <div className="mt-4">
-          <label className="block text-sm font-medium mb-1">
-            Field Must Contain:
-          </label>
-          <Input
-            type="text"
-            placeholder="e.g., specific keyword"
-            value={customField}
-            onChange={(e) => setCustomField(e.target.value)}
-          />
-        </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium mb-1">
-            Row Count (min):
-          </label>
-          <Input
-            type="number"
-            placeholder="e.g., 1000"
-            value={String(rowCount)}
-            onChange={(e) =>
-              setRowCount(e.target.value ? parseInt(e.target.value) : "")
-            }
-          />
-        </div>
-        <Button
-          className="mt-6 w-full"
-          onClick={() => {
-            onApply({
-              custom_field_contains: customField || undefined,
-              row_count_min:
-                typeof rowCount === "number" ? rowCount : undefined,
-            });
-            onClose();
-          }}
-        >
-          Apply Advanced Filters
-        </Button>
       </div>
     </div>
   );
@@ -1087,7 +1005,6 @@ export default function SearchDatasetsPage() {
   const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({});
   const [currentSort, setCurrentSort] = useState("relevance");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
-  const [isAdvancedDrawerOpen, setIsAdvancedDrawerOpen] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const {
@@ -1474,9 +1391,6 @@ export default function SearchDatasetsPage() {
               <FilterPanelPlaceholder
                 appliedFilters={appliedFilters}
                 onFilterChange={handleFilterChange}
-                onAdvancedFilterToggle={() => {
-                  setIsAdvancedDrawerOpen(true);
-                }}
               />
             </div>
             <div className="p-6 border-t">
@@ -1490,16 +1404,6 @@ export default function SearchDatasetsPage() {
           </div>
         </SheetContent>
       </Sheet>
-
-      <AdvancedFiltersDrawerPlaceholder
-        isOpen={isAdvancedDrawerOpen}
-        onClose={() => setIsAdvancedDrawerOpen(false)}
-        onApply={(advFilters) => {
-          console.log("Advanced filters applied", advFilters);
-          setAppliedFilters((prev) => ({ ...prev, ...advFilters }));
-          setViewMode("results");
-        }}
-      />
     </div>
   );
 }

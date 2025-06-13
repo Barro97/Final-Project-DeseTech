@@ -42,6 +42,9 @@ class DatasetFilterInternal(BaseModel):
     has_location: Optional[bool] = None
     min_downloads: Optional[int] = None
     max_downloads: Optional[int] = None
+    
+    # User approval status filter (replaces include_approval_status for regular users)
+    approval_status: Optional[List[str]] = None
 
 
 class BatchDeleteResult(BaseModel):

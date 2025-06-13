@@ -36,6 +36,8 @@ export interface SearchFilters {
   has_location?: boolean;
   min_downloads?: number;
   max_downloads?: number;
+  // Approval status filter
+  approval_status?: string[];
 }
 
 // Backend response format for search

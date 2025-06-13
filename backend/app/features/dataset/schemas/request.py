@@ -132,6 +132,9 @@ class DatasetFilterRequest(BaseModel):
     has_location: Optional[bool] = None
     min_downloads: Optional[int] = Field(None, ge=0)
     max_downloads: Optional[int] = Field(None, ge=0)
+    
+    # Approval status filter
+    approval_status: Optional[List[str]] = Field(None, max_items=3)
 
     @validator('search_term')
     def validate_search_term(cls, v):
@@ -150,6 +153,13 @@ class DatasetFilterRequest(BaseModel):
         if v:
             # Normalize file types to lowercase and remove empty strings
             return [ft.strip().lower() for ft in v if ft and isinstance(ft, str)]
+        return v
+    
+    @validator('approval_status')
+    def validate_approval_status(cls, v):
+        if v:
+            valid_statuses = ['pending', 'approved', 'rejected']
+            return [status.strip().lower() for status in v if status and status.strip().lower() in valid_statuses]
         return v
     
     @validator('max_downloads')

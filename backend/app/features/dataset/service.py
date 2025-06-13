@@ -640,7 +640,9 @@ class DatasetService:
             file_types=request.file_types,
             has_location=request.has_location,
             min_downloads=request.min_downloads,
-            max_downloads=request.max_downloads
+            max_downloads=request.max_downloads,
+            # Approval status filter
+            approval_status=request.approval_status
         )
 
         # EXECUTE SEARCH: Repository handles the complex query logic

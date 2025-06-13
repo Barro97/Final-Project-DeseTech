@@ -195,8 +195,11 @@ const FilterPanelPlaceholder = ({
     "parquet",
   ];
 
+  // Approval status options
+  const approvalStatusOptions = ["pending", "approved", "rejected"];
+
   const handleCheckboxChange = (
-    filterKey: "tags" | "file_types",
+    filterKey: "tags" | "file_types" | "approval_status",
     value: string,
     checked: boolean
   ) => {
@@ -246,7 +249,7 @@ const FilterPanelPlaceholder = ({
 
   const renderFilterGroup = (
     title: string,
-    filterKey: "tags" | "file_types",
+    filterKey: "tags" | "file_types" | "approval_status",
     options: ReadonlyArray<string>,
     isLoading?: boolean
   ) => (
@@ -296,6 +299,12 @@ const FilterPanelPlaceholder = ({
       )}
 
       {renderFilterGroup("File Types", "file_types", fileTypeOptions)}
+
+      {renderFilterGroup(
+        "Approval Status",
+        "approval_status",
+        approvalStatusOptions
+      )}
 
       <div className="mb-4">
         <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -697,7 +706,11 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "tags" || filterKey === "file_types") {
+        } else if (
+          filterKey === "tags" ||
+          filterKey === "file_types" ||
+          filterKey === "approval_status"
+        ) {
           if (
             Array.isArray(value) &&
             value.every((v) => typeof v === "string")

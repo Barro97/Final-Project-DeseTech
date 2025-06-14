@@ -188,8 +188,8 @@ const FilterPanelPlaceholder = ({
     useAvailableFileTypes();
   const fileTypeOptions = availableFileTypes || [];
 
-  // Approval status options
-  const approvalStatusOptions = ["pending", "approved", "rejected"];
+  // Approval status options (rejected datasets are automatically removed from database)
+  const approvalStatusOptions = ["pending", "approved"];
 
   const handleCheckboxChange = (
     filterKey: "tags" | "file_types" | "approval_status",

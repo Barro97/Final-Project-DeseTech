@@ -985,6 +985,7 @@ export default function SearchDatasetsPage() {
         <SheetContent
           side="left"
           className="w-full sm:max-w-md p-0 flex flex-col !bg-background !bg-opacity-100"
+          showDefaultClose={false}
           style={{
             opacity: 1,
             backgroundColor: "var(--background)",

@@ -170,11 +170,11 @@ const DatasetCarouselSectionPlaceholder = ({
 );
 
 const FilterPanelPlaceholder = ({
-  appliedFilters,
-  onFilterChange,
+  pendingFilters,
+  onPendingFilterChange,
 }: {
-  appliedFilters: SearchFilters;
-  onFilterChange: (
+  pendingFilters: SearchFilters;
+  onPendingFilterChange: (
     filterKey: keyof SearchFilters,
     value: string | string[] | boolean | number | undefined
   ) => void;
@@ -196,7 +196,7 @@ const FilterPanelPlaceholder = ({
     value: string,
     checked: boolean
   ) => {
-    const currentFilterValues = appliedFilters[filterKey];
+    const currentFilterValues = pendingFilters[filterKey];
     let newValuesArray: string[];
 
     const currentArray = (
@@ -214,14 +214,14 @@ const FilterPanelPlaceholder = ({
     } else {
       newValuesArray = currentArray.filter((v) => v !== value);
     }
-    onFilterChange(filterKey, newValuesArray);
+    onPendingFilterChange(filterKey, newValuesArray);
   };
 
   const handleDateChange = (
     filterKey: "date_from" | "date_to",
     value: string
   ) => {
-    onFilterChange(filterKey, value);
+    onPendingFilterChange(filterKey, value);
   };
 
   const handleNumberChange = (
@@ -230,14 +230,14 @@ const FilterPanelPlaceholder = ({
   ) => {
     const numValue = value === "" ? undefined : parseInt(value, 10);
     if (numValue !== undefined && !isNaN(numValue)) {
-      onFilterChange(filterKey, numValue);
+      onPendingFilterChange(filterKey, numValue);
     } else if (value === "") {
-      onFilterChange(filterKey, undefined);
+      onPendingFilterChange(filterKey, undefined);
     }
   };
 
   const handleLocationToggle = (checked: boolean) => {
-    onFilterChange("has_location", checked);
+    onPendingFilterChange("has_location", checked);
   };
 
   const renderFilterGroup = (
@@ -255,7 +255,7 @@ const FilterPanelPlaceholder = ({
       ) : (
         <div className="space-y-1 max-h-40 overflow-y-auto">
           {options.map((option) => {
-            const currentSelected = appliedFilters[filterKey];
+            const currentSelected = pendingFilters[filterKey];
             let isChecked = false;
             if (Array.isArray(currentSelected)) {
               isChecked = (currentSelected as string[]).includes(option);
@@ -312,7 +312,7 @@ const FilterPanelPlaceholder = ({
           <input
             type="checkbox"
             className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:checked:bg-blue-500"
-            checked={appliedFilters.has_location || false}
+            checked={pendingFilters.has_location || false}
             onChange={(e) => handleLocationToggle(e.target.checked)}
           />
           <span>Has location data</span>
@@ -329,7 +329,7 @@ const FilterPanelPlaceholder = ({
             placeholder="Min downloads"
             className="w-full"
             min="0"
-            value={appliedFilters.min_downloads || ""}
+            value={pendingFilters.min_downloads || ""}
             onChange={(e) =>
               handleNumberChange("min_downloads", e.target.value)
             }
@@ -339,7 +339,7 @@ const FilterPanelPlaceholder = ({
             placeholder="Max downloads"
             className="w-full"
             min="0"
-            value={appliedFilters.max_downloads || ""}
+            value={pendingFilters.max_downloads || ""}
             onChange={(e) =>
               handleNumberChange("max_downloads", e.target.value)
             }
@@ -356,14 +356,14 @@ const FilterPanelPlaceholder = ({
           placeholder="From"
           className="mb-2 w-full"
           onChange={(e) => handleDateChange("date_from", e.target.value)}
-          value={appliedFilters.date_from || ""}
+          value={pendingFilters.date_from || ""}
         />
         <Input
           type="date"
           placeholder="To"
           className="w-full"
           onChange={(e) => handleDateChange("date_to", e.target.value)}
-          value={appliedFilters.date_to || ""}
+          value={pendingFilters.date_to || ""}
         />
       </div>
     </div>
@@ -553,6 +553,7 @@ export default function SearchDatasetsPage() {
   const [viewMode, setViewMode] = useState<"landing" | "results">("landing");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({});
+  const [pendingFilters, setPendingFilters] = useState<SearchFilters>({});
   const [currentSort, setCurrentSort] = useState("newest");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -569,6 +570,13 @@ export default function SearchDatasetsPage() {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     return sevenDaysAgo.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   };
+
+  // Sync pending filters with applied filters when filter sheet opens
+  useEffect(() => {
+    if (isFilterSheetOpen) {
+      setPendingFilters(appliedFilters);
+    }
+  }, [isFilterSheetOpen, appliedFilters]);
 
   // Fetch data for landing page carousels
   const { data: mostDownloadedData, isLoading: isLoadingMostDownloaded } =
@@ -659,31 +667,38 @@ export default function SearchDatasetsPage() {
       case "Most Downloaded":
         setCurrentSort("downloads");
         setAppliedFilters({});
+        setPendingFilters({});
         break;
       case "Recently Added":
         setCurrentSort("newest");
         setAppliedFilters({});
+        setPendingFilters({});
         break;
       case "This Month's Uploads":
-        setAppliedFilters({ date_from: getFirstDayOfMonth() });
+        const thisMonthFilters = { date_from: getFirstDayOfMonth() };
+        setAppliedFilters(thisMonthFilters);
+        setPendingFilters(thisMonthFilters);
         setCurrentSort("newest");
         break;
       case "Popular This Week":
-        setAppliedFilters({ date_from: getSevenDaysAgo() });
+        const thisWeekFilters = { date_from: getSevenDaysAgo() };
+        setAppliedFilters(thisWeekFilters);
+        setPendingFilters(thisWeekFilters);
         setCurrentSort("downloads");
         break;
       default:
         setCurrentSort("newest");
         setAppliedFilters({});
+        setPendingFilters({});
     }
   }, []);
 
-  const handleFilterChange = useCallback(
+  const handlePendingFilterChange = useCallback(
     (
       filterKey: keyof SearchFilters,
       value: SearchFilters[keyof SearchFilters]
     ) => {
-      setAppliedFilters((prev) => {
+      setPendingFilters((prev) => {
         const newFilters = { ...prev };
 
         if (filterKey === "date_from" || filterKey === "date_to") {
@@ -754,10 +769,21 @@ export default function SearchDatasetsPage() {
         }
         return newFilters;
       });
-      if (viewMode === "landing") setViewMode("results");
     },
-    [viewMode]
+    []
   );
+
+  const handleApplyFilters = useCallback(() => {
+    console.log("🔧 Applying filters:", pendingFilters);
+    setAppliedFilters(pendingFilters);
+    setIsFilterSheetOpen(false);
+    if (viewMode === "landing") setViewMode("results");
+  }, [pendingFilters, viewMode]);
+
+  const handleToggleFilterSheet = useCallback(() => {
+    console.log("🔧 Toggling filter sheet. Current state:", isFilterSheetOpen);
+    setIsFilterSheetOpen(!isFilterSheetOpen);
+  }, [isFilterSheetOpen]);
 
   const handleRemoveFilterChip = useCallback(
     (filterKey: keyof SearchFilters, valueToRemove?: string) => {
@@ -789,6 +815,7 @@ export default function SearchDatasetsPage() {
   const resetAllFiltersAndSearch = useCallback(() => {
     setActiveSearchQuery("");
     setAppliedFilters({});
+    setPendingFilters({});
     setCurrentSort("newest");
     refetch();
   }, [refetch]);
@@ -833,7 +860,7 @@ export default function SearchDatasetsPage() {
             currentLayout={currentLayout}
             onLayoutChange={setCurrentLayout}
             onClearAllFilters={resetAllFiltersAndSearch}
-            onToggleFilterSheet={() => setIsFilterSheetOpen(true)}
+            onToggleFilterSheet={handleToggleFilterSheet}
             viewType="landing"
           />
 
@@ -879,7 +906,7 @@ export default function SearchDatasetsPage() {
             currentLayout={currentLayout}
             onLayoutChange={setCurrentLayout}
             onClearAllFilters={resetAllFiltersAndSearch}
-            onToggleFilterSheet={() => setIsFilterSheetOpen(true)}
+            onToggleFilterSheet={handleToggleFilterSheet}
             viewType="results"
           />
 
@@ -955,7 +982,15 @@ export default function SearchDatasetsPage() {
         </>
       )}
       <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-        <SheetContent side="left" className="w-full sm:max-w-md p-0">
+        <SheetContent
+          side="left"
+          className="w-full sm:max-w-md p-0 flex flex-col !bg-background !bg-opacity-100"
+          style={{
+            opacity: 1,
+            backgroundColor: "var(--background)",
+            backdropFilter: "none",
+          }}
+        >
           <VisuallyHidden asChild>
             <SheetTitle>Dataset Filters</SheetTitle>
           </VisuallyHidden>
@@ -964,27 +999,53 @@ export default function SearchDatasetsPage() {
               Apply or change filters to refine the dataset search results.
             </SheetDescription>
           </VisuallyHidden>
-          <div className="flex flex-col h-full">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Filters</h2>
-              <SheetClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-                <X />
-              </SheetClose>
-            </div>
-            <div className="flex-grow overflow-y-auto custom-scrollbar">
-              <FilterPanelPlaceholder
-                appliedFilters={appliedFilters}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
-            <div className="p-6 border-t">
-              <Button
-                onClick={() => setIsFilterSheetOpen(false)}
-                className="w-full"
-              >
-                Apply Filters
-              </Button>
-            </div>
+          {/* Header */}
+          <div
+            className="p-6 border-b flex justify-between items-center flex-shrink-0 !bg-opacity-100"
+            style={{
+              backgroundColor: "var(--background)",
+              backdropFilter: "none",
+            }}
+          >
+            <h2 className="text-lg font-semibold">Filters</h2>
+            <SheetClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <X />
+            </SheetClose>
+          </div>
+
+          {/* Scrollable Filter Content */}
+          <div
+            className="flex-1 overflow-y-auto custom-scrollbar min-h-0 !bg-opacity-100"
+            style={{
+              backgroundColor: "var(--background)",
+              backdropFilter: "none",
+            }}
+          >
+            <FilterPanelPlaceholder
+              pendingFilters={pendingFilters}
+              onPendingFilterChange={handlePendingFilterChange}
+            />
+          </div>
+
+          {/* Fixed Apply Button */}
+          <div
+            className="p-6 border-t bg-background flex-shrink-0 shadow-lg !bg-opacity-100"
+            style={{
+              backgroundColor: "var(--background)",
+              backdropFilter: "none",
+            }}
+          >
+            <Button
+              onClick={handleApplyFilters}
+              className="w-full h-12 text-base font-semibold text-white filter-apply-button"
+              style={{
+                backgroundColor: "var(--primary)",
+                opacity: 1,
+                backdropFilter: "none",
+              }}
+            >
+              Apply Filters
+            </Button>
           </div>
         </SheetContent>
       </Sheet>

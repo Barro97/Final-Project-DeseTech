@@ -324,3 +324,24 @@ main {
 .z-tooltip {
   z-index: 9998;
 }
+
+/* Sheet and Filter Dialog Styles */
+.filter-sheet-overlay {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.filter-apply-button {
+  position: relative;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure sheet content is properly layered */
+[data-radix-dialog-content] {
+  z-index: 9999 !important;
+}
+
+[data-radix-dialog-overlay] {
+  z-index: 9998 !important;
+}

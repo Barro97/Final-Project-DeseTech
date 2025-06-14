@@ -8,6 +8,10 @@ from backend.app.features.user.schemas import (
     UserCreate, UserUpdate, User as UserSchema, 
     ProfileUpdateRequest, ProfileResponse
 )
+from backend.app.features.user.user_schemas.search import (
+    UserSearchRequest, UserSearchListResponse
+)
+from backend.app.features.user.services.search_service import UserSearchService
 from backend.app.features.user.crud import (
     create_user,
     get_user,
@@ -15,10 +19,6 @@ from backend.app.features.user.crud import (
     delete_user,
 )
 from backend.app.features.user.services.profile_service import UserProfileService
-from backend.app.features.user.search_service import UserSearchService
-from backend.app.features.user.user_schemas.search import (
-    UserSearchRequest, UserSearchListResponse
-)
 from backend.app.features.file.utils.upload import save_file
 from backend.app.database.models import User
 
@@ -88,11 +88,10 @@ def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
     """
     return create_user(db=db, user=user)
 
-# User Search Endpoints - MUST BE BEFORE /{user_id} route to avoid conflicts
+# IMPORTANT: Search routes must come BEFORE parameterized routes to avoid path conflicts
 @router.get("/search", response_model=UserSearchListResponse)
-async def search_users(
+def search_users(
     db: Session = Depends(get_db),
-    current_user: Optional[dict] = Depends(get_optional_current_user),
     search_term: Optional[str] = Query(None, max_length=100),
     roles: Optional[List[str]] = Query(None),
     organizations: Optional[List[str]] = Query(None),
@@ -100,30 +99,35 @@ async def search_users(
     status: Optional[List[str]] = Query(None),
     has_datasets: Optional[bool] = Query(None),
     min_datasets: Optional[int] = Query(None, ge=0),
-    profile_completeness: Optional[str] = Query(None),
-    sort_by: str = Query("relevance", regex="^(relevance|name|recent|datasets|activity)$"),
+    profile_completeness: Optional[str] = Query(None, pattern="^(basic|intermediate|complete)$"),
+    sort_by: Optional[str] = Query("relevance", pattern="^(relevance|name|recent|datasets|activity)$"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100)
 ):
     """
-    Search users with privacy-aware filtering and intelligent ranking.
+    Search for users with comprehensive filtering options.
     
-    This endpoint allows searching for users across the platform with respect
-    for privacy settings. Results are filtered based on the viewer's authentication
-    status and the target users' privacy preferences.
+    This endpoint provides powerful search capabilities for finding researchers
+    and users in the platform with various filtering and sorting options.
     
-    Privacy Rules:
-    - Anonymous users: Only see public profiles
-    - Authenticated users: See public + authenticated profiles + own private profile
-    - All users: Cannot see inactive/suspended users
-    
-    Search Features:
-    - Multi-field search: names, usernames, organizations, bios
-    - Advanced filtering: roles, organizations, dataset counts, profile completeness
-    - Intelligent sorting: relevance, name, activity, dataset count
-    - Pagination support for large result sets
-    
-    Authentication is optional - anonymous users can search public profiles.
+    Args:
+        search_term: Search across usernames, names, emails, organizations
+        roles: Filter by user roles (e.g., ['researcher', 'admin'])
+        organizations: Filter by organization names
+        skills: Filter by user skills/expertise areas
+        status: Filter by user status (e.g., ['active', 'inactive'])
+        has_datasets: Filter users who have/haven't uploaded datasets
+        min_datasets: Minimum number of datasets user must have
+        profile_completeness: Filter by profile completion level
+        sort_by: Sort results by relevance, name, recent activity, or dataset count
+        page: Page number for pagination (starts at 1)
+        limit: Number of results per page (1-100)
+        
+    Returns:
+        UserSearchListResponse: Paginated list of users matching search criteria
+        
+    Example:
+        GET /users/search?search_term=john&roles=researcher&sort_by=datasets&limit=10
     """
     try:
         # Create search request from query parameters
@@ -141,57 +145,46 @@ async def search_users(
             limit=limit
         )
         
-        # Get viewer user ID for privacy filtering
-        viewer_user_id = current_user["user_id"] if current_user else None
-        
-        # Execute search
-        search_service = UserSearchService()
-        return search_service.search_users(db, search_request, viewer_user_id)
+        # Execute search using service
+        service = UserSearchService()
+        return service.search_users(db, search_request)
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Error searching users: {str(e)}"
         )
 
-
 @router.get("/search-suggestions", response_model=List[str])
-async def get_user_search_suggestions(
+def get_user_search_suggestions(
     search_term: str = Query(..., min_length=2, max_length=100),
     limit: int = Query(8, ge=1, le=20),
-    db: Session = Depends(get_db),
-    current_user: Optional[dict] = Depends(get_optional_current_user)
+    db: Session = Depends(get_db)
 ):
     """
     Get search suggestions for user search autocomplete.
     
-    This endpoint provides intelligent autocomplete suggestions based on:
-    - User names (first priority)
-    - Organizations (second priority)
-    - Respects privacy settings (only suggests discoverable users)
-    
-    Suggestions are ranked by user activity and relevance to provide
-    the most useful autocomplete experience.
+    This endpoint provides intelligent suggestions based on usernames, names,
+    and organizations to help users find what they're looking for quickly.
     
     Args:
         search_term: Partial search term (minimum 2 characters)
-        limit: Maximum suggestions to return (1-20, default 8)
+        limit: Maximum number of suggestions to return (1-20, default 8)
         
     Returns:
-        List[str]: Suggested search terms based on actual user data
+        List[str]: List of suggested search terms based on actual user data
         
-    Authentication is optional - anonymous users get suggestions from public profiles only.
+    Example:
+        GET /users/search-suggestions?search_term=john&limit=5
+        Returns: ["John Smith", "John Doe", "Johnson Research Lab", ...]
     """
     try:
-        viewer_user_id = current_user["user_id"] if current_user else None
-        
-        search_service = UserSearchService()
-        return search_service.get_search_suggestions(db, search_term, limit, viewer_user_id)
-        
+        service = UserSearchService()
+        return service.get_search_suggestions(db, search_term, limit)
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting user search suggestions: {str(e)}"
+            status_code=500,
+            detail=f"Error getting search suggestions: {str(e)}"
         )
 
 @router.get("/{user_id}", response_model=UserSchema)

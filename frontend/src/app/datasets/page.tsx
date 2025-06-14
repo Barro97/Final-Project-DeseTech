@@ -9,6 +9,8 @@ import {
   List,
   SlidersHorizontal,
   Home,
+  Users,
+  Database,
 } from "lucide-react";
 
 import { useAuth } from "@/app/features/auth/context/AuthContext";
@@ -23,14 +25,14 @@ import { useUsedTags } from "@/app/features/tag/hooks/useTags";
 import { useAvailableFileTypes } from "@/app/features/dataset/hooks/useAvailableFileTypes";
 import { useSearchSuggestions } from "@/app/features/dataset/hooks/useSearchSuggestions";
 import {
-  useUserSearch,
-  useUserSearchSuggestions,
-} from "@/app/features/user/hooks/useUserSearch";
-import {
   Dataset,
   SearchFilters,
 } from "@/app/features/dataset/types/datasetTypes";
 import { searchDatasets } from "@/app/features/dataset/services/datasetService";
+import {
+  searchUsers,
+  getUserSearchSuggestions,
+} from "@/app/features/user/services/userSearchService";
 import {
   Select,
   SelectContent,
@@ -67,16 +69,30 @@ const EnhancedSearchBarPlaceholder = ({
     isLoading: isLoadingDatasetSuggestions,
   } = useSearchSuggestions(
     inputValue,
-    8, // limit to 8 suggestions
+    4, // limit to 4 dataset suggestions
     inputValue.length >= 2 &&
       (searchType === "datasets" || searchType === "all")
   );
 
-  const { data: userSuggestions = [], isLoading: isLoadingUserSuggestions } =
-    useUserSearchSuggestions(
-      inputValue,
-      8 // limit to 8 suggestions
-    );
+  // Get user suggestions
+  const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
+  const [isLoadingUserSuggestions, setIsLoadingUserSuggestions] =
+    useState(false);
+
+  useEffect(() => {
+    if (
+      inputValue.length >= 2 &&
+      (searchType === "users" || searchType === "all")
+    ) {
+      setIsLoadingUserSuggestions(true);
+      getUserSearchSuggestions(inputValue, 4)
+        .then(setUserSuggestions)
+        .catch(() => setUserSuggestions([]))
+        .finally(() => setIsLoadingUserSuggestions(false));
+    } else {
+      setUserSuggestions([]);
+    }
+  }, [inputValue, searchType]);
 
   // Combine suggestions based on search type
   const suggestions =
@@ -84,7 +100,7 @@ const EnhancedSearchBarPlaceholder = ({
       ? datasetSuggestions
       : searchType === "users"
         ? userSuggestions
-        : [...datasetSuggestions.slice(0, 4), ...userSuggestions.slice(0, 4)];
+        : [...datasetSuggestions, ...userSuggestions];
 
   const isLoadingSuggestions =
     searchType === "datasets"
@@ -103,9 +119,9 @@ const EnhancedSearchBarPlaceholder = ({
       case "datasets":
         return "Search for datasets (e.g., Climate, Finance)...";
       case "users":
-        return "Search for users (e.g., Dr. Smith, University)...";
+        return "Search for researchers (e.g., John Smith, University)...";
       case "all":
-        return "Search datasets and users...";
+        return "Search for datasets and researchers...";
       default:
         return "Search...";
     }
@@ -114,37 +130,44 @@ const EnhancedSearchBarPlaceholder = ({
   return (
     <div className="p-4 my-4 bg-white dark:bg-gray-800 shadow-lg rounded-xl">
       {/* Search Type Toggle */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => onSearchTypeChange("datasets")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            searchType === "datasets"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          Datasets
-        </button>
-        <button
-          onClick={() => onSearchTypeChange("users")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            searchType === "users"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          Users
-        </button>
-        <button
-          onClick={() => onSearchTypeChange("all")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            searchType === "all"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          All
-        </button>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Search:
+        </span>
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => onSearchTypeChange("datasets")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "datasets"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            <Database className="h-4 w-4 inline mr-1" />
+            Datasets
+          </button>
+          <button
+            onClick={() => onSearchTypeChange("users")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "users"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            <Users className="h-4 w-4 inline mr-1" />
+            Users
+          </button>
+          <button
+            onClick={() => onSearchTypeChange("all")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "all"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            All
+          </button>
+        </div>
       </div>
 
       <div className="relative">
@@ -181,9 +204,9 @@ const EnhancedSearchBarPlaceholder = ({
                 Loading suggestions...
               </li>
             ) : suggestions.length > 0 ? (
-              suggestions.map((suggestion) => (
+              suggestions.map((suggestion, index) => (
                 <li
-                  key={suggestion}
+                  key={`${suggestion}-${index}`}
                   onClick={() => {
                     setInputValue(suggestion);
                     onSearch(suggestion);
@@ -646,15 +669,15 @@ export default function SearchDatasetsPage() {
   const { ref: loadMoreRef, inView } = useInView();
 
   const [viewMode, setViewMode] = useState<"landing" | "results">("landing");
-  const [searchType, setSearchType] = useState<"datasets" | "users" | "all">(
-    "datasets"
-  );
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({});
   const [pendingFilters, setPendingFilters] = useState<SearchFilters>({});
   const [currentSort, setCurrentSort] = useState("newest");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [searchType, setSearchType] = useState<"datasets" | "users" | "all">(
+    "datasets"
+  );
 
   // Calculate date filters for meaningful sections
   const getFirstDayOfMonth = () => {
@@ -716,15 +739,21 @@ export default function SearchDatasetsPage() {
 
   // Dataset search query
   const {
-    data,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
+    data: datasetData,
+    isLoading: isLoadingDatasets,
+    isError: isDatasetError,
+    fetchNextPage: fetchNextDatasetPage,
+    hasNextPage: hasNextDatasetPage,
+    isFetchingNextPage: isFetchingNextDatasetPage,
+    refetch: refetchDatasets,
   } = useInfiniteQuery({
-    queryKey: ["allDatasets", activeSearchQuery, currentSort, appliedFilters],
+    queryKey: [
+      "allDatasets",
+      activeSearchQuery,
+      currentSort,
+      appliedFilters,
+      searchType,
+    ],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         return await fetchDatasets(
@@ -755,24 +784,82 @@ export default function SearchDatasetsPage() {
 
   // User search query
   const {
-    data: userSearchData,
+    data: userData,
     isLoading: isLoadingUsers,
-    isError: isUserSearchError,
-  } = useUserSearch(
-    {
-      search_term: activeSearchQuery,
-      sort_by: "relevance",
-      page: 1,
-      limit: 20,
+    isError: isUserError,
+    fetchNextPage: fetchNextUserPage,
+    hasNextPage: hasNextUserPage,
+    isFetchingNextPage: isFetchingNextUserPage,
+    refetch: refetchUsers,
+  } = useInfiniteQuery({
+    queryKey: [
+      "allUsers",
+      activeSearchQuery,
+      currentSort,
+      appliedFilters,
+      searchType,
+    ],
+    queryFn: async ({ pageParam = 1 }) => {
+      try {
+        return await searchUsers({
+          search_term: activeSearchQuery,
+          sort_by:
+            currentSort === "newest"
+              ? "recent"
+              : currentSort === "downloads"
+                ? "datasets"
+                : currentSort,
+          page: pageParam,
+          limit: 12,
+        });
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again.",
+          variant: "error",
+        });
+        throw error;
+      }
     },
-    !isAuthLoading &&
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.has_next ? allPages.length + 1 : undefined,
+    initialPageParam: 1,
+    enabled:
+      !isAuthLoading &&
       viewMode === "results" &&
-      (searchType === "users" || searchType === "all")
-  );
+      (searchType === "users" || searchType === "all"),
+  });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
+    // Handle dataset infinite scroll
+    if (
+      inView &&
+      hasNextDatasetPage &&
+      !isFetchingNextDatasetPage &&
+      (searchType === "datasets" || searchType === "all")
+    ) {
+      fetchNextDatasetPage();
+    }
+    // Handle user infinite scroll
+    if (
+      inView &&
+      hasNextUserPage &&
+      !isFetchingNextUserPage &&
+      (searchType === "users" || searchType === "all")
+    ) {
+      fetchNextUserPage();
+    }
+  }, [
+    inView,
+    fetchNextDatasetPage,
+    hasNextDatasetPage,
+    isFetchingNextDatasetPage,
+    fetchNextUserPage,
+    hasNextUserPage,
+    isFetchingNextUserPage,
+    searchType,
+  ]);
 
   const handleSearchSubmit = useCallback((query: string) => {
     setActiveSearchQuery(query);
@@ -782,6 +869,7 @@ export default function SearchDatasetsPage() {
   const handleCarouselSeeAll = useCallback((category: string) => {
     setViewMode("results");
     setActiveSearchQuery("");
+    setSearchType("datasets"); // Always show datasets for carousel "see all"
     switch (category) {
       case "Most Downloaded":
         setCurrentSort("downloads");
@@ -936,8 +1024,10 @@ export default function SearchDatasetsPage() {
     setAppliedFilters({});
     setPendingFilters({});
     setCurrentSort("newest");
-    refetch();
-  }, [refetch]);
+    // Refetch both datasets and users
+    refetchDatasets();
+    refetchUsers();
+  }, [refetchDatasets, refetchUsers]);
 
   const returnToLandingPage = useCallback(() => {
     setViewMode("landing");
@@ -947,8 +1037,57 @@ export default function SearchDatasetsPage() {
     setCurrentSort("newest");
   }, []);
 
-  const datasets = data?.pages.flatMap((page) => page.datasets) || [];
-  const totalResults = data?.pages[0]?.total || 0;
+  // Combine data based on search type
+  const datasets = datasetData?.pages.flatMap((page) => page.datasets) || [];
+  const users = userData?.pages.flatMap((page) => page.users) || [];
+
+  // Calculate totals and loading states based on search type
+  const getTotalResults = () => {
+    if (searchType === "datasets") return datasetData?.pages[0]?.total || 0;
+    if (searchType === "users") return userData?.pages[0]?.total_count || 0;
+    if (searchType === "all")
+      return (
+        (datasetData?.pages[0]?.total || 0) +
+        (userData?.pages[0]?.total_count || 0)
+      );
+    return 0;
+  };
+
+  const getIsLoading = () => {
+    if (searchType === "datasets") return isLoadingDatasets;
+    if (searchType === "users") return isLoadingUsers;
+    if (searchType === "all") return isLoadingDatasets || isLoadingUsers;
+    return false;
+  };
+
+  const getIsError = () => {
+    if (searchType === "datasets") return isDatasetError;
+    if (searchType === "users") return isUserError;
+    if (searchType === "all") return isDatasetError || isUserError;
+    return false;
+  };
+
+  const getIsFetchingNextPage = () => {
+    if (searchType === "datasets") return isFetchingNextDatasetPage;
+    if (searchType === "users") return isFetchingNextUserPage;
+    if (searchType === "all")
+      return isFetchingNextDatasetPage || isFetchingNextUserPage;
+    return false;
+  };
+
+  const getHasNextPage = () => {
+    if (searchType === "datasets") return hasNextDatasetPage;
+    if (searchType === "users") return hasNextUserPage;
+    if (searchType === "all") return hasNextDatasetPage || hasNextUserPage;
+    return false;
+  };
+
+  const totalResults = getTotalResults();
+  const isLoading = getIsLoading();
+  const isError = getIsError();
+  const isFetchingNextPage = getIsFetchingNextPage();
+  const hasNextPage = getHasNextPage();
+
   const searchDuration =
     viewMode === "results" && !isLoading && activeSearchQuery
       ? `${(Math.random() * 0.3 + 0.05).toFixed(2)}s`
@@ -977,6 +1116,7 @@ export default function SearchDatasetsPage() {
           </div>
           <EnhancedSearchBarPlaceholder
             onSearch={handleSearchSubmit}
+            initialQuery={activeSearchQuery}
             searchType={searchType}
             onSearchTypeChange={setSearchType}
           />
@@ -1053,26 +1193,17 @@ export default function SearchDatasetsPage() {
               />
               <Separator className="mb-6" />
 
-              {/* Loading States */}
-              {((isLoading && !datasets.length) ||
-                (isLoadingUsers &&
-                  (searchType === "users" || searchType === "all"))) && (
+              {isLoading && !datasets.length && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-40">
                   <div className="text-center">
                     <LoadingSpinner size="lg" />
                     <p className="mt-4 text-gray-500 dark:text-gray-400">
-                      {searchType === "datasets"
-                        ? "Searching datasets..."
-                        : searchType === "users"
-                          ? "Searching users..."
-                          : "Searching..."}
+                      Searching datasets...
                     </p>
                   </div>
                 </div>
               )}
-
-              {/* Error States */}
-              {(isError || isUserSearchError) && (
+              {isError && (
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-md mb-6">
                   <p>
                     Failed to load{" "}
@@ -1086,96 +1217,94 @@ export default function SearchDatasetsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refetch()}
+                    onClick={() => {
+                      if (searchType === "datasets") refetchDatasets();
+                      else if (searchType === "users") refetchUsers();
+                      else {
+                        refetchDatasets();
+                        refetchUsers();
+                      }
+                    }}
                     className="mt-2"
                   >
                     Retry
                   </Button>
                 </div>
               )}
+              {!isLoading && !isError && totalResults === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-lg text-gray-500 dark:text-gray-400 mb-4">
+                    No{" "}
+                    {searchType === "datasets"
+                      ? "datasets"
+                      : searchType === "users"
+                        ? "users"
+                        : "results"}{" "}
+                    match your search criteria.
+                  </p>
+                  <Button variant="outline" onClick={resetAllFiltersAndSearch}>
+                    Clear all filters and search
+                  </Button>
+                </div>
+              )}
 
-              {/* No Results State */}
-              {!isLoading &&
-                !isLoadingUsers &&
-                !isError &&
-                !isUserSearchError &&
-                datasets.length === 0 &&
-                (!userSearchData?.users ||
-                  userSearchData.users.length === 0) && (
-                  <div className="text-center py-12">
-                    <p className="text-lg text-gray-500 dark:text-gray-400 mb-4">
-                      No{" "}
-                      {searchType === "datasets"
-                        ? "datasets"
-                        : searchType === "users"
-                          ? "users"
-                          : "results"}{" "}
-                      match your search criteria.
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={resetAllFiltersAndSearch}
-                    >
-                      Clear all filters and search
-                    </Button>
-                  </div>
-                )}
-
-              {/* Dataset Results */}
-              {datasets.length > 0 &&
-                (searchType === "datasets" || searchType === "all") && (
-                  <div className="mb-8">
-                    {searchType === "all" && (
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-                        Datasets ({datasets.length})
-                      </h3>
-                    )}
-                    <div
-                      className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
-                    >
-                      {datasets.map((dataset) => (
+              {/* Results Display */}
+              {(datasets.length > 0 || users.length > 0) && (
+                <div className="space-y-8">
+                  {/* Dataset Results */}
+                  {(searchType === "datasets" || searchType === "all") &&
+                    datasets.length > 0 && (
+                      <div>
+                        {searchType === "all" && (
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                            Datasets ({datasets.length})
+                          </h3>
+                        )}
                         <div
-                          key={dataset.dataset_id}
-                          className="group relative"
+                          className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
                         >
-                          <DatasetCard
-                            dataset={dataset}
-                            isSelected={false}
-                            onSelect={() => {}}
-                            showSelectionCheckbox={false}
-                          />
+                          {datasets.map((dataset) => (
+                            <div
+                              key={dataset.dataset_id}
+                              className="group relative"
+                            >
+                              <DatasetCard
+                                dataset={dataset}
+                                isSelected={false}
+                                onSelect={() => {}}
+                                showSelectionCheckbox={false}
+                              />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              {/* User Results */}
-              {userSearchData?.users &&
-                userSearchData.users.length > 0 &&
-                (searchType === "users" || searchType === "all") && (
-                  <div className="mb-8">
-                    {searchType === "all" && (
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-                        Users ({userSearchData.users.length})
-                      </h3>
+                      </div>
                     )}
-                    <div
-                      className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
-                    >
-                      {userSearchData.users.map((user) => (
-                        <div key={user.user_id} className="group relative">
-                          <UserCard
-                            user={user}
-                            isSelected={false}
-                            onSelect={() => {}}
-                            showSelectionCheckbox={false}
-                          />
+
+                  {/* User Results */}
+                  {(searchType === "users" || searchType === "all") &&
+                    users.length > 0 && (
+                      <div>
+                        {searchType === "all" && (
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                            Researchers ({users.length})
+                          </h3>
+                        )}
+                        <div
+                          className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
+                        >
+                          {users.map((user) => (
+                            <div key={user.user_id} className="group relative">
+                              <UserCard
+                                user={user}
+                                showSelectionCheckbox={false}
+                              />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    )}
+                </div>
+              )}
 
               {isFetchingNextPage && (
                 <div className="flex justify-center mt-8">

@@ -1,62 +1,40 @@
 "use client";
-
 import React from "react";
+import { Card } from "@/app/components/molecules/card";
+import { Calendar, Database, Shield } from "lucide-react";
 import Link from "next/link";
-import { MapPin, Calendar, Database, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/app/components/molecules/card";
-
-export interface UserSearchResult {
-  user_id: number;
-  username: string;
-  full_name: string;
-  email: string;
-  role_name?: string;
-  status: string;
-  organization?: string;
-  bio?: string;
-  profile_picture_url?: string;
-  dataset_count: number;
-  profile_completeness: string;
-  last_activity?: string;
-  skills: string[];
-  is_verified: boolean;
-}
 
 interface UserCardProps {
-  user: UserSearchResult;
+  user: {
+    user_id: number;
+    username: string;
+    full_name: string;
+    email: string;
+    role_name?: string;
+    status: string;
+    organization?: string;
+    bio?: string;
+    profile_picture_url?: string;
+    dataset_count: number;
+    profile_completeness: string;
+    last_activity?: string;
+    skills: string[];
+    is_verified: boolean;
+  };
+  showSelectionCheckbox?: boolean;
   isSelected?: boolean;
   onSelect?: (userId: number) => void;
-  showSelectionCheckbox?: boolean;
-  className?: string;
 }
 
-export const UserCard: React.FC<UserCardProps> = ({
+export function UserCard({
   user,
+  showSelectionCheckbox = false,
   isSelected = false,
   onSelect,
-  showSelectionCheckbox = false,
-  className = "",
-}) => {
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger selection if clicking on links or buttons
-    if ((e.target as HTMLElement).closest("a, button")) {
-      return;
-    }
-
-    if (onSelect) {
-      onSelect(user.user_id);
-    }
-  };
-
-  const getProfileCompletenessColor = (completeness: string) => {
-    switch (completeness) {
-      case "complete":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "intermediate":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-    }
+}: UserCardProps) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Never";
+    return new Date(dateString).toLocaleDateString();
   };
 
   const getRoleColor = (role?: string) => {
@@ -64,169 +42,148 @@ export const UserCard: React.FC<UserCardProps> = ({
       case "admin":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       case "moderator":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
-      case "researcher":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
     }
   };
 
-  const formatLastActivity = (lastActivity?: string) => {
-    if (!lastActivity) return "No recent activity";
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "inactive":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+      case "suspended":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+    }
+  };
 
-    const date = new Date(lastActivity);
-    const now = new Date();
-    const diffInDays = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (diffInDays === 0) return "Active today";
-    if (diffInDays === 1) return "Active yesterday";
-    if (diffInDays < 7) return `Active ${diffInDays} days ago`;
-    if (diffInDays < 30)
-      return `Active ${Math.floor(diffInDays / 7)} weeks ago`;
-    return `Active ${Math.floor(diffInDays / 30)} months ago`;
+  const getCompletenessColor = (completeness: string) => {
+    switch (completeness.toLowerCase()) {
+      case "complete":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "intermediate":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "basic":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+    }
   };
 
   return (
-    <Card
-      className={`
-        group relative transition-all duration-200 hover:shadow-lg hover:-translate-y-1 
-        border-gray-200 dark:border-gray-700 cursor-pointer
-        ${isSelected ? "ring-2 ring-blue-500 border-blue-500" : ""}
-        ${className}
-      `}
-      onClick={handleCardClick}
-    >
+    <Card className="p-6 hover:shadow-lg transition-shadow duration-200 relative group">
       {showSelectionCheckbox && (
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-4 left-4 z-10">
           <input
             type="checkbox"
             checked={isSelected}
             onChange={() => onSelect?.(user.user_id)}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-            onClick={(e) => e.stopPropagation()}
+            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:checked:bg-blue-500"
           />
         </div>
       )}
 
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          {/* Profile Picture */}
-          <div className="flex-shrink-0">
-            {user.profile_picture_url ? (
-              <img
-                src={user.profile_picture_url}
-                alt={`${user.full_name}'s profile`}
-                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                {user.full_name.charAt(0).toUpperCase()}
-              </div>
-            )}
+      <Link href={`/profile/${user.user_id}`} className="block">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start space-x-4 flex-1">
+            {/* Profile Picture */}
+            <div className="flex-shrink-0">
+              {user.profile_picture_url ? (
+                <img
+                  src={user.profile_picture_url}
+                  alt={user.full_name}
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                  {user.full_name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            {/* User Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                {user.full_name}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                @{user.username}
+              </p>
+              {user.organization && (
+                <p className="text-sm text-blue-600 dark:text-blue-400 truncate">
+                  {user.organization}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* User Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <Link
-                href={`/profile/${user.user_id}`}
-                className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {user.full_name}
-              </Link>
-              {user.is_verified && (
-                <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              )}
-            </div>
-
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              @{user.username}
-            </p>
-
-            {/* Role and Status Badges */}
-            <div className="flex flex-wrap gap-1 mb-2">
-              {user.role_name && (
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${getRoleColor(user.role_name)}`}
-                >
-                  {user.role_name}
-                </span>
-              )}
+          {/* Status Badges */}
+          <div className="flex flex-col gap-2 items-end flex-shrink-0">
+            {user.role_name && (
               <span
-                className={`text-xs px-2 py-1 rounded-full ${getProfileCompletenessColor(user.profile_completeness)}`}
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role_name)}`}
               >
-                {user.profile_completeness} profile
+                <Shield className="h-3 w-3 inline mr-1" />
+                {user.role_name.charAt(0).toUpperCase() +
+                  user.role_name.slice(1)}
               </span>
-            </div>
+            )}
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getCompletenessColor(user.profile_completeness)}`}
+            >
+              {user.profile_completeness.charAt(0).toUpperCase() +
+                user.profile_completeness.slice(1)}{" "}
+              Profile
+            </span>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="pt-0">
         {/* Bio */}
         {user.bio && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
             {user.bio}
           </p>
         )}
 
-        {/* Organization */}
-        {user.organization && (
-          <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-2">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">{user.organization}</span>
-          </div>
-        )}
-
-        {/* Stats Row */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-          <div className="flex items-center gap-1">
-            <Database className="w-4 h-4" />
-            <span>
-              {user.dataset_count} dataset{user.dataset_count !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            <span className="text-xs">
-              {formatLastActivity(user.last_activity)}
-            </span>
-          </div>
-        </div>
-
         {/* Skills */}
-        {user.skills && user.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {user.skills.slice(0, 3).map((skill, index) => (
-              <span
-                key={index}
-                className="text-xs px-2 py-1 rounded border bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-              >
-                {skill}
-              </span>
-            ))}
-            {user.skills.length > 3 && (
-              <span className="text-xs px-2 py-1 rounded border bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                +{user.skills.length - 3} more
-              </span>
-            )}
+        {user.skills.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1">
+              {user.skills.slice(0, 3).map((skill) => (
+                <span
+                  key={skill}
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 text-xs px-2 py-1 rounded-full"
+                >
+                  {skill}
+                </span>
+              ))}
+              {user.skills.length > 3 && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                  +{user.skills.length - 3} more
+                </span>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Email (if not private) */}
-        {user.email && user.email !== "Private" && (
-          <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {user.email}
-            </p>
+        {/* Stats */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Database className="h-4 w-4" />
+            <span>{user.dataset_count} datasets</span>
           </div>
-        )}
-      </CardContent>
+          {user.last_activity && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="h-4 w-4" />
+              <span>Last active: {formatDate(user.last_activity)}</span>
+            </div>
+          )}
+        </div>
+      </Link>
     </Card>
   );
-};
+}

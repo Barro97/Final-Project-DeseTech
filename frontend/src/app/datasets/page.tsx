@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   List,
   SlidersHorizontal,
+  Home,
 } from "lucide-react";
 
 import { useAuth } from "@/app/features/auth/context/AuthContext";
@@ -433,6 +434,7 @@ const SearchControlsToolbar = ({
   onLayoutChange,
   onClearAllFilters,
   onToggleFilterSheet,
+  onReturnToLanding,
   viewType,
 }: {
   totalResults: number;
@@ -443,6 +445,7 @@ const SearchControlsToolbar = ({
   onLayoutChange: (layout: "grid" | "list") => void;
   onClearAllFilters: () => void;
   onToggleFilterSheet: () => void;
+  onReturnToLanding?: () => void;
   viewType: "landing" | "results";
 }) => {
   const sortOptions = [
@@ -490,6 +493,16 @@ const SearchControlsToolbar = ({
 
         {viewType === "results" && (
           <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReturnToLanding}
+              className="h-9 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            >
+              <Home size={16} className="mr-2" />
+              Back to Browse
+            </Button>
+
             <div className="flex items-center gap-1">
               <Button
                 variant={currentLayout === "grid" ? "secondary" : "ghost"}
@@ -820,6 +833,14 @@ export default function SearchDatasetsPage() {
     refetch();
   }, [refetch]);
 
+  const returnToLandingPage = useCallback(() => {
+    setViewMode("landing");
+    setActiveSearchQuery("");
+    setAppliedFilters({});
+    setPendingFilters({});
+    setCurrentSort("newest");
+  }, []);
+
   const datasets = data?.pages.flatMap((page) => page.datasets) || [];
   const totalResults = data?.pages[0]?.total || 0;
   const searchDuration =
@@ -861,6 +882,7 @@ export default function SearchDatasetsPage() {
             onLayoutChange={setCurrentLayout}
             onClearAllFilters={resetAllFiltersAndSearch}
             onToggleFilterSheet={handleToggleFilterSheet}
+            onReturnToLanding={returnToLandingPage}
             viewType="landing"
           />
 
@@ -907,6 +929,7 @@ export default function SearchDatasetsPage() {
             onLayoutChange={setCurrentLayout}
             onClearAllFilters={resetAllFiltersAndSearch}
             onToggleFilterSheet={handleToggleFilterSheet}
+            onReturnToLanding={returnToLandingPage}
             viewType="results"
           />
 

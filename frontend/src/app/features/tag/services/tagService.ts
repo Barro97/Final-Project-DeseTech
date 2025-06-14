@@ -37,6 +37,24 @@ export async function getAllTags(): Promise<TagList> {
 }
 
 /**
+ * Get only tags that are associated with at least one dataset (public endpoint)
+ * This is useful for filtering interfaces where unused tags would result in empty results
+ */
+export async function getUsedTags(): Promise<TagList> {
+  try {
+    const response = await axios.get(`${API_URL}/tags/used`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching used tags:", error);
+    throw error;
+  }
+}
+
+/**
  * Create a new tag (admin only)
  */
 export async function createTag(tagData: TagCreate): Promise<Tag> {

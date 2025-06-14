@@ -17,7 +17,7 @@ import { Input } from "@/app/components/atoms/input";
 import { Button } from "@/app/components/atoms/button";
 import { Separator } from "@/app/components/atoms/separator";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
-import { useTags } from "@/app/features/tag/hooks/useTags";
+import { useUsedTags } from "@/app/features/tag/hooks/useTags";
 import { useAvailableFileTypes } from "@/app/features/dataset/hooks/useAvailableFileTypes";
 import {
   Dataset,
@@ -179,8 +179,8 @@ const FilterPanelPlaceholder = ({
     value: string | string[] | boolean | number | undefined
   ) => void;
 }) => {
-  // Fetch real tags from database
-  const { data: tagsData, isLoading: isLoadingTags } = useTags();
+  // Fetch real tags from database (only used tags to avoid empty results)
+  const { data: tagsData, isLoading: isLoadingTags } = useUsedTags();
   const availableTags = tagsData?.tags || [];
 
   // Fetch available file types from database

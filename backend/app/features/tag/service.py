@@ -128,6 +128,35 @@ class TagService:
             logger.error(f"Error retrieving tags: {str(e)}")
             raise TagError("Failed to retrieve tags")
 
+    def get_used_tags(self, db: Session) -> TagList:
+        """
+        Get only tags that are associated with at least one dataset.
+        
+        This method returns tags that are actually being used by datasets,
+        filtering out any tags that exist in the database but aren't
+        associated with any datasets. This is useful for filtering
+        interfaces where showing unused tags would result in empty results.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            TagList: Only tags that have associated datasets, with total count
+        """
+        try:
+            # Query tags that are associated with at least one dataset
+            # Using INNER JOIN with DatasetTag to get only used tags
+            used_tags = db.query(Tag).join(DatasetTag).distinct().order_by(Tag.tag_category_name).all()
+            
+            return TagList(
+                tags=[TagSchema(tag_id=tag.tag_id, tag_category_name=tag.tag_category_name) for tag in used_tags],
+                total_count=len(used_tags)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error retrieving used tags: {str(e)}")
+            raise TagError("Failed to retrieve used tags")
+
     def update_tag(self, db: Session, tag_id: int, request: TagUpdate, current_user_id: int) -> TagSchema:
         """
         Update an existing tag with admin permission checking.

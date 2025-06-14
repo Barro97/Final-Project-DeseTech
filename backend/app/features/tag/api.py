@@ -74,6 +74,33 @@ def get_all_tags(db: Session = Depends(get_db)):
         logger.error(f"Unexpected error retrieving tags: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/used", response_model=TagList)
+def get_used_tags(db: Session = Depends(get_db)):
+    """
+    Get only tags that are associated with at least one dataset.
+    
+    This endpoint returns tags that are actually being used by datasets,
+    filtering out any tags that exist in the database but aren't
+    associated with any datasets. This is useful for filtering
+    interfaces where showing unused tags would result in empty results.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        TagList: Only tags that have associated datasets, with total count
+        
+    Raises:
+        HTTPException: 500 for internal server errors
+    """
+    try:
+        return tag_service.get_used_tags(db)
+    except TagError as e:
+        raise handle_tag_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error retrieving used tags: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @router.get("/{tag_id}", response_model=TagSchema)
 def get_tag_by_id(
     tag_id: int = Path(..., gt=0),

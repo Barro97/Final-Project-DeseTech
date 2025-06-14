@@ -3,18 +3,10 @@ import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/app/components/molecules/card";
+import { Card, CardContent } from "@/app/components/molecules/card";
 import { Button } from "@/app/components/atoms/button";
 import {
   FileText,
-  Clock,
   Download,
   Upload,
   Search,
@@ -25,31 +17,10 @@ import Link from "next/link";
 import { UploadModal } from "@/app/features/upload modal/modal";
 import { createPortal } from "react-dom";
 import { usePublicStats } from "@/app/features/dataset/hooks/usePublicStats";
-
-// Mock data for initial rendering - would be replaced with actual API calls
-const mockFeaturedDatasets = [
-  {
-    id: 1,
-    name: "Climate Change Temperature Data",
-    description: "Global temperature records from 1880 to 2023",
-    downloads: 1234,
-    date: "2 days ago",
-  },
-  {
-    id: 2,
-    name: "Urban Development Patterns",
-    description: "Satellite imagery analysis of urban growth",
-    downloads: 856,
-    date: "1 week ago",
-  },
-  {
-    id: 3,
-    name: "Renewable Energy Production",
-    description: "Solar and wind energy output statistics",
-    downloads: 432,
-    date: "3 days ago",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { searchDatasets } from "@/app/features/dataset/services/datasetService";
+import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
+import { Dataset } from "@/app/features/dataset/types/datasetTypes";
 
 const mockRecentActivity = [
   {
@@ -75,6 +46,56 @@ const mockRecentActivity = [
   },
 ];
 
+// Featured Datasets Component - similar to DatasetCarouselSectionPlaceholder from search page
+const FeaturedDatasets = ({
+  title,
+  onSeeAll,
+  datasets,
+  isLoading,
+}: {
+  title: string;
+  onSeeAll: () => void;
+  datasets: Dataset[];
+  isLoading?: boolean;
+}) => (
+  <div className="mb-8">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+        {title}
+      </h2>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onSeeAll}
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        View all &rarr;
+      </Button>
+    </div>
+    {isLoading ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="animate-pulse">
+            <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {datasets.map((dataset) => (
+          <DatasetCard
+            key={dataset.dataset_id}
+            dataset={dataset}
+            isSelected={false}
+            onSelect={() => {}}
+            showSelectionCheckbox={false}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 function HomePage() {
   const { user, token, isLoading } = useAuth();
   const router = useRouter();
@@ -82,6 +103,15 @@ function HomePage() {
 
   // Fetch real statistics from backend
   const { stats, loading: statsLoading, error: statsError } = usePublicStats();
+
+  // Fetch featured datasets (most downloaded)
+  const { data: featuredDatasetsData, isLoading: isLoadingFeatured } = useQuery(
+    {
+      queryKey: ["datasets", "featured"],
+      queryFn: () => searchDatasets({ sort_by: "downloads", limit: 3 }),
+      enabled: !isLoading,
+    }
+  );
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -235,47 +265,12 @@ function HomePage() {
         </div>
 
         {/* Featured Datasets */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Featured Datasets</h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/datasets">View all</Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockFeaturedDatasets.map((dataset) => (
-              <Card
-                key={dataset.id}
-                className="transition-all hover:shadow-md hover:-translate-y-1 border-gray-200 dark:border-gray-700"
-              >
-                <CardHeader>
-                  <CardTitle>{dataset.name}</CardTitle>
-                  <CardDescription>{dataset.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Download className="h-4 w-4 mr-1" />
-                    <span>{dataset.downloads} downloads</span>
-                    <span className="mx-2">•</span>
-                    <Clock className="h-4 w-4 mr-1" />
-                    <span>{dataset.date}</span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    asChild
-                    className="w-full"
-                  >
-                    <Link href={`/datasets/${dataset.id}`}>View Details</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <FeaturedDatasets
+          title="Featured Datasets"
+          onSeeAll={() => router.push("/datasets")}
+          datasets={featuredDatasetsData?.datasets || []}
+          isLoading={isLoadingFeatured}
+        />
 
         {/* Recent Activity */}
         <div className="mb-8">

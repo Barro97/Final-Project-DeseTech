@@ -168,6 +168,23 @@ class DatasetRepositoryInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_available_file_types(self, db: Session) -> List[str]:
+        """
+        Get all unique file types that exist in the database.
+        
+        This method retrieves all distinct file_type values from the files table,
+        filters out null values, and returns them for dynamic filter generation.
+        
+        Returns:
+            List[str]: List of unique MIME types that exist in the database
+            
+        Example:
+            >>> file_types = repository.get_available_file_types(db)
+            >>> print(file_types)  # ['text/csv', 'application/pdf', 'application/json']
+        """
+        pass
+
 
 class DatasetRepository(DatasetRepositoryInterface):
     """
@@ -359,28 +376,23 @@ class DatasetRepository(DatasetRepositoryInterface):
                 'ppt': ['application/vnd.ms-powerpoint']
             }
             
-            # Convert file extensions to MIME types and include extensions for fallback
-            search_values = []
+            # Convert file extensions to MIME types
+            mime_types = []
             for ext in filters.file_types:
                 ext_lower = ext.lower()
-                # Add the extension itself (in case it's stored as extension)
-                search_values.append(ext_lower)
-                search_values.append(ext.upper())
-                # Add corresponding MIME types
                 if ext_lower in extension_to_mime:
-                    search_values.extend(extension_to_mime[ext_lower])
+                    mapped_mimes = extension_to_mime[ext_lower]
+                    mime_types.extend(mapped_mimes)
+                else:
+                    # If not in mapping, assume it's already a MIME type or try as-is
+                    mime_types.append(ext)
             
             # Remove duplicates
-            search_values = list(set(search_values))
+            mime_types = list(set(mime_types))
             
-            # Filter by both MIME types and extensions (case-insensitive)
-            query = query.filter(
-                or_(
-                    Dataset.files.any(File.file_type.in_(search_values)),
-                    Dataset.files.any(func.lower(File.file_type).in_([v.lower() for v in search_values]))
-                )
-            )
-        
+            # Filter datasets that have files with any of the specified MIME types
+            query = query.filter(Dataset.files.any(File.file_type.in_(mime_types)))
+
         # Geographic location filter - datasets with/without location data
         if filters.has_location is not None:
             if filters.has_location:
@@ -616,47 +628,57 @@ class DatasetRepository(DatasetRepositoryInterface):
 
     def get_public_stats(self, db: Session) -> dict:
         """
-        Generate public statistics for homepage display.
+        Generate public statistics for the platform landing page.
         
-        This method provides key platform metrics suitable for public display
-        without exposing sensitive admin information.
+        This method provides statistics that are safe to display publicly
+        without requiring authentication. It focuses on approved content
+        to present accurate public metrics.
         
         STATISTICS CALCULATED:
-        - **Total Datasets**: Count of approved datasets only
-        - **Total Researchers**: Count of users who have uploaded at least one dataset
-        - **Total Downloads**: Sum of download counts across all approved datasets
-        - **Research Fields**: Count of unique tags used in approved datasets
+        - **Total Approved Datasets**: Count of datasets approved by admins
+        - **Total Researchers**: Count of active users in the system
+        - **Total Downloads**: Sum of download counts for approved datasets
         
         Args:
             db: Database session for query execution
             
         Returns:
-            dict: Public statistics dictionary with keys:
-                - total_datasets: int
-                - total_researchers: int
-                - total_downloads: int
-                - research_fields: int
-                
+            dict: Public statistics with total_datasets, total_researchers, total_downloads
+            
         Example:
             >>> stats = repository.get_public_stats(db)
-            >>> print(f"Public stats: {stats['total_datasets']} datasets, {stats['total_researchers']} researchers")
+            >>> print(f"Platform has {stats['total_datasets']} datasets")
         """
-        # APPROVED DATASETS ONLY (public-facing)
-        approved_datasets_query = db.query(Dataset).filter(Dataset.approval_status == 'approved')
-        total_datasets = approved_datasets_query.count()
+        # Count only approved datasets for public display
+        total_datasets = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
         
-        # TOTAL DOWNLOADS FROM APPROVED DATASETS
+        # Count all active users (researchers using the platform)
+        total_researchers = db.query(User).filter(User.status == 'active').count()
+        
+        # Sum downloads only from approved datasets
         total_downloads = db.query(func.sum(Dataset.downloads_count)).filter(
             Dataset.approval_status == 'approved'
         ).scalar() or 0
-        
-        # TOTAL RESEARCHERS (users who have uploaded at least one approved dataset)
-        total_researchers = db.query(func.count(func.distinct(Dataset.uploader_id))).filter(
-            Dataset.approval_status == 'approved'
-        ).scalar() or 0
-        
+
         return {
             "total_datasets": total_datasets,
-            "total_researchers": total_researchers, 
+            "total_researchers": total_researchers,
             "total_downloads": total_downloads
-        } 
+        }
+
+    def get_available_file_types(self, db: Session) -> List[str]:
+        """
+        Get all unique file types that exist in the database.
+        
+        This method retrieves all distinct file_type values from the files table,
+        filters out null values, and returns them for dynamic filter generation.
+        
+        Returns:
+            List[str]: List of unique MIME types that exist in the database
+            
+        Example:
+            >>> file_types = repository.get_available_file_types(db)
+            >>> print(file_types)  # ['text/csv', 'application/pdf', 'application/json']
+        """
+        result = db.query(File.file_type).filter(File.file_type.isnot(None)).distinct().all()
+        return [row[0] for row in result if row[0]] 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from typing import List
 import zipfile
@@ -22,6 +22,7 @@ from backend.app.features.dataset.exceptions import DatasetError, handle_dataset
 from backend.app.features.dataset.utils import create_safe_filename
 from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
 from backend.app.features.file.services.download_tracking import DownloadTrackingService
+from backend.app.database.models import File
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/datasets")
@@ -70,25 +71,38 @@ def get_public_stats(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/available-file-types", response_model=List[str])
+def get_available_file_types(db: Session = Depends(get_db)):
+    """Get all available file types for filtering (no authentication required)."""
+    try:
+        return dataset_service.get_available_file_types(db)
+    except Exception as e:
+        logger.error(f"Unexpected error getting available file types: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/search", response_model=DatasetListResponse)
 def search_datasets(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
     search_term: str = None,
-    tags: List[str] = None,
+    tags: List[str] = Query(None),
     uploader_id: int = None,
     sort_by: str = "newest",
     page: int = 1,
     limit: int = 20,
     # Tier 1 filters
-    file_types: List[str] = None,
+    file_types: List[str] = Query(None),
     has_location: bool = None,
     min_downloads: int = None,
-    max_downloads: int = None
+    max_downloads: int = None,
+    # Approval status filter
+    approval_status: List[str] = Query(None)
 ):
     """Search and filter datasets with enhanced filtering capabilities."""
     try:
-        request = DatasetFilterRequest(
+        # Create filter request
+        filter_request = DatasetFilterRequest(
             search_term=search_term,
             tags=tags,
             uploader_id=uploader_id,
@@ -98,14 +112,18 @@ def search_datasets(
             file_types=file_types,
             has_location=has_location,
             min_downloads=min_downloads,
-            max_downloads=max_downloads
+            max_downloads=max_downloads,
+            approval_status=approval_status
         )
-        return dataset_service.search_datasets(db, request, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
+        
+        # Get service and search
+        service = DatasetService()
+        result = service.search_datasets(db, filter_request)
+        
+        return result
+        
     except Exception as e:
-        logger.error(f"Unexpected error searching datasets: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return handle_dataset_exception(e)
 
 
 @router.post("/batch-delete", response_model=BatchDeleteResponse)

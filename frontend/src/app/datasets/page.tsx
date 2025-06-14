@@ -18,6 +18,7 @@ import { Button } from "@/app/components/atoms/button";
 import { Separator } from "@/app/components/atoms/separator";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useTags } from "@/app/features/tag/hooks/useTags";
+import { useAvailableFileTypes } from "@/app/features/dataset/hooks/useAvailableFileTypes";
 import {
   Dataset,
   SearchFilters,
@@ -182,18 +183,10 @@ const FilterPanelPlaceholder = ({
   const { data: tagsData, isLoading: isLoadingTags } = useTags();
   const availableTags = tagsData?.tags || [];
 
-  // Common file types for filtering
-  const fileTypeOptions = [
-    "csv",
-    "json",
-    "xlsx",
-    "pdf",
-    "txt",
-    "xml",
-    "zip",
-    "sql",
-    "parquet",
-  ];
+  // Fetch available file types from database
+  const { data: availableFileTypes, isLoading: isLoadingFileTypes } =
+    useAvailableFileTypes();
+  const fileTypeOptions = availableFileTypes || [];
 
   // Approval status options
   const approvalStatusOptions = ["pending", "approved", "rejected"];
@@ -298,7 +291,12 @@ const FilterPanelPlaceholder = ({
         isLoadingTags
       )}
 
-      {renderFilterGroup("File Types", "file_types", fileTypeOptions)}
+      {renderFilterGroup(
+        "File Types",
+        "file_types",
+        fileTypeOptions,
+        isLoadingFileTypes
+      )}
 
       {renderFilterGroup(
         "Approval Status",

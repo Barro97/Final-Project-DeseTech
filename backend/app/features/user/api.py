@@ -209,41 +209,19 @@ async def upload_profile_picture(
         # Upload file using existing infrastructure
         file_path, size = save_file(file)
         
-        # List files in bucket to verify upload
-        from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
-        try:
-            bucket_files = client.storage.from_(SUPABASE_STORAGE_BUCKET).list()
-            print(f"🔍 Debug - Files in bucket: {len(bucket_files) if bucket_files else 0}")
-            # Check if our file exists
-            file_found = any(f.get('name', '').endswith(file.filename) for f in bucket_files) if bucket_files else False
-            print(f"🔍 Debug - Our file found in bucket: {file_found}")
-        except Exception as list_error:
-            print(f"🔍 Debug - Failed to list bucket files: {list_error}")
-        
         # Get public URL for the uploaded file
         from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
         
-        # The file_path is actually the storage key/path, get the public URL
-        public_url_response = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(file_path)
-        
-
-        
-        print(f"🔍 Debug - file_path: {file_path}")
-        print(f"🔍 Debug - public_url_response type: {type(public_url_response)}")
-        print(f"🔍 Debug - public_url_response: {public_url_response}")
-        
-        # Try using signed URL instead of public URL for better compatibility
+        # Try using signed URL for better compatibility
         try:
             # Create a long-term signed URL (1 year)
             signed_url_result = client.storage.from_(SUPABASE_STORAGE_BUCKET).create_signed_url(file_path, 60*60*24*365)
-            print(f"🔍 Debug - signed_url_result: {signed_url_result}")
             
             if isinstance(signed_url_result, dict) and 'signedURL' in signed_url_result:
                 file_url = signed_url_result['signedURL']
-                print(f"🔍 Debug - Using signed URL: {file_url}")
             else:
-                print(f"🔍 Debug - Signed URL failed, falling back to public URL")
                 # Fallback to public URL approach
+                public_url_response = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(file_path)
                 if isinstance(public_url_response, dict):
                     file_url = public_url_response.get('publicUrl') or public_url_response.get('publicURL') or public_url_response.get('url')
                 elif hasattr(public_url_response, 'url'):
@@ -253,16 +231,13 @@ async def upload_profile_picture(
                 else:
                     file_url = str(public_url_response)
                     
-                print(f"🔍 Debug - extracted public file_url: {file_url}")
-                
                 # Clean up the URL - remove trailing query parameters if empty
                 if file_url and file_url.endswith('?'):
                     file_url = file_url.rstrip('?')
-                    print(f"🔍 Debug - Cleaned URL (removed trailing ?): {file_url}")
                 
-        except Exception as signed_error:
-            print(f"🔍 Debug - Signed URL creation failed: {signed_error}")
+        except Exception:
             # Fallback to public URL approach
+            public_url_response = client.storage.from_(SUPABASE_STORAGE_BUCKET).get_public_url(file_path)
             if isinstance(public_url_response, dict):
                 file_url = public_url_response.get('publicUrl') or public_url_response.get('publicURL') or public_url_response.get('url')
             elif hasattr(public_url_response, 'url'):
@@ -272,39 +247,15 @@ async def upload_profile_picture(
             else:
                 file_url = str(public_url_response)
                 
-            print(f"🔍 Debug - extracted fallback file_url: {file_url}")
-            
             # Clean up the URL - remove trailing query parameters if empty
             if file_url and file_url.endswith('?'):
                 file_url = file_url.rstrip('?')
-                print(f"🔍 Debug - Cleaned URL (removed trailing ?): {file_url}")
         
         # Final validation and manual construction if needed
         if not file_url or not file_url.startswith('http'):
-            print(f"🔍 Debug - URL doesn't look valid, constructing manually")
             # Fallback: construct URL manually
             from backend.app.core.config import SUPABASE_URL
             file_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_STORAGE_BUCKET}/{file_path}"
-            print(f"🔍 Debug - manual URL: {file_url}")
-        
-        print(f"🔍 Debug - Final URL being saved: {file_url}")
-        
-        # Test the URL by making a HEAD request to check if it's accessible
-        import urllib.request
-        try:
-            request = urllib.request.Request(file_url, method='HEAD')
-            with urllib.request.urlopen(request, timeout=10) as response:
-                print(f"🔍 Debug - URL accessibility test: {response.status} {response.reason}")
-                if response.status != 200:
-                    print(f"🔍 Debug - URL headers: {dict(response.headers)}")
-        except Exception as test_error:
-            print(f"🔍 Debug - URL accessibility test failed: {test_error}")
-            # Try with GET request
-            try:
-                with urllib.request.urlopen(file_url, timeout=10) as response:
-                    print(f"🔍 Debug - GET request test: {response.status} {response.reason}")
-            except Exception as get_error:
-                print(f"🔍 Debug - GET request also failed: {get_error}")
         
         # Update user's profile picture URL
         user.profile_picture = file_url

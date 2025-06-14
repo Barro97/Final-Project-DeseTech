@@ -3,16 +3,8 @@ import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-import { Card, CardContent } from "@/app/components/molecules/card";
 import { Button } from "@/app/components/atoms/button";
-import {
-  FileText,
-  Download,
-  Upload,
-  Search,
-  ArrowRight,
-  Sparkles,
-} from "lucide-react";
+import { Upload, Search, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { UploadModal } from "@/app/features/upload modal/modal";
 import { createPortal } from "react-dom";
@@ -21,30 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 import { searchDatasets } from "@/app/features/dataset/services/datasetService";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
 import { Dataset } from "@/app/features/dataset/types/datasetTypes";
-
-const mockRecentActivity = [
-  {
-    id: 1,
-    type: "upload",
-    dataset: "Agricultural Yield Data 2023",
-    user: "Dr. Smith",
-    date: "2 hours ago",
-  },
-  {
-    id: 2,
-    type: "download",
-    dataset: "Climate Change Temperature Data",
-    user: "research_team",
-    date: "5 hours ago",
-  },
-  {
-    id: 3,
-    type: "comment",
-    dataset: "Urban Development Patterns",
-    user: "urbanplanner",
-    date: "1 day ago",
-  },
-];
 
 // Featured Datasets Component - similar to DatasetCarouselSectionPlaceholder from search page
 const FeaturedDatasets = ({
@@ -272,100 +240,96 @@ function HomePage() {
           isLoading={isLoadingFeatured}
         />
 
-        {/* Recent Activity */}
+        {/* How It Works */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <Card className="border-gray-200 dark:border-gray-700">
-            <CardContent className="p-0">
-              <ul className="divide-y">
-                {mockRecentActivity.map((activity) => (
-                  <li key={activity.id} className="flex items-center p-4">
-                    {activity.type === "upload" && (
-                      <Upload className="h-5 w-5 text-green-500 mr-3" />
-                    )}
-                    {activity.type === "download" && (
-                      <Download className="h-5 w-5 text-blue-500 mr-3" />
-                    )}
-                    {activity.type === "comment" && (
-                      <FileText className="h-5 w-5 text-purple-500 mr-3" />
-                    )}
-
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.dataset}</p>
-                      <p className="text-sm text-gray-500">
-                        {activity.type === "upload" && "Uploaded by "}
-                        {activity.type === "download" && "Downloaded by "}
-                        {activity.type === "comment" && "Commented by "}
-                        <span className="font-medium">
-                          {activity.user}
-                        </span> on {activity.date}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Getting Started */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-          <Card className="border-gray-200 dark:border-gray-700">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col items-center text-center">
-                  <div className="rounded-full bg-blue-100 p-3 mb-4">
-                    <Upload className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-medium mb-2">
-                    Upload Your First Dataset
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Share your data with the community by uploading your first
-                    dataset.
-                  </p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => setUploadModalOpen(true)}
-                  >
-                    Get Started
-                  </Button>
+          <h2 className="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Step 1: Upload a Dataset */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="relative mb-6">
+                <div className="rounded-full bg-gradient-to-br from-blue-500 to-blue-600 p-4 mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <Upload className="h-8 w-8 text-white" />
                 </div>
-
-                <div className="flex flex-col items-center text-center">
-                  <div className="rounded-full bg-green-100 p-3 mb-4">
-                    <Search className="h-6 w-6 text-green-600" />
-                  </div>
-                  <h3 className="font-medium mb-2">
-                    Explore Available Datasets
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Browse through datasets uploaded by other researchers and
-                    users.
-                  </p>
-                  <Button variant="link" size="sm" className="mt-2" asChild>
-                    <Link href="/datasets">Explore Now</Link>
-                  </Button>
-                </div>
-
-                <div className="flex flex-col items-center text-center">
-                  <div className="rounded-full bg-purple-100 p-3 mb-4">
-                    <Download className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-medium mb-2">Download & Use Datasets</h3>
-                  <p className="text-sm text-gray-500">
-                    Download datasets for your research or applications.
-                  </p>
-                  <Button variant="link" size="sm" className="mt-2" asChild>
-                    <Link href="/datasets">Find Datasets</Link>
-                  </Button>
+                <div className="absolute -top-2 -right-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  1
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">
+                Upload a Dataset
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                Share your research data with rich metadata including geographic
+                location, time periods, and comprehensive descriptions to help
+                others discover and understand your work.
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                onClick={() => setUploadModalOpen(true)}
+              >
+                Start Uploading →
+              </Button>
+            </div>
+
+            {/* Step 2: Explore Others' Work */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="relative mb-6">
+                <div className="rounded-full bg-gradient-to-br from-green-500 to-green-600 p-4 mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <Search className="h-8 w-8 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  2
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">
+                Explore Others&apos; Work
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                Discover datasets through intelligent search, filtering by tags,
+                file types, geographic regions, and time periods. Preview data
+                before downloading.
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-4 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                asChild
+              >
+                <Link href="/datasets">Browse Datasets →</Link>
+              </Button>
+            </div>
+
+            {/* Step 3: Collaborate and Grow */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="relative mb-6">
+                <div className="rounded-full bg-gradient-to-br from-purple-500 to-purple-600 p-4 mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">
+                Collaborate and Grow
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                Build on others&apos; research, contribute to the scientific
+                community, and accelerate discovery through shared knowledge and
+                collaborative datasets.
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-4 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                asChild
+              >
+                <Link href="/profile">View Your Profile →</Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

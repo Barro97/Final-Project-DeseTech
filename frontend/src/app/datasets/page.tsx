@@ -1289,9 +1289,7 @@ export default function SearchDatasetsPage() {
                             Researchers ({users.length})
                           </h3>
                         )}
-                        <div
-                          className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
-                        >
+                        <div className="grid gap-4 grid-cols-1">
                           {users.map((user) => (
                             <div key={user.user_id} className="group relative">
                               <UserCard

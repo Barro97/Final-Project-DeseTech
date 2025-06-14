@@ -185,6 +185,28 @@ class DatasetRepositoryInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
+        """
+        Get search suggestions based on dataset names and descriptions.
+        
+        This method provides autocomplete suggestions by searching through
+        dataset names and descriptions for partial matches.
+        
+        Args:
+            db: Database session for query execution
+            search_term: Partial search term to find suggestions for
+            limit: Maximum number of suggestions to return
+            
+        Returns:
+            List[str]: List of suggested search terms based on actual dataset data
+            
+        Example:
+            >>> suggestions = repository.get_search_suggestions(db, "machine", limit=5)
+            >>> print(suggestions)  # ['Machine Learning', 'Machine Vision', 'Agricultural Machines']
+        """
+        pass
+
 
 class DatasetRepository(DatasetRepositoryInterface):
     """
@@ -681,4 +703,74 @@ class DatasetRepository(DatasetRepositoryInterface):
             >>> print(file_types)  # ['text/csv', 'application/pdf', 'application/json']
         """
         result = db.query(File.file_type).filter(File.file_type.isnot(None)).distinct().all()
-        return [row[0] for row in result if row[0]] 
+        return [row[0] for row in result if row[0]]
+
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
+        """
+        Get search suggestions based on dataset names and descriptions.
+        
+        This method searches through approved dataset names and descriptions to provide
+        relevant autocomplete suggestions with intelligent prioritization and sorting.
+        
+        SEARCH STRATEGY:
+        - Only searches approved datasets (public suggestions)
+        - Case-insensitive partial matching using ILIKE
+        - PRIORITY 1: Dataset names (most relevant)
+        - PRIORITY 2: Descriptions (only after name matches exhausted)
+        - Sorted by download count (most popular first)
+        - Returns unique suggestions to avoid duplicates
+        
+        SORTING LOGIC:
+        - Name matches sorted by downloads (descending)
+        - Description matches sorted by downloads (descending)
+        - Name matches always appear before description matches
+        
+        Args:
+            db: Database session for query execution
+            search_term: Partial search term to find suggestions for (minimum 2 characters)
+            limit: Maximum number of suggestions to return (default 10)
+            
+        Returns:
+            List[str]: List of suggested search terms based on actual dataset data,
+                      ordered by relevance (names first) and popularity (downloads)
+                      
+        Example:
+            >>> suggestions = repository.get_search_suggestions(db, "machine", limit=5)
+            >>> print(suggestions)  # ['Machine Learning Dataset', 'Agricultural Machines', ...]
+        """
+        if not search_term or len(search_term.strip()) < 2:
+            return []
+        
+        search_pattern = f"%{search_term.strip()}%"
+        final_suggestions = []
+        
+        # PRIORITY 1: Search dataset names (most important)
+        # Get name matches with download counts for sorting
+        name_matches = db.query(Dataset.dataset_name, Dataset.downloads_count).filter(
+            Dataset.approval_status == 'approved',
+            Dataset.dataset_name.ilike(search_pattern)
+        ).order_by(Dataset.downloads_count.desc()).limit(limit).all()
+        
+        # Add name matches to final list (already sorted by downloads)
+        for match in name_matches:
+            if match[0]:  # Ensure not null
+                final_suggestions.append(match[0])
+        
+        # PRIORITY 2: Search descriptions if we need more suggestions
+        if len(final_suggestions) < limit:
+            remaining_limit = limit - len(final_suggestions)
+            
+            # Get datasets where description matches but name doesn't
+            description_matches = db.query(Dataset.dataset_name, Dataset.downloads_count).filter(
+                Dataset.approval_status == 'approved',
+                Dataset.dataset_description.ilike(search_pattern),
+                Dataset.dataset_name.notilike(search_pattern)  # Exclude already found names
+            ).order_by(Dataset.downloads_count.desc()).limit(remaining_limit).all()
+            
+            # Add description matches to final list (already sorted by downloads)
+            for match in description_matches:
+                if match[0] and match[0] not in final_suggestions:  # Ensure not null and not duplicate
+                    final_suggestions.append(match[0])
+        
+        # Return the ordered list (name matches first, then description matches, both sorted by downloads)
+        return final_suggestions[:limit] 

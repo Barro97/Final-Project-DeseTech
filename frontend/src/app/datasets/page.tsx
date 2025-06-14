@@ -20,6 +20,7 @@ import { Separator } from "@/app/components/atoms/separator";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useUsedTags } from "@/app/features/tag/hooks/useTags";
 import { useAvailableFileTypes } from "@/app/features/dataset/hooks/useAvailableFileTypes";
+import { useSearchSuggestions } from "@/app/features/dataset/hooks/useSearchSuggestions";
 import {
   Dataset,
   SearchFilters,
@@ -49,15 +50,15 @@ const EnhancedSearchBarPlaceholder = ({
   initialQuery?: string;
 }) => {
   const [inputValue, setInputValue] = useState(initialQuery);
-  const suggestions = [
-    "Climate",
-    "Finance",
-    "Open Data",
-    "Health",
-    "AI",
-    "Agriculture",
-  ];
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Get dynamic suggestions from the database
+  const { data: suggestions = [], isLoading: isLoadingSuggestions } =
+    useSearchSuggestions(
+      inputValue,
+      8, // limit to 8 suggestions
+      inputValue.length >= 2 // only fetch when we have at least 2 characters
+    );
 
   const handleSubmit = () => {
     onSearch(inputValue);
@@ -92,12 +93,15 @@ const EnhancedSearchBarPlaceholder = ({
           </button>
         )}
       </div>
-      {showSuggestions && inputValue && (
+      {showSuggestions && inputValue && inputValue.length >= 2 && (
         <div className="relative">
           <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
-            {suggestions
-              .filter((s) => s.toLowerCase().includes(inputValue.toLowerCase()))
-              .map((suggestion) => (
+            {isLoadingSuggestions ? (
+              <li className="px-4 py-2 text-gray-500">
+                Loading suggestions...
+              </li>
+            ) : suggestions.length > 0 ? (
+              suggestions.map((suggestion) => (
                 <li
                   key={suggestion}
                   onClick={() => {
@@ -109,10 +113,8 @@ const EnhancedSearchBarPlaceholder = ({
                 >
                   {suggestion}
                 </li>
-              ))}
-            {suggestions.filter((s) =>
-              s.toLowerCase().includes(inputValue.toLowerCase())
-            ).length === 0 && (
+              ))
+            ) : (
               <li className="px-4 py-2 text-gray-500">No suggestions found</li>
             )}
           </ul>

@@ -890,6 +890,48 @@ class DatasetService:
         # Return sorted list of unique extensions
         return sorted(list(extensions))
 
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 8) -> List[str]:
+        """
+        Get search suggestions based on actual dataset data.
+        
+        This method provides intelligent autocomplete suggestions by searching through
+        approved dataset names and descriptions. It's designed for public use and
+        doesn't require authentication.
+        
+        BUSINESS LOGIC:
+        - Only suggests from approved datasets (public content)
+        - Validates minimum search term length (2 characters)
+        - Limits suggestions for performance and UX
+        - Returns relevant, unique suggestions
+        
+        Args:
+            db: Database session for query execution
+            search_term: User's partial search input
+            limit: Maximum number of suggestions to return (default 8 for UI)
+            
+        Returns:
+            List[str]: List of relevant search suggestions based on actual dataset names
+            
+        Raises:
+            DatasetError: If there's an error retrieving suggestions
+            
+        Example:
+            >>> suggestions = service.get_search_suggestions(db, "machine")
+            >>> print(suggestions)  # ['Machine Learning Dataset', 'Agricultural Machines']
+        """
+        try:
+            # VALIDATION: Ensure search term is meaningful
+            if not search_term or len(search_term.strip()) < 2:
+                return []
+            
+            # DELEGATE TO REPOSITORY: Data access layer handles the query
+            return self.repository.get_search_suggestions(db, search_term.strip(), limit)
+            
+        except Exception as e:
+            logger.error(f"Error getting search suggestions for '{search_term}': {str(e)}")
+            # GRACEFUL DEGRADATION: Return empty list instead of failing
+            return []
+
     def _user_can_modify_dataset(self, dataset: Dataset, user_id: int) -> bool:
         """
         Check if a user has permission to modify a specific dataset.

@@ -81,6 +81,37 @@ def get_available_file_types(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/search-suggestions", response_model=List[str])
+def get_search_suggestions(
+    search_term: str = Query(..., min_length=2, max_length=100),
+    limit: int = Query(8, ge=1, le=20),
+    db: Session = Depends(get_db)
+):
+    """
+    Get search suggestions based on dataset names and descriptions.
+    
+    This endpoint provides autocomplete suggestions for the search bar by searching
+    through approved dataset names and descriptions. No authentication required.
+    
+    Args:
+        search_term: Partial search term (minimum 2 characters)
+        limit: Maximum number of suggestions to return (1-20, default 8)
+        db: Database session
+        
+    Returns:
+        List[str]: List of suggested search terms based on actual dataset data
+        
+    Example:
+        GET /datasets/search-suggestions?search_term=machine&limit=5
+        Returns: ["Machine Learning Dataset", "Agricultural Machines", ...]
+    """
+    try:
+        return dataset_service.get_search_suggestions(db, search_term, limit)
+    except Exception as e:
+        logger.error(f"Unexpected error getting search suggestions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/search", response_model=DatasetListResponse)
 def search_datasets(
     db: Session = Depends(get_db),

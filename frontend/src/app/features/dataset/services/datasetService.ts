@@ -272,6 +272,31 @@ export async function getAvailableFileTypes(): Promise<string[]> {
   }
 }
 
+// Get search suggestions based on dataset names and descriptions
+export async function getSearchSuggestions(
+  searchTerm: string,
+  limit: number = 8
+): Promise<string[]> {
+  try {
+    // Don't make API call for very short search terms
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      return [];
+    }
+
+    const response = await axios.get(`${API_URL}/datasets/search-suggestions`, {
+      params: {
+        search_term: searchTerm.trim(),
+        limit: limit,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching search suggestions:", error);
+    // Return empty array on error to gracefully degrade
+    return [];
+  }
+}
+
 // Search datasets using the backend search endpoint
 export const searchDatasets = async (
   filters: SearchFilters

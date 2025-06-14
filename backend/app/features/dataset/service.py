@@ -53,7 +53,7 @@ from backend.app.features.dataset.schemas.internal import (
 )
 from backend.app.features.dataset.exceptions import (
     DatasetNotFoundError, DatasetPermissionError, DatasetOwnershipError,
-    DatasetValidationError
+    DatasetValidationError, DatasetError
 )
 from backend.app.features.dataset.utils import handle_dataset_tags, create_safe_filename
 from backend.app.features.file.utils.upload import delete_file_from_storage
@@ -574,82 +574,68 @@ class DatasetService:
         datasets = self.repository.get_by_user(db, user_id)
         return [self._format_dataset_response(dataset) for dataset in datasets]
 
-    def search_datasets(self, db: Session, request: DatasetFilterRequest, current_user_id: int = None) -> DatasetListResponse:
-        """
-        Search and filter datasets with pagination support.
-        
-        This method provides comprehensive dataset discovery capabilities:
-        - Text search across dataset names and descriptions
-        - Tag-based filtering with multiple tag support
-        - Uploader filtering for user-specific searches
-        - Date range filtering for temporal searches
-        - Multiple sorting options (newest, oldest, downloads, name)
-        - Pagination for performance with large result sets
-        - Approval status filtering based on user role
-        
-        SEARCH BEHAVIOR:
-        - Text search is case-insensitive and searches both name and description
-        - Tag filtering uses AND logic (dataset must have ALL specified tags)
-        - Date filtering uses inclusive ranges
-        - Results are always paginated for performance
-        - Regular users only see approved datasets
-        - Admin users can see all datasets
-        
-        Args:
-            db: Database session for query execution
-            request: Search and filter criteria with pagination parameters
-            current_user_id: ID of user making the request (for permission checking)
+    def search_datasets(self, db: Session, request: DatasetFilterRequest) -> DatasetListResponse:
+        """Search datasets with filters."""
+        try:
+            # Convert request to internal filters
+            internal_filters = DatasetFilterInternal(
+                search_term=request.search_term,
+                tags=request.tags,
+                uploader_id=request.uploader_id,
+                date_from=request.date_from,
+                date_to=request.date_to,
+                sort_by=request.sort_by,
+                offset=(request.page - 1) * request.limit,
+                limit=request.limit,
+                file_types=request.file_types,
+                has_location=request.has_location,
+                min_downloads=request.min_downloads,
+                max_downloads=request.max_downloads,
+                approval_status=request.approval_status
+            )
             
-        Returns:
-            DatasetListResponse: Paginated search results with metadata:
-                - List of matching datasets
-                - Total count (for pagination UI)
-                - Current page and limit
-                - Navigation flags (has_next, has_prev)
-                
-        Example:
-            >>> request = DatasetFilterRequest(
-            ...     search_term="machine learning",
-            ...     tags=["AI", "research"],
-            ...     sort_by="downloads",
-            ...     page=1,
-            ...     limit=20
-            ... )
-            >>> results = service.search_datasets(db, request, current_user_id=123)
-            >>> print(f"Found {results.total_count} datasets")
-        """
-        # CHECK IF USER IS ADMIN
-        is_admin_request = False
-        if current_user_id:
-            user = db.query(User).join(User.role).filter(User.user_id == current_user_id).first()
-            is_admin_request = user and user.role and user.role.role_name == 'admin'
-        
-        # CONVERT TO INTERNAL FILTER FORMAT
-        # This abstraction allows the repository to focus on data access
-        filters = DatasetFilterInternal(
-            search_term=request.search_term,
-            tags=request.tags,
-            uploader_id=request.uploader_id,
-            date_from=request.date_from,
-            date_to=request.date_to,
-            sort_by=request.sort_by,
-            offset=(request.page - 1) * request.limit,  # Convert page-based to offset-based
-            limit=request.limit,
-            is_admin_request=is_admin_request  # Pass admin status to repository
-        )
-
-        # EXECUTE SEARCH: Repository handles the complex query logic
-        datasets, total_count = self.repository.get_filtered(db, filters)
-
-        # PREPARE PAGINATED RESPONSE
-        return DatasetListResponse(
-            datasets=[self._format_dataset_response(dataset) for dataset in datasets],
-            total_count=total_count,
-            page=request.page,
-            limit=request.limit,
-            has_next=(request.page * request.limit) < total_count,  # More results available
-            has_prev=request.page > 1  # Previous page exists
-        )
+            # Get datasets from repository
+            datasets, total_count = self.repository.get_filtered(db, internal_filters)
+            
+            # Convert to response models
+            dataset_responses = [
+                DatasetResponse(
+                    dataset_id=dataset.dataset_id,
+                    dataset_name=dataset.dataset_name,
+                    dataset_description=dataset.dataset_description,
+                    date_of_creation=dataset.date_of_creation,
+                    dataset_last_updated=dataset.dataset_last_updated,
+                    downloads_count=dataset.downloads_count,
+                    uploader_id=dataset.uploader_id,
+                    uploader_username=dataset.uploader.username if dataset.uploader else None,
+                    geographic_location=dataset.geographic_location,
+                    data_time_period=dataset.data_time_period,
+                    approval_status=dataset.approval_status,
+                    approved_by=dataset.approved_by,
+                    approval_date=dataset.approval_date,
+                    tags=[tag.tag_category_name for tag in dataset.tags],
+                    file_count=len(dataset.files),
+                    total_file_size=sum(file.size or 0 for file in dataset.files)
+                )
+                for dataset in datasets
+            ]
+            
+            # Calculate pagination info
+            has_next = (request.page * request.limit) < total_count
+            has_prev = request.page > 1
+            
+            return DatasetListResponse(
+                datasets=dataset_responses,
+                total_count=total_count,
+                page=request.page,
+                limit=request.limit,
+                has_next=has_next,
+                has_prev=has_prev
+            )
+            
+        except Exception as e:
+            logger.error(f"Error searching datasets: {str(e)}")
+            raise DatasetError(f"Failed to search datasets: {str(e)}")
 
     def add_owner(self, db: Session, dataset_id: int, request: OwnerActionRequest,
                   current_user_id: int) -> OwnerActionResponse:
@@ -827,35 +813,124 @@ class DatasetService:
 
     def get_public_stats(self, db: Session) -> PublicStatsResponse:
         """
-        Generate public homepage statistics for display to all users.
+        Get public platform statistics for homepage display.
         
-        This method provides key platform metrics suitable for public display
-        without exposing sensitive administrative information. It focuses on
-        approved datasets only to maintain data quality for public consumption.
-        
-        STATISTICS INCLUDED:
-        - **Total Datasets**: Count of approved datasets (quality assured)
-        - **Total Researchers**: Unique users who have contributed datasets
-        - **Total Downloads**: Download activity across approved datasets
-        - **Research Fields**: Diversity of research areas (unique tags)
+        This method provides key metrics that are safe to display publicly
+        without requiring authentication. It focuses on approved content only.
         
         Args:
             db: Database session for query execution
             
         Returns:
-            PublicStatsResponse: Public statistics including:
-                - total_datasets: Count of approved datasets
-                - total_researchers: Unique dataset contributors
-                - total_downloads: Total download activity
-                - research_fields: Number of unique research areas
-                
+            PublicStatsResponse: Public statistics including total datasets,
+                               researchers, and downloads
+                               
         Example:
             >>> stats = service.get_public_stats(db)
-            >>> print(f"Platform: {stats.total_datasets} datasets from {stats.total_researchers} researchers")
+            >>> print(f"Platform has {stats.total_datasets} datasets")
         """
-        # DELEGATE TO REPOSITORY: Public statistics queries
         stats = self.repository.get_public_stats(db)
         return PublicStatsResponse(**stats)
+
+    def get_available_file_types(self, db: Session) -> List[str]:
+        """
+        Get available file types for filtering, converted to user-friendly extensions.
+        
+        This method retrieves all unique file types from the database and converts
+        MIME types to user-friendly file extensions for display in the UI.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            List[str]: List of user-friendly file extensions (e.g., ['csv', 'pdf', 'json'])
+            
+        Example:
+            >>> file_types = service.get_available_file_types(db)
+            >>> print(file_types)  # ['csv', 'pdf', 'json', 'xlsx']
+        """
+        # Get MIME types from database
+        mime_types = self.repository.get_available_file_types(db)
+        
+        # Create mapping from MIME types to user-friendly extensions
+        mime_to_extension = {
+            'text/csv': 'csv',
+            'application/csv': 'csv',
+            'application/json': 'json',
+            'text/json': 'json',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+            'application/vnd.ms-excel': 'xls',
+            'application/pdf': 'pdf',
+            'text/plain': 'txt',
+            'application/xml': 'xml',
+            'text/xml': 'xml',
+            'application/zip': 'zip',
+            'application/sql': 'sql',
+            'text/sql': 'sql',
+            'application/octet-stream': 'parquet',  # Common for parquet files
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+            'application/msword': 'doc',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+            'application/vnd.ms-powerpoint': 'ppt'
+        }
+        
+        # Convert MIME types to extensions
+        extensions = set()
+        for mime_type in mime_types:
+            if mime_type in mime_to_extension:
+                extensions.add(mime_to_extension[mime_type])
+            else:
+                # For unknown MIME types, try to extract extension from MIME type
+                if '/' in mime_type:
+                    potential_ext = mime_type.split('/')[-1].lower()
+                    # Only add if it looks like a reasonable file extension
+                    if len(potential_ext) <= 10 and potential_ext.isalnum():
+                        extensions.add(potential_ext)
+        
+        # Return sorted list of unique extensions
+        return sorted(list(extensions))
+
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 8) -> List[str]:
+        """
+        Get search suggestions based on actual dataset data.
+        
+        This method provides intelligent autocomplete suggestions by searching through
+        approved dataset names and descriptions. It's designed for public use and
+        doesn't require authentication.
+        
+        BUSINESS LOGIC:
+        - Only suggests from approved datasets (public content)
+        - Validates minimum search term length (2 characters)
+        - Limits suggestions for performance and UX
+        - Returns relevant, unique suggestions
+        
+        Args:
+            db: Database session for query execution
+            search_term: User's partial search input
+            limit: Maximum number of suggestions to return (default 8 for UI)
+            
+        Returns:
+            List[str]: List of relevant search suggestions based on actual dataset names
+            
+        Raises:
+            DatasetError: If there's an error retrieving suggestions
+            
+        Example:
+            >>> suggestions = service.get_search_suggestions(db, "machine")
+            >>> print(suggestions)  # ['Machine Learning Dataset', 'Agricultural Machines']
+        """
+        try:
+            # VALIDATION: Ensure search term is meaningful
+            if not search_term or len(search_term.strip()) < 2:
+                return []
+            
+            # DELEGATE TO REPOSITORY: Data access layer handles the query
+            return self.repository.get_search_suggestions(db, search_term.strip(), limit)
+            
+        except Exception as e:
+            logger.error(f"Error getting search suggestions for '{search_term}': {str(e)}")
+            # GRACEFUL DEGRADATION: Return empty list instead of failing
+            return []
 
     def _user_can_modify_dataset(self, dataset: Dataset, user_id: int) -> bool:
         """

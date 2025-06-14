@@ -168,6 +168,45 @@ class DatasetRepositoryInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_available_file_types(self, db: Session) -> List[str]:
+        """
+        Get all unique file types that exist in the database.
+        
+        This method retrieves all distinct file_type values from the files table,
+        filters out null values, and returns them for dynamic filter generation.
+        
+        Returns:
+            List[str]: List of unique MIME types that exist in the database
+            
+        Example:
+            >>> file_types = repository.get_available_file_types(db)
+            >>> print(file_types)  # ['text/csv', 'application/pdf', 'application/json']
+        """
+        pass
+
+    @abstractmethod
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
+        """
+        Get search suggestions based on dataset names and descriptions.
+        
+        This method provides autocomplete suggestions by searching through
+        dataset names and descriptions for partial matches.
+        
+        Args:
+            db: Database session for query execution
+            search_term: Partial search term to find suggestions for
+            limit: Maximum number of suggestions to return
+            
+        Returns:
+            List[str]: List of suggested search terms based on actual dataset data
+            
+        Example:
+            >>> suggestions = repository.get_search_suggestions(db, "machine", limit=5)
+            >>> print(suggestions)  # ['Machine Learning', 'Machine Vision', 'Agricultural Machines']
+        """
+        pass
+
 
 class DatasetRepository(DatasetRepositoryInterface):
     """
@@ -297,14 +336,17 @@ class DatasetRepository(DatasetRepositoryInterface):
         # START WITH BASE QUERY
         query = db.query(Dataset)
 
-        # APPLY APPROVAL STATUS FILTER - Critical for admin workflow
+        # APPLY APPROVAL STATUS FILTER - Updated to allow user choice
         if filters.is_admin_request:
             # Admin can see all datasets, optionally filtered by specific statuses
             if filters.include_approval_status:
                 query = query.filter(Dataset.approval_status.in_(filters.include_approval_status))
         else:
-            # Regular users can only see approved datasets
-            query = query.filter(Dataset.approval_status == 'approved')
+            # Regular users can now choose what approval statuses to see
+            if filters.approval_status:
+                # If user specifies approval statuses, filter by those
+                query = query.filter(Dataset.approval_status.in_(filters.approval_status))
+            # If no approval status filter is specified, show all datasets (approved, pending, rejected)
 
         # APPLY TEXT SEARCH FILTER
         if filters.search_term:
@@ -333,6 +375,65 @@ class DatasetRepository(DatasetRepositoryInterface):
 
         if filters.date_to:
             query = query.filter(Dataset.date_of_creation <= filters.date_to)
+
+        # APPLY TIER 1 FILTERS
+        
+        # File types filter - datasets must have files of specified types
+        if filters.file_types:
+            # Create mapping from file extensions to MIME types
+            extension_to_mime = {
+                'csv': ['text/csv', 'application/csv'],
+                'json': ['application/json', 'text/json'],
+                'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+                'xls': ['application/vnd.ms-excel'],
+                'pdf': ['application/pdf'],
+                'txt': ['text/plain'],
+                'xml': ['application/xml', 'text/xml'],
+                'zip': ['application/zip'],
+                'sql': ['application/sql', 'text/sql'],
+                'parquet': ['application/octet-stream'],
+                'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                'doc': ['application/msword'],
+                'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+                'ppt': ['application/vnd.ms-powerpoint']
+            }
+            
+            # Convert file extensions to MIME types
+            mime_types = []
+            for ext in filters.file_types:
+                ext_lower = ext.lower()
+                if ext_lower in extension_to_mime:
+                    mapped_mimes = extension_to_mime[ext_lower]
+                    mime_types.extend(mapped_mimes)
+                else:
+                    # If not in mapping, assume it's already a MIME type or try as-is
+                    mime_types.append(ext)
+            
+            # Remove duplicates
+            mime_types = list(set(mime_types))
+            
+            # Filter datasets that have files with any of the specified MIME types
+            query = query.filter(Dataset.files.any(File.file_type.in_(mime_types)))
+
+        # Geographic location filter - datasets with/without location data
+        if filters.has_location is not None:
+            if filters.has_location:
+                query = query.filter(Dataset.geographic_location.isnot(None))
+                query = query.filter(Dataset.geographic_location != '')
+            else:
+                query = query.filter(
+                    or_(
+                        Dataset.geographic_location.is_(None),
+                        Dataset.geographic_location == ''
+                    )
+                )
+        
+        # Download count range filters
+        if filters.min_downloads is not None:
+            query = query.filter(Dataset.downloads_count >= filters.min_downloads)
+            
+        if filters.max_downloads is not None:
+            query = query.filter(Dataset.downloads_count <= filters.max_downloads)
 
         # GET TOTAL COUNT (before pagination for UI)
         total_count = query.count()
@@ -549,47 +650,127 @@ class DatasetRepository(DatasetRepositoryInterface):
 
     def get_public_stats(self, db: Session) -> dict:
         """
-        Generate public statistics for homepage display.
+        Generate public statistics for the platform landing page.
         
-        This method provides key platform metrics suitable for public display
-        without exposing sensitive admin information.
+        This method provides statistics that are safe to display publicly
+        without requiring authentication. It focuses on approved content
+        to present accurate public metrics.
         
         STATISTICS CALCULATED:
-        - **Total Datasets**: Count of approved datasets only
-        - **Total Researchers**: Count of users who have uploaded at least one dataset
-        - **Total Downloads**: Sum of download counts across all approved datasets
-        - **Research Fields**: Count of unique tags used in approved datasets
+        - **Total Approved Datasets**: Count of datasets approved by admins
+        - **Total Researchers**: Count of active users in the system
+        - **Total Downloads**: Sum of download counts for approved datasets
         
         Args:
             db: Database session for query execution
             
         Returns:
-            dict: Public statistics dictionary with keys:
-                - total_datasets: int
-                - total_researchers: int
-                - total_downloads: int
-                - research_fields: int
-                
+            dict: Public statistics with total_datasets, total_researchers, total_downloads
+            
         Example:
             >>> stats = repository.get_public_stats(db)
-            >>> print(f"Public stats: {stats['total_datasets']} datasets, {stats['total_researchers']} researchers")
+            >>> print(f"Platform has {stats['total_datasets']} datasets")
         """
-        # APPROVED DATASETS ONLY (public-facing)
-        approved_datasets_query = db.query(Dataset).filter(Dataset.approval_status == 'approved')
-        total_datasets = approved_datasets_query.count()
+        # Count only approved datasets for public display
+        total_datasets = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
         
-        # TOTAL DOWNLOADS FROM APPROVED DATASETS
+        # Count all active users (researchers using the platform)
+        total_researchers = db.query(User).filter(User.status == 'active').count()
+        
+        # Sum downloads only from approved datasets
         total_downloads = db.query(func.sum(Dataset.downloads_count)).filter(
             Dataset.approval_status == 'approved'
         ).scalar() or 0
-        
-        # TOTAL RESEARCHERS (users who have uploaded at least one approved dataset)
-        total_researchers = db.query(func.count(func.distinct(Dataset.uploader_id))).filter(
-            Dataset.approval_status == 'approved'
-        ).scalar() or 0
-        
+
         return {
             "total_datasets": total_datasets,
-            "total_researchers": total_researchers, 
+            "total_researchers": total_researchers,
             "total_downloads": total_downloads
-        } 
+        }
+
+    def get_available_file_types(self, db: Session) -> List[str]:
+        """
+        Get all unique file types that exist in the database.
+        
+        This method retrieves all distinct file_type values from the files table,
+        filters out null values, and returns them for dynamic filter generation.
+        
+        Returns:
+            List[str]: List of unique MIME types that exist in the database
+            
+        Example:
+            >>> file_types = repository.get_available_file_types(db)
+            >>> print(file_types)  # ['text/csv', 'application/pdf', 'application/json']
+        """
+        result = db.query(File.file_type).filter(File.file_type.isnot(None)).distinct().all()
+        return [row[0] for row in result if row[0]]
+
+    def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
+        """
+        Get search suggestions based on dataset names and descriptions.
+        
+        This method searches through approved dataset names and descriptions to provide
+        relevant autocomplete suggestions with intelligent prioritization and sorting.
+        
+        SEARCH STRATEGY:
+        - Only searches approved datasets (public suggestions)
+        - Case-insensitive partial matching using ILIKE
+        - PRIORITY 1: Dataset names (most relevant)
+        - PRIORITY 2: Descriptions (only after name matches exhausted)
+        - Sorted by download count (most popular first)
+        - Returns unique suggestions to avoid duplicates
+        
+        SORTING LOGIC:
+        - Name matches sorted by downloads (descending)
+        - Description matches sorted by downloads (descending)
+        - Name matches always appear before description matches
+        
+        Args:
+            db: Database session for query execution
+            search_term: Partial search term to find suggestions for (minimum 2 characters)
+            limit: Maximum number of suggestions to return (default 10)
+            
+        Returns:
+            List[str]: List of suggested search terms based on actual dataset data,
+                      ordered by relevance (names first) and popularity (downloads)
+                      
+        Example:
+            >>> suggestions = repository.get_search_suggestions(db, "machine", limit=5)
+            >>> print(suggestions)  # ['Machine Learning Dataset', 'Agricultural Machines', ...]
+        """
+        if not search_term or len(search_term.strip()) < 2:
+            return []
+        
+        search_pattern = f"%{search_term.strip()}%"
+        final_suggestions = []
+        
+        # PRIORITY 1: Search dataset names (most important)
+        # Get name matches with download counts for sorting
+        name_matches = db.query(Dataset.dataset_name, Dataset.downloads_count).filter(
+            Dataset.approval_status == 'approved',
+            Dataset.dataset_name.ilike(search_pattern)
+        ).order_by(Dataset.downloads_count.desc()).limit(limit).all()
+        
+        # Add name matches to final list (already sorted by downloads)
+        for match in name_matches:
+            if match[0]:  # Ensure not null
+                final_suggestions.append(match[0])
+        
+        # PRIORITY 2: Search descriptions if we need more suggestions
+        if len(final_suggestions) < limit:
+            remaining_limit = limit - len(final_suggestions)
+            
+            # Get datasets where description matches but name doesn't
+            description_matches = db.query(Dataset.dataset_name, Dataset.downloads_count).filter(
+                Dataset.approval_status == 'approved',
+                Dataset.dataset_description.ilike(search_pattern),
+                Dataset.dataset_name.notilike(search_pattern)  # Exclude already found names
+            ).order_by(Dataset.downloads_count.desc()).limit(remaining_limit).all()
+            
+            # Add description matches to final list (already sorted by downloads)
+            for match in description_matches:
+                if match[0] and match[0] not in final_suggestions:  # Ensure not null and not duplicate
+                    final_suggestions.append(match[0])
+        
+        # Return the ordered list (name matches first, then description matches, both sorted by downloads)
+        return final_suggestions[:limit] 

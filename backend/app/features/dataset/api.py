@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from typing import List
 import zipfile
@@ -22,6 +22,7 @@ from backend.app.features.dataset.exceptions import DatasetError, handle_dataset
 from backend.app.features.dataset.utils import create_safe_filename
 from backend.app.features.file.utils.upload import client, SUPABASE_STORAGE_BUCKET
 from backend.app.features.file.services.download_tracking import DownloadTrackingService
+from backend.app.database.models import File
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/datasets")
@@ -67,6 +68,124 @@ def get_public_stats(db: Session = Depends(get_db)):
         return dataset_service.get_public_stats(db)
     except Exception as e:
         logger.error(f"Unexpected error getting public stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/available-file-types", response_model=List[str])
+def get_available_file_types(db: Session = Depends(get_db)):
+    """Get all available file types for filtering (no authentication required)."""
+    try:
+        return dataset_service.get_available_file_types(db)
+    except Exception as e:
+        logger.error(f"Unexpected error getting available file types: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/search-suggestions", response_model=List[str])
+def get_search_suggestions(
+    search_term: str = Query(..., min_length=2, max_length=100),
+    limit: int = Query(8, ge=1, le=20),
+    db: Session = Depends(get_db)
+):
+    """
+    Get search suggestions based on dataset names and descriptions.
+    
+    This endpoint provides autocomplete suggestions for the search bar by searching
+    through approved dataset names and descriptions. No authentication required.
+    
+    Args:
+        search_term: Partial search term (minimum 2 characters)
+        limit: Maximum number of suggestions to return (1-20, default 8)
+        db: Database session
+        
+    Returns:
+        List[str]: List of suggested search terms based on actual dataset data
+        
+    Example:
+        GET /datasets/search-suggestions?search_term=machine&limit=5
+        Returns: ["Machine Learning Dataset", "Agricultural Machines", ...]
+    """
+    try:
+        return dataset_service.get_search_suggestions(db, search_term, limit)
+    except Exception as e:
+        logger.error(f"Unexpected error getting search suggestions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/search", response_model=DatasetListResponse)
+def search_datasets(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    search_term: str = None,
+    tags: List[str] = Query(None),
+    uploader_id: int = None,
+    sort_by: str = "newest",
+    page: int = 1,
+    limit: int = 20,
+    # Tier 1 filters
+    file_types: List[str] = Query(None),
+    has_location: bool = None,
+    min_downloads: int = None,
+    max_downloads: int = None,
+    # Approval status filter
+    approval_status: List[str] = Query(None)
+):
+    """Search and filter datasets with enhanced filtering capabilities."""
+    try:
+        # Create filter request
+        filter_request = DatasetFilterRequest(
+            search_term=search_term,
+            tags=tags,
+            uploader_id=uploader_id,
+            sort_by=sort_by,
+            page=page,
+            limit=limit,
+            file_types=file_types,
+            has_location=has_location,
+            min_downloads=min_downloads,
+            max_downloads=max_downloads,
+            approval_status=approval_status
+        )
+        
+        # Get service and search
+        service = DatasetService()
+        result = service.search_datasets(db, filter_request)
+        
+        return result
+        
+    except Exception as e:
+        return handle_dataset_exception(e)
+
+
+@router.post("/batch-delete", response_model=BatchDeleteResponse)
+def batch_delete_datasets(
+    request_data: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete multiple datasets."""
+    try:
+        return dataset_service.batch_delete_datasets(db, request_data, current_user["user_id"])
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error in batch delete: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/user/{user_id}", response_model=List[DatasetResponse])
+def get_user_datasets(
+    user_id: int = Path(..., gt=0),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all datasets where the specified user is an uploader or owner."""
+    try:
+        return dataset_service.get_user_datasets(db, user_id, current_user["user_id"])
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error getting user datasets for user {user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -136,22 +255,6 @@ def delete_dataset(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/batch-delete", response_model=BatchDeleteResponse)
-def batch_delete_datasets(
-    request_data: BatchDeleteRequest,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Delete multiple datasets."""
-    try:
-        return dataset_service.batch_delete_datasets(db, request_data, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error in batch delete: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 @router.post("/{dataset_id}/add-owner", response_model=OwnerActionResponse)
 def add_dataset_owner(
     owner_request: OwnerActionRequest,
@@ -183,51 +286,6 @@ def remove_dataset_owner(
         raise handle_dataset_exception(e)
     except Exception as e:
         logger.error(f"Unexpected error removing owner from dataset {dataset_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/user/{user_id}", response_model=List[DatasetResponse])
-def get_user_datasets(
-    user_id: int = Path(..., gt=0),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Get all datasets where the specified user is an uploader or owner."""
-    try:
-        return dataset_service.get_user_datasets(db, user_id, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error getting user datasets for user {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/search", response_model=DatasetListResponse)
-def search_datasets(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-    search_term: str = None,
-    tags: List[str] = None,
-    uploader_id: int = None,
-    sort_by: str = "newest",
-    page: int = 1,
-    limit: int = 20
-):
-    """Search and filter datasets."""
-    try:
-        request = DatasetFilterRequest(
-            search_term=search_term,
-            tags=tags,
-            uploader_id=uploader_id,
-            sort_by=sort_by,
-            page=page,
-            limit=limit
-        )
-        return dataset_service.search_datasets(db, request, current_user["user_id"])
-    except DatasetError as e:
-        raise handle_dataset_exception(e)
-    except Exception as e:
-        logger.error(f"Unexpected error searching datasets: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

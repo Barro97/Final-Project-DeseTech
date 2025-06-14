@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAllTags,
+  getUsedTags,
   createTag,
   updateTag,
   deleteTag,
@@ -23,6 +24,19 @@ export function useTags() {
   return useQuery<TagList, Error>({
     queryKey: ["tags"],
     queryFn: getAllTags,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Custom hook for fetching only tags that are associated with datasets
+ * Used in filtering interfaces to avoid showing tags that would return empty results
+ */
+export function useUsedTags() {
+  return useQuery<TagList, Error>({
+    queryKey: ["tags", "used"],
+    queryFn: getUsedTags,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

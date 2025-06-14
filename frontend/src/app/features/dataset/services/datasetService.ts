@@ -1,5 +1,10 @@
 import axios from "axios";
-import { Dataset, DatasetFile, PublicStats } from "../types/datasetTypes";
+import {
+  Dataset,
+  DatasetFile,
+  PublicStats,
+  SearchFilters,
+} from "../types/datasetTypes";
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND}`;
 
@@ -245,16 +250,113 @@ export async function getFilePreview(
  * No authentication required
  */
 export async function getPublicStats(): Promise<PublicStats> {
-  const response = await fetch(`${API_URL}/datasets/public-stats`, {
+  try {
+    const response = await axios.get(`${API_URL}/datasets/public-stats`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching public stats:", error);
+    throw error;
+  }
+}
+
+// Get available file types for filtering
+export async function getAvailableFileTypes(): Promise<string[]> {
+  try {
+    const response = await axios.get(
+      `${API_URL}/datasets/available-file-types`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching available file types:", error);
+    throw error;
+  }
+}
+
+// Get search suggestions based on dataset names and descriptions
+export async function getSearchSuggestions(
+  searchTerm: string,
+  limit: number = 8
+): Promise<string[]> {
+  try {
+    // Don't make API call for very short search terms
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      return [];
+    }
+
+    const response = await axios.get(`${API_URL}/datasets/search-suggestions`, {
+      params: {
+        search_term: searchTerm.trim(),
+        limit: limit,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching search suggestions:", error);
+    // Return empty array on error to gracefully degrade
+    return [];
+  }
+}
+
+// Search datasets using the backend search endpoint
+export const searchDatasets = async (
+  filters: SearchFilters
+): Promise<{ datasets: Dataset[]; total: number; hasMore: boolean }> => {
+  const params = new URLSearchParams();
+
+  // Add basic parameters
+  if (filters.search_term) params.append("search_term", filters.search_term);
+  if (filters.sort_by) params.append("sort_by", filters.sort_by);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.limit) params.append("limit", filters.limit.toString());
+
+  // Add array parameters
+  if (filters.tags && filters.tags.length > 0) {
+    filters.tags.forEach((tag) => params.append("tags", tag));
+  }
+
+  if (filters.file_types && filters.file_types.length > 0) {
+    filters.file_types.forEach((fileType) =>
+      params.append("file_types", fileType)
+    );
+  }
+
+  if (filters.approval_status && filters.approval_status.length > 0) {
+    filters.approval_status.forEach((status) =>
+      params.append("approval_status", status)
+    );
+  }
+
+  // Add other parameters
+  if (filters.uploader_id)
+    params.append("uploader_id", filters.uploader_id.toString());
+  if (filters.date_from) params.append("date_from", filters.date_from);
+  if (filters.date_to) params.append("date_to", filters.date_to);
+  if (filters.has_location !== undefined)
+    params.append("has_location", filters.has_location.toString());
+  if (filters.min_downloads !== undefined)
+    params.append("min_downloads", filters.min_downloads.toString());
+  if (filters.max_downloads !== undefined)
+    params.append("max_downloads", filters.max_downloads.toString());
+
+  const url = `${API_URL}/datasets/search?${params.toString()}`;
+
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
     },
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch public stats: ${response.statusText}`);
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  return response.json();
-}
+  const data = await response.json();
+
+  return {
+    datasets: data.datasets || [],
+    total: data.total_count || 0,
+    hasMore: data.has_next || false,
+  };
+};

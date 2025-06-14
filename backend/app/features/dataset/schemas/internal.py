@@ -36,6 +36,15 @@ class DatasetFilterInternal(BaseModel):
     # Admin filtering options
     include_approval_status: Optional[List[str]] = None  # ['pending', 'approved', 'rejected']
     is_admin_request: bool = False  # Indicates if request comes from admin
+    
+    # Tier 1 filters
+    file_types: Optional[List[str]] = None
+    has_location: Optional[bool] = None
+    min_downloads: Optional[int] = None
+    max_downloads: Optional[int] = None
+    
+    # User approval status filter (replaces include_approval_status for regular users)
+    approval_status: Optional[List[str]] = None
 
 
 class BatchDeleteResult(BaseModel):

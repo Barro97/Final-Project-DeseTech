@@ -35,6 +35,7 @@ import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { EditDatasetDialog } from "./EditDatasetDialog";
 import { FilePreview } from "@/app/features/dataset/components/FilePreview";
 import { UploaderProfile } from "./UploaderProfile";
+import { OwnersProfile } from "./OwnersProfile";
 
 export default function DatasetDetailPage({
   params,
@@ -349,6 +350,13 @@ export default function DatasetDetailPage({
                 <div className="my-6">
                   <UploaderProfile uploaderId={dataset.uploader_id} />
                 </div>
+
+                {/* Dataset Owners */}
+                {dataset.owners && dataset.owners.length > 0 && (
+                  <div className="mb-6">
+                    <OwnersProfile ownerIds={dataset.owners} />
+                  </div>
+                )}
 
                 {/* Admin approval notice */}
                 {canApprove && (

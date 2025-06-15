@@ -17,7 +17,6 @@ import {
   Calendar,
   Download,
   FileText,
-  User,
   Trash2,
   Edit,
   Clock,
@@ -35,6 +34,7 @@ import { useState } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { EditDatasetDialog } from "./EditDatasetDialog";
 import { FilePreview } from "@/app/features/dataset/components/FilePreview";
+import { UploaderProfile } from "./UploaderProfile";
 
 export default function DatasetDetailPage({
   params,
@@ -445,10 +445,7 @@ export default function DatasetDetailPage({
                 </div>
               )}
 
-              <div className="flex items-center text-gray-600 dark:text-gray-300">
-                <User className="w-5 h-5 mr-2" />
-                <span>Uploaded by: {user?.email}</span>
-              </div>
+              <UploaderProfile uploaderId={dataset.uploader_id} />
 
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <Database className="w-5 h-5 mr-2" />

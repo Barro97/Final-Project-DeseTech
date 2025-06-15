@@ -24,6 +24,11 @@ import { DatasetMetadataForm } from "./components/DatasetMetadataForm";
 import { DatasetFileUploadArea } from "./components/DatasetFileUploadArea";
 import { UploadProgressIndicator } from "./components/UploadProgressIndicator";
 import { TagSelector } from "@/app/features/tag/components/TagSelector";
+import {
+  UserOwnerSelector,
+  UserOwner,
+} from "@/app/features/user/components/UserOwnerSelector";
+import { addDatasetOwner } from "@/app/features/dataset/services/datasetService";
 
 // Form values managed by react-hook-form
 interface UploadFormValues {
@@ -55,6 +60,7 @@ export function UploadModal({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<UserOwner[]>([]);
 
   const onSubmit = async (data: UploadFormValues) => {
     if (!user || typeof user.id === "undefined") {
@@ -90,6 +96,18 @@ export function UploadModal({
       const result = await uploadDataset(datasetPayload, files);
 
       if (result.success) {
+        // Add owners to the newly created dataset
+        if (selectedOwners.length > 0 && result.datasetId) {
+          try {
+            for (const owner of selectedOwners) {
+              await addDatasetOwner(result.datasetId, owner.user_id);
+            }
+          } catch (error) {
+            console.error("Error adding owners to dataset:", error);
+            // Don't fail the whole upload for owner errors, just log them
+          }
+        }
+
         toast({
           title: "Success!",
           description: `Dataset "${data.name}" uploaded successfully! Redirecting to dataset page...`,
@@ -100,6 +118,7 @@ export function UploadModal({
         resetForm();
         setFiles([]);
         setSelectedTags([]);
+        setSelectedOwners([]);
 
         // Small delay to show success message, then redirect and close modal
         setTimeout(() => {
@@ -155,6 +174,7 @@ export function UploadModal({
       resetUploadProgress();
       resetForm();
       setSelectedTags([]);
+      setSelectedOwners([]);
     }
   }, [open, isSubmitting, resetForm, resetUploadProgress]);
 
@@ -192,6 +212,18 @@ export function UploadModal({
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
                 placeholder="Select tags for your dataset..."
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Dataset Owners <span className="text-gray-500">(Optional)</span>
+              </label>
+              <UserOwnerSelector
+                selectedOwners={selectedOwners}
+                onOwnersChange={setSelectedOwners}
+                placeholder="Add other users as dataset owners..."
                 disabled={isSubmitting}
               />
             </div>

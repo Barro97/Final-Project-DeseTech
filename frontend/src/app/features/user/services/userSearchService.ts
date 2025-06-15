@@ -131,3 +131,65 @@ export async function getUserSearchSuggestions(
 
   return response.json();
 }
+
+/**
+ * Get a user by their ID
+ */
+export async function getUserById(userId: number): Promise<UserSearchResponse> {
+  const response = await fetch(`${config.BACKEND_URL}/users/${userId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get user: ${response.statusText}`);
+  }
+
+  const userData = await response.json();
+
+  // Convert the backend user response to UserSearchResponse format
+  return {
+    user_id: userData.user_id,
+    username: userData.username,
+    full_name:
+      `${userData.first_name || ""} ${userData.last_name || ""}`.trim() ||
+      userData.username,
+    email: userData.email,
+    role_name: userData.role?.role_name,
+    status: userData.status || "active",
+    organization: userData.organization,
+    bio: userData.bio,
+    about_me: userData.about_me,
+    profile_picture_url: userData.profile_picture,
+    dataset_count: 0, // Will be filled by backend if needed
+    profile_completeness: "basic", // Default value
+    last_activity: userData.last_login,
+    skills: [],
+    is_verified: false,
+  };
+}
+
+/**
+ * Get multiple users by their IDs
+ */
+export async function getUsersByIds(
+  userIds: number[]
+): Promise<UserSearchResponse[]> {
+  if (userIds.length === 0) {
+    return [];
+  }
+
+  try {
+    // Get users in parallel
+    const userPromises = userIds.map(getUserById);
+    const users = await Promise.all(userPromises);
+    return users;
+  } catch (error) {
+    console.error("Error getting users by IDs:", error);
+    // Return empty array on error to gracefully degrade
+    return [];
+  }
+}

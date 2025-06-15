@@ -297,6 +297,59 @@ export async function getSearchSuggestions(
   }
 }
 
+// Owner action response interface
+export interface OwnerActionResponse {
+  message: string;
+  dataset_id: number;
+  user_id: number;
+}
+
+// Add a user as owner to a dataset
+export async function addDatasetOwner(
+  datasetId: string | number,
+  userId: number
+): Promise<OwnerActionResponse> {
+  try {
+    const response = await axios.post<OwnerActionResponse>(
+      `${API_URL}/datasets/${datasetId}/add-owner`,
+      { user_id: userId },
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding dataset owner:", error);
+    throw error;
+  }
+}
+
+// Remove a user as owner from a dataset
+export async function removeDatasetOwner(
+  datasetId: string | number,
+  userId: number
+): Promise<OwnerActionResponse> {
+  try {
+    const response = await axios.post<OwnerActionResponse>(
+      `${API_URL}/datasets/${datasetId}/remove-owner`,
+      { user_id: userId },
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error removing dataset owner:", error);
+    throw error;
+  }
+}
+
 // Search datasets using the backend search endpoint
 export const searchDatasets = async (
   filters: SearchFilters

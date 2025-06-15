@@ -19,12 +19,19 @@ import {
   updateDataset,
   deleteDatasetFile,
   uploadFileToDataset,
+  addDatasetOwner,
+  removeDatasetOwner,
 } from "@/app/features/dataset/services/datasetService";
 import { useToast } from "@/app/features/toaster/hooks/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileUpload } from "@/app/features/upload/components/organisms/FileUpload";
 import { FileItem } from "@/app/features/upload/types/file";
 import { TagSelector } from "@/app/features/tag/components/TagSelector";
+import {
+  UserOwnerSelector,
+  UserOwner,
+} from "@/app/features/user/components/UserOwnerSelector";
+import { getUsersByIds } from "@/app/features/user/services/userSearchService";
 import "./editDatasetStyles.css";
 
 interface EditDatasetDialogProps {
@@ -60,6 +67,9 @@ export function EditDatasetDialog({
   const [newFiles, setNewFiles] = useState<FileItem[]>([]);
   const [filesToDelete, setFilesToDelete] = useState<number[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<UserOwner[]>([]);
+  const [originalOwners, setOriginalOwners] = useState<number[]>([]);
+  const [isLoadingOwners, setIsLoadingOwners] = useState(false);
 
   // Reset form when dialog opens (to fix the visual bug)
   useEffect(() => {
@@ -71,6 +81,32 @@ export function EditDatasetDialog({
       setSelectedTags(dataset.tags || []);
       setNewFiles([]);
       setFilesToDelete([]);
+      setOriginalOwners(dataset.owners || []);
+
+      // Load owner details
+      if (dataset.owners && dataset.owners.length > 0) {
+        setIsLoadingOwners(true);
+        getUsersByIds(dataset.owners)
+          .then((ownerDetails) => {
+            const userOwners: UserOwner[] = ownerDetails.map((user) => ({
+              user_id: user.user_id,
+              username: user.username,
+              full_name: user.full_name,
+              profile_picture_url: user.profile_picture_url,
+              organization: user.organization,
+            }));
+            setSelectedOwners(userOwners);
+          })
+          .catch((error) => {
+            console.error("Error loading owner details:", error);
+            setSelectedOwners([]);
+          })
+          .finally(() => {
+            setIsLoadingOwners(false);
+          });
+      } else {
+        setSelectedOwners([]);
+      }
     }
   }, [isOpen, dataset]);
 
@@ -90,6 +126,8 @@ export function EditDatasetDialog({
     setSelectedTags(dataset.tags || []);
     setNewFiles([]);
     setFilesToDelete([]);
+    setSelectedOwners([]);
+    setOriginalOwners(dataset.owners || []);
   };
 
   const handleCancel = () => {
@@ -132,7 +170,36 @@ export function EditDatasetDialog({
         await uploadFileToDataset(parseInt(datasetId), fileItem.file);
       }
 
-      // 4. Invalidate queries to refresh the data
+      // 4. Handle owner changes
+      const currentOwnerIds = selectedOwners.map((owner) => owner.user_id);
+      const ownersToAdd = currentOwnerIds.filter(
+        (id) => !originalOwners.includes(id)
+      );
+      const ownersToRemove = originalOwners.filter(
+        (id) => !currentOwnerIds.includes(id)
+      );
+
+      // Add new owners
+      for (const userId of ownersToAdd) {
+        try {
+          await addDatasetOwner(datasetId, userId);
+        } catch (error) {
+          console.error(`Failed to add owner ${userId}:`, error);
+          // Continue with other operations even if one fails
+        }
+      }
+
+      // Remove owners
+      for (const userId of ownersToRemove) {
+        try {
+          await removeDatasetOwner(datasetId, userId);
+        } catch (error) {
+          console.error(`Failed to remove owner ${userId}:`, error);
+          // Continue with other operations even if one fails
+        }
+      }
+
+      // 5. Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["dataset", datasetId] });
       queryClient.invalidateQueries({ queryKey: ["datasetFiles", datasetId] });
 
@@ -266,6 +333,24 @@ export function EditDatasetDialog({
                   placeholder="Select tags for your dataset..."
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Dataset Owners{" "}
+                  <span className="text-gray-500">(Optional)</span>
+                </label>
+                <UserOwnerSelector
+                  selectedOwners={selectedOwners}
+                  onOwnersChange={setSelectedOwners}
+                  placeholder="Add other users as dataset owners..."
+                  disabled={isSubmitting || isLoadingOwners}
+                />
+                {isLoadingOwners && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Loading current owners...
+                  </p>
+                )}
               </div>
 
               {/* Existing Files */}

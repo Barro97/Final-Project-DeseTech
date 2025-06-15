@@ -34,8 +34,7 @@ import { useState } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { EditDatasetDialog } from "./EditDatasetDialog";
 import { FilePreview } from "@/app/features/dataset/components/FilePreview";
-import { UploaderProfile } from "./UploaderProfile";
-import { OwnersProfile } from "./OwnersProfile";
+import { DatasetPeople } from "./DatasetPeople";
 
 export default function DatasetDetailPage({
   params,
@@ -346,17 +345,13 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
-                {/* Uploader Information */}
+                {/* Dataset Contributors */}
                 <div className="my-6">
-                  <UploaderProfile uploaderId={dataset.uploader_id} />
+                  <DatasetPeople
+                    uploaderId={dataset.uploader_id}
+                    ownerIds={dataset.owners || []}
+                  />
                 </div>
-
-                {/* Dataset Owners */}
-                {dataset.owners && dataset.owners.length > 0 && (
-                  <div className="mb-6">
-                    <OwnersProfile ownerIds={dataset.owners} />
-                  </div>
-                )}
 
                 {/* Admin approval notice */}
                 {canApprove && (

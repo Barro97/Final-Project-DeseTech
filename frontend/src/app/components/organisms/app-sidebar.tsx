@@ -40,7 +40,7 @@ const items = [
     icon: Database,
   },
   {
-    title: "Search Datasets",
+    title: "Search",
     url: "/datasets",
     icon: Search,
   },

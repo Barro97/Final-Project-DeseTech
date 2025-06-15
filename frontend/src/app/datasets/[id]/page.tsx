@@ -17,7 +17,6 @@ import {
   Calendar,
   Download,
   FileText,
-  User,
   Trash2,
   Edit,
   Clock,
@@ -35,6 +34,7 @@ import { useState } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { EditDatasetDialog } from "./EditDatasetDialog";
 import { FilePreview } from "@/app/features/dataset/components/FilePreview";
+import { UploaderProfile } from "./UploaderProfile";
 
 export default function DatasetDetailPage({
   params,
@@ -345,6 +345,11 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
+                {/* Uploader Information */}
+                <div className="my-6">
+                  <UploaderProfile uploaderId={dataset.uploader_id} />
+                </div>
+
                 {/* Admin approval notice */}
                 {canApprove && (
                   <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -446,26 +451,12 @@ export default function DatasetDetailPage({
               )}
 
               <div className="flex items-center text-gray-600 dark:text-gray-300">
-                <User className="w-5 h-5 mr-2" />
-                <span>Uploaded by: {user?.email}</span>
-              </div>
-
-              <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <Database className="w-5 h-5 mr-2" />
                 <span>
                   {datasetFiles.length} file
                   {datasetFiles.length !== 1 ? "s" : ""}
                 </span>
               </div>
-
-              {/* Show approval info for approved datasets */}
-              {dataset.approval_status === "approved" &&
-                dataset.approval_date && (
-                  <div className="flex items-center text-green-600 dark:text-green-400">
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    <span>Approved: {formatDate(dataset.approval_date)}</span>
-                  </div>
-                )}
 
               {/* Geographic Location */}
               {dataset.geographic_location && (

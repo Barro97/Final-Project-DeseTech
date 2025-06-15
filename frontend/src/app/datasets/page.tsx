@@ -9,10 +9,13 @@ import {
   List,
   SlidersHorizontal,
   Home,
+  Users,
+  Database,
 } from "lucide-react";
 
 import { useAuth } from "@/app/features/auth/context/AuthContext";
 import { DatasetCard } from "@/app/features/dataset/components/DatasetCard";
+import { UserCard } from "@/app/features/user/components/UserCard";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { Input } from "@/app/components/atoms/input";
 import { Button } from "@/app/components/atoms/button";
@@ -26,6 +29,10 @@ import {
   SearchFilters,
 } from "@/app/features/dataset/types/datasetTypes";
 import { searchDatasets } from "@/app/features/dataset/services/datasetService";
+import {
+  searchUsers,
+  getUserSearchSuggestions,
+} from "@/app/features/user/services/userSearchService";
 import {
   Select,
   SelectContent,
@@ -45,33 +52,129 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 const EnhancedSearchBarPlaceholder = ({
   onSearch,
   initialQuery = "",
+  searchType,
+  onSearchTypeChange,
 }: {
   onSearch: (query: string) => void;
   initialQuery?: string;
+  searchType: "datasets" | "users" | "all";
+  onSearchTypeChange: (type: "datasets" | "users" | "all") => void;
 }) => {
   const [inputValue, setInputValue] = useState(initialQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Get dynamic suggestions from the database
-  const { data: suggestions = [], isLoading: isLoadingSuggestions } =
-    useSearchSuggestions(
-      inputValue,
-      8, // limit to 8 suggestions
-      inputValue.length >= 2 // only fetch when we have at least 2 characters
-    );
+  // Get dynamic suggestions from the database based on search type
+  const {
+    data: datasetSuggestions = [],
+    isLoading: isLoadingDatasetSuggestions,
+  } = useSearchSuggestions(
+    inputValue,
+    4, // limit to 4 dataset suggestions
+    inputValue.length >= 2 &&
+      (searchType === "datasets" || searchType === "all")
+  );
+
+  // Get user suggestions
+  const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
+  const [isLoadingUserSuggestions, setIsLoadingUserSuggestions] =
+    useState(false);
+
+  useEffect(() => {
+    if (
+      inputValue.length >= 2 &&
+      (searchType === "users" || searchType === "all")
+    ) {
+      setIsLoadingUserSuggestions(true);
+      getUserSearchSuggestions(inputValue, 4)
+        .then(setUserSuggestions)
+        .catch(() => setUserSuggestions([]))
+        .finally(() => setIsLoadingUserSuggestions(false));
+    } else {
+      setUserSuggestions([]);
+    }
+  }, [inputValue, searchType]);
+
+  // Combine suggestions based on search type
+  const suggestions =
+    searchType === "datasets"
+      ? datasetSuggestions
+      : searchType === "users"
+        ? userSuggestions
+        : [...datasetSuggestions, ...userSuggestions];
+
+  const isLoadingSuggestions =
+    searchType === "datasets"
+      ? isLoadingDatasetSuggestions
+      : searchType === "users"
+        ? isLoadingUserSuggestions
+        : isLoadingDatasetSuggestions || isLoadingUserSuggestions;
 
   const handleSubmit = () => {
     onSearch(inputValue);
     setShowSuggestions(false);
   };
 
+  const getPlaceholderText = () => {
+    switch (searchType) {
+      case "datasets":
+        return "Search for datasets (e.g., Climate, Finance)...";
+      case "users":
+        return "Search for researchers (e.g., John Smith, University)...";
+      case "all":
+        return "Search for datasets and researchers...";
+      default:
+        return "Search...";
+    }
+  };
+
   return (
     <div className="p-4 my-4 bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+      {/* Search Type Toggle */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Search:
+        </span>
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => onSearchTypeChange("datasets")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "datasets"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            <Database className="h-4 w-4 inline mr-1" />
+            Datasets
+          </button>
+          <button
+            onClick={() => onSearchTypeChange("users")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "users"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            <Users className="h-4 w-4 inline mr-1" />
+            Users
+          </button>
+          <button
+            onClick={() => onSearchTypeChange("all")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              searchType === "all"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            All
+          </button>
+        </div>
+      </div>
+
       <div className="relative">
         <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
         <Input
           type="text"
-          placeholder="Search for datasets (e.g., Climate, Finance)..."
+          placeholder={getPlaceholderText()}
           value={inputValue}
           onChange={(e) => {
             setInputValue(e.target.value);
@@ -101,9 +204,9 @@ const EnhancedSearchBarPlaceholder = ({
                 Loading suggestions...
               </li>
             ) : suggestions.length > 0 ? (
-              suggestions.map((suggestion) => (
+              suggestions.map((suggestion, index) => (
                 <li
-                  key={suggestion}
+                  key={`${suggestion}-${index}`}
                   onClick={() => {
                     setInputValue(suggestion);
                     onSearch(suggestion);
@@ -572,6 +675,9 @@ export default function SearchDatasetsPage() {
   const [currentSort, setCurrentSort] = useState("newest");
   const [currentLayout, setCurrentLayout] = useState<"grid" | "list">("grid");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [searchType, setSearchType] = useState<"datasets" | "users" | "all">(
+    "datasets"
+  );
 
   // Calculate date filters for meaningful sections
   const getFirstDayOfMonth = () => {
@@ -631,16 +737,23 @@ export default function SearchDatasetsPage() {
       enabled: !isAuthLoading,
     });
 
+  // Dataset search query
   const {
-    data,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
+    data: datasetData,
+    isLoading: isLoadingDatasets,
+    isError: isDatasetError,
+    fetchNextPage: fetchNextDatasetPage,
+    hasNextPage: hasNextDatasetPage,
+    isFetchingNextPage: isFetchingNextDatasetPage,
+    refetch: refetchDatasets,
   } = useInfiniteQuery({
-    queryKey: ["allDatasets", activeSearchQuery, currentSort, appliedFilters],
+    queryKey: [
+      "allDatasets",
+      activeSearchQuery,
+      currentSort,
+      appliedFilters,
+      searchType,
+    ],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         return await fetchDatasets(
@@ -663,12 +776,90 @@ export default function SearchDatasetsPage() {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length + 1 : undefined,
     initialPageParam: 1,
-    enabled: !isAuthLoading && viewMode === "results",
+    enabled:
+      !isAuthLoading &&
+      viewMode === "results" &&
+      (searchType === "datasets" || searchType === "all"),
+  });
+
+  // User search query
+  const {
+    data: userData,
+    isLoading: isLoadingUsers,
+    isError: isUserError,
+    fetchNextPage: fetchNextUserPage,
+    hasNextPage: hasNextUserPage,
+    isFetchingNextPage: isFetchingNextUserPage,
+    refetch: refetchUsers,
+  } = useInfiniteQuery({
+    queryKey: [
+      "allUsers",
+      activeSearchQuery,
+      currentSort,
+      appliedFilters,
+      searchType,
+    ],
+    queryFn: async ({ pageParam = 1 }) => {
+      try {
+        return await searchUsers({
+          search_term: activeSearchQuery,
+          sort_by:
+            currentSort === "newest"
+              ? "recent"
+              : currentSort === "downloads"
+                ? "datasets"
+                : currentSort,
+          page: pageParam,
+          limit: 12,
+        });
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again.",
+          variant: "error",
+        });
+        throw error;
+      }
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.has_next ? allPages.length + 1 : undefined,
+    initialPageParam: 1,
+    enabled:
+      !isAuthLoading &&
+      viewMode === "results" &&
+      (searchType === "users" || searchType === "all"),
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
+    // Handle dataset infinite scroll
+    if (
+      inView &&
+      hasNextDatasetPage &&
+      !isFetchingNextDatasetPage &&
+      (searchType === "datasets" || searchType === "all")
+    ) {
+      fetchNextDatasetPage();
+    }
+    // Handle user infinite scroll
+    if (
+      inView &&
+      hasNextUserPage &&
+      !isFetchingNextUserPage &&
+      (searchType === "users" || searchType === "all")
+    ) {
+      fetchNextUserPage();
+    }
+  }, [
+    inView,
+    fetchNextDatasetPage,
+    hasNextDatasetPage,
+    isFetchingNextDatasetPage,
+    fetchNextUserPage,
+    hasNextUserPage,
+    isFetchingNextUserPage,
+    searchType,
+  ]);
 
   const handleSearchSubmit = useCallback((query: string) => {
     setActiveSearchQuery(query);
@@ -678,6 +869,7 @@ export default function SearchDatasetsPage() {
   const handleCarouselSeeAll = useCallback((category: string) => {
     setViewMode("results");
     setActiveSearchQuery("");
+    setSearchType("datasets"); // Always show datasets for carousel "see all"
     switch (category) {
       case "Most Downloaded":
         setCurrentSort("downloads");
@@ -832,8 +1024,10 @@ export default function SearchDatasetsPage() {
     setAppliedFilters({});
     setPendingFilters({});
     setCurrentSort("newest");
-    refetch();
-  }, [refetch]);
+    // Refetch both datasets and users
+    refetchDatasets();
+    refetchUsers();
+  }, [refetchDatasets, refetchUsers]);
 
   const returnToLandingPage = useCallback(() => {
     setViewMode("landing");
@@ -843,8 +1037,57 @@ export default function SearchDatasetsPage() {
     setCurrentSort("newest");
   }, []);
 
-  const datasets = data?.pages.flatMap((page) => page.datasets) || [];
-  const totalResults = data?.pages[0]?.total || 0;
+  // Combine data based on search type
+  const datasets = datasetData?.pages.flatMap((page) => page.datasets) || [];
+  const users = userData?.pages.flatMap((page) => page.users) || [];
+
+  // Calculate totals and loading states based on search type
+  const getTotalResults = () => {
+    if (searchType === "datasets") return datasetData?.pages[0]?.total || 0;
+    if (searchType === "users") return userData?.pages[0]?.total_count || 0;
+    if (searchType === "all")
+      return (
+        (datasetData?.pages[0]?.total || 0) +
+        (userData?.pages[0]?.total_count || 0)
+      );
+    return 0;
+  };
+
+  const getIsLoading = () => {
+    if (searchType === "datasets") return isLoadingDatasets;
+    if (searchType === "users") return isLoadingUsers;
+    if (searchType === "all") return isLoadingDatasets || isLoadingUsers;
+    return false;
+  };
+
+  const getIsError = () => {
+    if (searchType === "datasets") return isDatasetError;
+    if (searchType === "users") return isUserError;
+    if (searchType === "all") return isDatasetError || isUserError;
+    return false;
+  };
+
+  const getIsFetchingNextPage = () => {
+    if (searchType === "datasets") return isFetchingNextDatasetPage;
+    if (searchType === "users") return isFetchingNextUserPage;
+    if (searchType === "all")
+      return isFetchingNextDatasetPage || isFetchingNextUserPage;
+    return false;
+  };
+
+  const getHasNextPage = () => {
+    if (searchType === "datasets") return hasNextDatasetPage;
+    if (searchType === "users") return hasNextUserPage;
+    if (searchType === "all") return hasNextDatasetPage || hasNextUserPage;
+    return false;
+  };
+
+  const totalResults = getTotalResults();
+  const isLoading = getIsLoading();
+  const isError = getIsError();
+  const isFetchingNextPage = getIsFetchingNextPage();
+  const hasNextPage = getHasNextPage();
+
   const searchDuration =
     viewMode === "results" && !isLoading && activeSearchQuery
       ? `${(Math.random() * 0.3 + 0.05).toFixed(2)}s`
@@ -871,7 +1114,12 @@ export default function SearchDatasetsPage() {
               categories.
             </p>
           </div>
-          <EnhancedSearchBarPlaceholder onSearch={handleSearchSubmit} />
+          <EnhancedSearchBarPlaceholder
+            onSearch={handleSearchSubmit}
+            initialQuery={activeSearchQuery}
+            searchType={searchType}
+            onSearchTypeChange={setSearchType}
+          />
 
           <SearchControlsToolbar
             totalResults={0}
@@ -920,6 +1168,8 @@ export default function SearchDatasetsPage() {
           <EnhancedSearchBarPlaceholder
             onSearch={handleSearchSubmit}
             initialQuery={activeSearchQuery}
+            searchType={searchType}
+            onSearchTypeChange={setSearchType}
           />
 
           <SearchControlsToolbar
@@ -955,21 +1205,42 @@ export default function SearchDatasetsPage() {
               )}
               {isError && (
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-md mb-6">
-                  <p>Failed to load datasets. Please try again later.</p>
+                  <p>
+                    Failed to load{" "}
+                    {searchType === "datasets"
+                      ? "datasets"
+                      : searchType === "users"
+                        ? "users"
+                        : "results"}
+                    . Please try again later.
+                  </p>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refetch()}
+                    onClick={() => {
+                      if (searchType === "datasets") refetchDatasets();
+                      else if (searchType === "users") refetchUsers();
+                      else {
+                        refetchDatasets();
+                        refetchUsers();
+                      }
+                    }}
                     className="mt-2"
                   >
                     Retry
                   </Button>
                 </div>
               )}
-              {!isLoading && !isError && datasets.length === 0 && (
+              {!isLoading && !isError && totalResults === 0 && (
                 <div className="text-center py-12">
                   <p className="text-lg text-gray-500 dark:text-gray-400 mb-4">
-                    No datasets match your search criteria.
+                    No{" "}
+                    {searchType === "datasets"
+                      ? "datasets"
+                      : searchType === "users"
+                        ? "users"
+                        : "results"}{" "}
+                    match your search criteria.
                   </p>
                   <Button variant="outline" onClick={resetAllFiltersAndSearch}>
                     Clear all filters and search
@@ -977,20 +1248,59 @@ export default function SearchDatasetsPage() {
                 </div>
               )}
 
-              {datasets.length > 0 && (
-                <div
-                  className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
-                >
-                  {datasets.map((dataset) => (
-                    <div key={dataset.dataset_id} className="group relative">
-                      <DatasetCard
-                        dataset={dataset}
-                        isSelected={false}
-                        onSelect={() => {}}
-                        showSelectionCheckbox={false}
-                      />
-                    </div>
-                  ))}
+              {/* Results Display */}
+              {(datasets.length > 0 || users.length > 0) && (
+                <div className="space-y-8">
+                  {/* Dataset Results */}
+                  {(searchType === "datasets" || searchType === "all") &&
+                    datasets.length > 0 && (
+                      <div>
+                        {searchType === "all" && (
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                            Datasets ({datasets.length})
+                          </h3>
+                        )}
+                        <div
+                          className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
+                        >
+                          {datasets.map((dataset) => (
+                            <div
+                              key={dataset.dataset_id}
+                              className="group relative"
+                            >
+                              <DatasetCard
+                                dataset={dataset}
+                                isSelected={false}
+                                onSelect={() => {}}
+                                showSelectionCheckbox={false}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* User Results */}
+                  {(searchType === "users" || searchType === "all") &&
+                    users.length > 0 && (
+                      <div>
+                        {searchType === "all" && (
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                            Researchers ({users.length})
+                          </h3>
+                        )}
+                        <div className="grid gap-4 grid-cols-1">
+                          {users.map((user) => (
+                            <div key={user.user_id} className="group relative">
+                              <UserCard
+                                user={user}
+                                showSelectionCheckbox={false}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               )}
 

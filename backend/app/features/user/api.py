@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, Depends, status, HTTPException, Request, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -8,6 +8,10 @@ from backend.app.features.user.schemas import (
     UserCreate, UserUpdate, User as UserSchema, 
     ProfileUpdateRequest, ProfileResponse
 )
+from backend.app.features.user.user_schemas.search import (
+    UserSearchRequest, UserSearchListResponse
+)
+from backend.app.features.user.services.search_service import UserSearchService
 from backend.app.features.user.crud import (
     create_user,
     get_user,
@@ -83,6 +87,105 @@ def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
     Create a new user in the system.
     """
     return create_user(db=db, user=user)
+
+# IMPORTANT: Search routes must come BEFORE parameterized routes to avoid path conflicts
+@router.get("/search", response_model=UserSearchListResponse)
+def search_users(
+    db: Session = Depends(get_db),
+    search_term: Optional[str] = Query(None, max_length=100),
+    roles: Optional[List[str]] = Query(None),
+    organizations: Optional[List[str]] = Query(None),
+    skills: Optional[List[str]] = Query(None),
+    status: Optional[List[str]] = Query(None),
+    has_datasets: Optional[bool] = Query(None),
+    min_datasets: Optional[int] = Query(None, ge=0),
+    profile_completeness: Optional[str] = Query(None, pattern="^(basic|intermediate|complete)$"),
+    sort_by: Optional[str] = Query("relevance", pattern="^(relevance|name|recent|datasets|activity)$"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """
+    Search for users with comprehensive filtering options.
+    
+    This endpoint provides powerful search capabilities for finding researchers
+    and users in the platform with various filtering and sorting options.
+    
+    Args:
+        search_term: Search across usernames, names, emails, organizations
+        roles: Filter by user roles (e.g., ['researcher', 'admin'])
+        organizations: Filter by organization names
+        skills: Filter by user skills/expertise areas
+        status: Filter by user status (e.g., ['active', 'inactive'])
+        has_datasets: Filter users who have/haven't uploaded datasets
+        min_datasets: Minimum number of datasets user must have
+        profile_completeness: Filter by profile completion level
+        sort_by: Sort results by relevance, name, recent activity, or dataset count
+        page: Page number for pagination (starts at 1)
+        limit: Number of results per page (1-100)
+        
+    Returns:
+        UserSearchListResponse: Paginated list of users matching search criteria
+        
+    Example:
+        GET /users/search?search_term=john&roles=researcher&sort_by=datasets&limit=10
+    """
+    try:
+        # Create search request from query parameters
+        search_request = UserSearchRequest(
+            search_term=search_term,
+            roles=roles,
+            organizations=organizations,
+            skills=skills,
+            status=status,
+            has_datasets=has_datasets,
+            min_datasets=min_datasets,
+            profile_completeness=profile_completeness,
+            sort_by=sort_by,
+            page=page,
+            limit=limit
+        )
+        
+        # Execute search using service
+        service = UserSearchService()
+        return service.search_users(db, search_request)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error searching users: {str(e)}"
+        )
+
+@router.get("/search-suggestions", response_model=List[str])
+def get_user_search_suggestions(
+    search_term: str = Query(..., min_length=2, max_length=100),
+    limit: int = Query(8, ge=1, le=20),
+    db: Session = Depends(get_db)
+):
+    """
+    Get search suggestions for user search autocomplete.
+    
+    This endpoint provides intelligent suggestions based on usernames, names,
+    and organizations to help users find what they're looking for quickly.
+    
+    Args:
+        search_term: Partial search term (minimum 2 characters)
+        limit: Maximum number of suggestions to return (1-20, default 8)
+        
+    Returns:
+        List[str]: List of suggested search terms based on actual user data
+        
+    Example:
+        GET /users/search-suggestions?search_term=john&limit=5
+        Returns: ["John Smith", "John Doe", "Johnson Research Lab", ...]
+    """
+    try:
+        service = UserSearchService()
+        return service.get_search_suggestions(db, search_term, limit)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting search suggestions: {str(e)}"
+        )
 
 @router.get("/{user_id}", response_model=UserSchema)
 def read_user_endpoint(user_id: int, db: Session = Depends(get_db)):
@@ -273,4 +376,7 @@ async def upload_profile_picture(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload profile picture: {str(e)}"
         )
+
+
+
 

@@ -18,7 +18,12 @@ export default function ConditionalLayout({
   const pathname = usePathname();
 
   // Define public routes that don't need the sidebar
-  const publicRoutes = ["/login", "/signup", "/forgot-password"];
+  const publicRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/auth/oauth-callback",
+  ];
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   );

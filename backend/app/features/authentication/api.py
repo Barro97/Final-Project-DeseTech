@@ -20,7 +20,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth user schema
 class OAuthUserData(BaseModel):
-    email: str
+    email: Optional[str] = None  # GitHub might not provide email
     name: str
     provider: str
     provider_id: str
@@ -70,6 +70,10 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
         ).first()
         
         if not db_user:
+            # For GitHub users without email, we'll create a placeholder email
+            if not oauth_data.email:
+                oauth_data.email = f"{oauth_data.provider_id}@{oauth_data.provider}.oauth"
+            
             # Check if user exists by email (for linking existing accounts)
             db_user = db.query(User).filter(User.email == oauth_data.email).first()
             
@@ -81,8 +85,12 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
                     db_user.profile_picture = oauth_data.picture
             else:
                 # Create new OAuth user
-                # Generate unique username from email
-                base_username = oauth_data.email.split('@')[0].lower()
+                # Generate unique username from name or provider_id
+                if oauth_data.name:
+                    base_username = oauth_data.name.lower().replace(' ', '').replace('-', '').replace('_', '')[:20]
+                else:
+                    base_username = f"{oauth_data.provider}user"
+                
                 username = base_username
                 counter = 1
                 while db.query(User).filter(User.username == username).first():
@@ -90,8 +98,8 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
                     counter += 1
                 
                 # Split name into first and last name
-                name_parts = oauth_data.name.strip().split(' ', 1)
-                first_name = name_parts[0] if name_parts else ""
+                name_parts = oauth_data.name.strip().split(' ', 1) if oauth_data.name else ["User", ""]
+                first_name = name_parts[0] if name_parts else "User"
                 last_name = name_parts[1] if len(name_parts) > 1 else ""
                 
                 # Get default user role
@@ -130,6 +138,7 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
         
     except Exception as e:
         db.rollback()
+        print(f"OAuth authentication error: {str(e)}")  # Add logging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"OAuth authentication failed: {str(e)}"

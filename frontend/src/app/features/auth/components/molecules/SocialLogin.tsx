@@ -61,6 +61,7 @@ function SocialLogin() {
       {providers.map((p) => (
         <Button
           key={p.id}
+          type="button"
           variant="outline"
           className="flex items-center justify-center gap-2 transition-all hover:bg-muted"
           onClick={() => handleSocialLogin(p.id)}

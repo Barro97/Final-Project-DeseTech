@@ -1,5 +1,6 @@
 import { Github } from "lucide-react";
 import { Button } from "@/app/components/atoms/button";
+import { signIn } from "next-auth/react";
 
 const providers = [
   {
@@ -38,9 +39,20 @@ const providers = [
   },
 ];
 
-function handleSocialLogin() {
-  // Implement login logic
-  console.log("hi");
+function handleSocialLogin(providerId: string) {
+  if (providerId === "google") {
+    signIn("google", {
+      callbackUrl: "/auth/oauth-callback",
+      redirect: true,
+    });
+  } else if (providerId === "github") {
+    signIn("github", {
+      callbackUrl: "/auth/oauth-callback",
+      redirect: true,
+    });
+  } else {
+    console.log(`${providerId} login not implemented yet`);
+  }
 }
 
 function SocialLogin() {
@@ -51,7 +63,7 @@ function SocialLogin() {
           key={p.id}
           variant="outline"
           className="flex items-center justify-center gap-2 transition-all hover:bg-muted"
-          onClick={() => handleSocialLogin()}
+          onClick={() => handleSocialLogin(p.id)}
         >
           {p.icon}
           <span>{p.label}</span>

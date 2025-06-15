@@ -1,4 +1,5 @@
 import QueryProvider from "@/app/providers/QueryProvider";
+import NextAuthProvider from "@/app/providers/NextAuthProvider";
 import { Toaster } from "@/app/features/toaster/components/toaster";
 import "./globals.css";
 import { AuthProvider } from "@/app/features/auth/context/AuthContext";
@@ -14,15 +15,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col bg-background">
-        <QueryProvider>
-          <AuthProvider>
-            <AuthSessionManager />
-            <ConditionalLayout>
-              <Suspense fallback={null}>{children}</Suspense>
-            </ConditionalLayout>
-            <Toaster />
-          </AuthProvider>
-        </QueryProvider>
+        <NextAuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <AuthSessionManager />
+              <ConditionalLayout>
+                <Suspense fallback={null}>{children}</Suspense>
+              </ConditionalLayout>
+              <Toaster />
+            </AuthProvider>
+          </QueryProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );

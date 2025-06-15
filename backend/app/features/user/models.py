@@ -26,12 +26,16 @@ class User(Base):
     first_name = Column(String(255))
     last_name = Column(String(255))
     gender = Column(String(50))
-    password = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=True)  # Made nullable for OAuth users
     country = Column(String(255))
     profile_picture = Column(Text)
     education = Column(String(255))
     organization = Column(String(255))
     role_id = Column(Integer, ForeignKey('roles.role_id'))
+    
+    # OAuth fields
+    oauth_provider = Column(String(50), nullable=True)  # 'google', 'github', etc.
+    oauth_id = Column(String(255), nullable=True)       # Provider's user ID
     
     # Admin management fields
     status = Column(String(20), nullable=False, server_default=text("'active'"))

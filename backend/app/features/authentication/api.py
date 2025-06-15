@@ -81,7 +81,8 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
                 # Link existing account with OAuth
                 db_user.oauth_provider = oauth_data.provider
                 db_user.oauth_id = oauth_data.provider_id
-                if oauth_data.picture and not db_user.profile_picture:
+                # Always update profile picture from OAuth provider
+                if oauth_data.picture:
                     db_user.profile_picture = oauth_data.picture
             else:
                 # Create new OAuth user
@@ -125,6 +126,13 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
             
             db.commit()
             db.refresh(db_user)
+        else:
+            # User already exists with OAuth - update profile picture if provided
+            # This ensures profile pictures stay in sync with OAuth provider
+            if oauth_data.picture and oauth_data.picture != db_user.profile_picture:
+                db_user.profile_picture = oauth_data.picture
+                db.commit()
+                db.refresh(db_user)
         
         # Generate JWT token
         user_role = db_user.role.role_name if db_user.role else None

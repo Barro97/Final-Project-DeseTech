@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { X, Users, ChevronDown, Check, User } from "lucide-react";
+import { X, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/app/components/atoms/button";
 import { Input } from "@/app/components/atoms/input";
 import { searchUsers, UserSearchResponse } from "../services/userSearchService";
@@ -24,6 +24,7 @@ interface UserOwnerSelectorProps {
   disabled?: boolean;
   className?: string;
   excludeCurrentUser?: boolean;
+  uploaderId?: number; // ID of the original uploader who cannot be removed
 }
 
 export function UserOwnerSelector({
@@ -33,6 +34,7 @@ export function UserOwnerSelector({
   disabled = false,
   className = "",
   excludeCurrentUser = true,
+  uploaderId,
 }: UserOwnerSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -148,13 +150,27 @@ export function UserOwnerSelector({
 
   const handleRemoveOwner = (userOwner: UserOwner, event: React.MouseEvent) => {
     event.stopPropagation();
+
+    // Prevent removing the original uploader
+    if (uploaderId && userOwner.user_id === uploaderId) {
+      return;
+    }
+
     onOwnersChange(
       selectedOwners.filter((owner) => owner.user_id !== userOwner.user_id)
     );
   };
 
   const clearAllOwners = () => {
-    onOwnersChange([]);
+    // Keep the original uploader if they are in the list
+    if (uploaderId) {
+      const uploaderOwner = selectedOwners.find(
+        (owner) => owner.user_id === uploaderId
+      );
+      onOwnersChange(uploaderOwner ? [uploaderOwner] : []);
+    } else {
+      onOwnersChange([]);
+    }
   };
 
   // Helper function to get user initials for avatar fallback
@@ -201,10 +217,17 @@ export function UserOwnerSelector({
                 <span className="max-w-[120px] truncate">
                   {owner.full_name}
                 </span>
-                <X
-                  className="h-3 w-3 hover:bg-gray-300 rounded-full cursor-pointer flex-shrink-0"
-                  onClick={(e) => handleRemoveOwner(owner, e)}
-                />
+                {/* Only show X button if this is not the original uploader */}
+                {(!uploaderId || owner.user_id !== uploaderId) && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveOwner(owner, e)}
+                    className="h-4 w-4 hover:bg-red-200 dark:hover:bg-red-800 rounded-full cursor-pointer flex-shrink-0 flex items-center justify-center transition-colors"
+                    aria-label={`Remove ${owner.full_name} as owner`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </span>
             ))
           )}
@@ -267,7 +290,7 @@ export function UserOwnerSelector({
                 </div>
               ) : searchResults.length === 0 ? (
                 <div className="p-4 text-center text-sm text-gray-500">
-                  No users found matching "{searchTerm}"
+                  No users found matching &quot;{searchTerm}&quot;
                 </div>
               ) : (
                 searchResults.map((userResult) => {

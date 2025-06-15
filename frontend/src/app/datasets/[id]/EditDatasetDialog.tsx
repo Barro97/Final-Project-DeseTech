@@ -345,6 +345,7 @@ export function EditDatasetDialog({
                   onOwnersChange={setSelectedOwners}
                   placeholder="Add other users as dataset owners..."
                   disabled={isSubmitting || isLoadingOwners}
+                  uploaderId={dataset.uploader_id}
                 />
                 {isLoadingOwners && (
                   <p className="text-xs text-gray-500 mt-1">

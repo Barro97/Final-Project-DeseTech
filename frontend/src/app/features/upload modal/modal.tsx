@@ -225,6 +225,7 @@ export function UploadModal({
                 onOwnersChange={setSelectedOwners}
                 placeholder="Add other users as dataset owners..."
                 disabled={isSubmitting}
+                uploaderId={user ? parseInt(user.id) : undefined}
               />
             </div>
 

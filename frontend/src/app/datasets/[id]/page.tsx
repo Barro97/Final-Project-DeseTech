@@ -345,6 +345,11 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
+                {/* Uploader Information */}
+                <div className="my-6">
+                  <UploaderProfile uploaderId={dataset.uploader_id} />
+                </div>
+
                 {/* Admin approval notice */}
                 {canApprove && (
                   <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -444,8 +449,6 @@ export default function DatasetDetailPage({
                   </span>
                 </div>
               )}
-
-              <UploaderProfile uploaderId={dataset.uploader_id} />
 
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <Database className="w-5 h-5 mr-2" />

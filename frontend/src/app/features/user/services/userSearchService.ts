@@ -24,6 +24,7 @@ export interface UserSearchResponse {
   status: string;
   organization?: string;
   bio?: string;
+  about_me?: string;
   profile_picture_url?: string;
   dataset_count: number;
   profile_completeness: string;

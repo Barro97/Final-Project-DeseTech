@@ -16,6 +16,7 @@ import {
   getRoles,
   approveDataset,
   updateUserRole,
+  deleteUser,
 } from "../services/adminService";
 
 // Hook for admin statistics
@@ -155,6 +156,21 @@ export const useUsers = (initialFilters: AdminFilterRequest) => {
     [fetchUsers]
   );
 
+  const handleUserDelete = useCallback(
+    async (userId: number) => {
+      try {
+        await deleteUser(userId);
+        // Refresh users after deletion
+        await fetchUsers();
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete user");
+        return false;
+      }
+    },
+    [fetchUsers]
+  );
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
@@ -168,6 +184,7 @@ export const useUsers = (initialFilters: AdminFilterRequest) => {
     changePage,
     refetch: fetchUsers,
     handleRoleUpdate,
+    handleUserDelete,
   };
 };
 

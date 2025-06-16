@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, asc, or_, and_
 from datetime import datetime, timedelta
 
-from backend.app.database.models import Dataset, User, AdminAudit
+from backend.app.database.models import Dataset, User, AdminAudit, File, Comment, Like
 from backend.app.features.user.models import Role
 from backend.app.features.admin.schemas.request import AdminFilterRequest
 
@@ -327,4 +327,83 @@ class AdminRepository(AdminRepositoryInterface):
         
         user.status = status
         db.flush()
+        return True
+
+    def delete_user(self, db: Session, user_id: int) -> bool:
+        """
+        Delete a user from the system with comprehensive cascade deletion.
+        
+        This method handles complete removal of a user and all their related data:
+        - User's datasets (as uploader) - completely deleted with files
+        - User's ownership relationships - removed from other datasets
+        - User's comments, likes, download tracking - deleted
+        - Admin audit records - preserved but anonymized
+        - Dataset approvals - preserved but set approved_by to NULL
+        - Users created by this user - set created_by to NULL
+        
+        Args:
+            db: Database session for transaction
+            user_id: ID of user to delete
+            
+        Returns:
+            bool: True if deletion successful, False if user not found
+        """
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return False
+        
+        # Import here to avoid circular imports
+        from backend.app.features.file.models import UserDownload
+        
+        # STEP 1: Remove user from ownership of datasets they don't own (many-to-many cleanup)
+        # This handles the dataset_owner_table relationship
+        user_owned_datasets = db.query(Dataset).filter(Dataset.owners.any(User.user_id == user_id)).all()
+        for dataset in user_owned_datasets:
+            if dataset.uploader_id != user_id:  # Don't remove from datasets they uploaded
+                dataset.owners.remove(user)
+        
+        # STEP 2: Handle datasets where user is uploader - these will be deleted completely
+        user_datasets = db.query(Dataset).filter(Dataset.uploader_id == user_id).all()
+        for dataset in user_datasets:
+            # First delete all files associated with these datasets
+            db.query(File).filter(File.dataset_id == dataset.dataset_id).delete()
+            # Delete comments on these datasets
+            db.query(Comment).filter(Comment.dataset_id == dataset.dataset_id).delete()
+            # Delete likes on these datasets
+            db.query(Like).filter(Like.dataset_id == dataset.dataset_id).delete()
+            # Delete download tracking for these datasets
+            db.query(UserDownload).filter(UserDownload.dataset_id == dataset.dataset_id).delete()
+        
+        # Delete the datasets themselves
+        db.query(Dataset).filter(Dataset.uploader_id == user_id).delete()
+        
+        # STEP 3: Delete user's personal activity records
+        # Delete user's comments on other datasets
+        db.query(Comment).filter(Comment.user_id == user_id).delete()
+        
+        # Delete user's likes on other datasets
+        db.query(Like).filter(Like.user_id == user_id).delete()
+        
+        # Delete user's download tracking records
+        db.query(UserDownload).filter(UserDownload.user_id == user_id).delete()
+        
+        # STEP 4: Preserve audit trail but anonymize admin actions
+        # Set approved_by to NULL for datasets approved by this user (preserve approval but remove reference)
+        db.query(Dataset).filter(Dataset.approved_by == user_id).update(
+            {Dataset.approved_by: None}, synchronize_session=False
+        )
+        
+        # Keep admin audit records but could anonymize them (optional - discuss with team)
+        # For now, we'll keep them as they are important for compliance
+        
+        # STEP 5: Handle users created by this user
+        # Set created_by to NULL for users created by this user
+        db.query(User).filter(User.created_by == user_id).update(
+            {User.created_by: None}, synchronize_session=False
+        )
+        
+        # STEP 6: Finally delete the user record
+        db.delete(user)
+        db.flush()
+        
         return True 

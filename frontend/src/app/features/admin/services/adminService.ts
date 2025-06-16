@@ -121,6 +121,21 @@ export async function updateUserRole(
   return response.json();
 }
 
+export async function deleteUser(
+  userId: number
+): Promise<UserManagementResponse> {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete user: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function getRoles(): Promise<Role[]> {
   const response = await fetch(`${API_BASE_URL}/admin/roles`, {
     method: "GET",

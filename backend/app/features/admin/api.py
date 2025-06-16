@@ -133,4 +133,20 @@ def get_available_roles(
 @router.get("/health")
 def admin_health_check():
     """Health check endpoint for admin functionality."""
-    return {"status": "healthy", "message": "Admin API is operational"} 
+    return {"status": "healthy", "message": "Admin API is operational"}
+
+
+@router.delete("/users/{user_id}", response_model=UserManagementResponse)
+def delete_user(
+    user_id: int = Path(..., gt=0),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a user from the system."""
+    try:
+        return admin_service.delete_user(db, user_id, current_user["user_id"])
+    except AdminError as e:
+        raise handle_admin_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error deleting user {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error") 

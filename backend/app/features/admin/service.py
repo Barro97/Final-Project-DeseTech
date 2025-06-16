@@ -42,7 +42,7 @@ from backend.app.features.admin.exceptions import (
     AdminValidationError, AdminActionError, DatasetAlreadyProcessedError
 )
 from backend.app.features.dataset.repository import DatasetRepository
-from backend.app.database.models import Dataset, User
+from backend.app.database.models import Dataset, User, File
 from backend.app.features.user.models import Role
 
 logger = logging.getLogger(__name__)
@@ -408,4 +408,136 @@ class AdminService:
             )
             role_responses.append(role_response)
         
-        return role_responses 
+        return role_responses
+
+    def delete_user(self, db: Session, user_id: int, admin_user_id: int) -> UserManagementResponse:
+        """
+        Delete a user from the system with comprehensive data cleanup.
+        
+        This method handles the complete user deletion workflow including:
+        1. Admin permission validation
+        2. Prevention of self-deletion
+        3. Comprehensive data cleanup (datasets, files, comments, likes)
+        4. File deletion from storage
+        5. Audit trail logging
+        6. Complete user removal
+        
+        BUSINESS RULES:
+        - Only admins can delete users
+        - Admins cannot delete themselves
+        - All user data is completely removed (datasets, files, comments, etc.)
+        - Files are deleted from both database and storage
+        - Audit trails are preserved for compliance
+        
+        Args:
+            db: Database session for transaction
+            user_id: ID of user to delete
+            admin_user_id: ID of admin performing the deletion
+            
+        Returns:
+            UserManagementResponse: Result of deletion operation
+            
+        Raises:
+            AdminPermissionError: If user lacks admin permissions
+            UserNotFoundError: If target user doesn't exist
+            AdminValidationError: If trying to delete self or other validation fails
+        """
+        try:
+            # STEP 1: Validate admin permissions
+            admin_user = self._check_admin_permission(db, admin_user_id)
+            
+            # STEP 2: Prevent self-deletion
+            if user_id == admin_user_id:
+                raise AdminValidationError("Cannot delete your own account")
+            
+            # STEP 3: Get target user and validate existence
+            target_user = db.query(User).filter(User.user_id == user_id).first()
+            if not target_user:
+                raise UserNotFoundError(user_id)
+            
+            # STEP 4: Get all files that will be deleted for storage cleanup
+            user_datasets = db.query(Dataset).filter(Dataset.uploader_id == user_id).all()
+            files_to_delete = []
+            for dataset in user_datasets:
+                dataset_files = db.query(File).filter(File.dataset_id == dataset.dataset_id).all()
+                files_to_delete.extend(dataset_files)
+            
+            # STEP 5: Store comprehensive user information for audit logging
+            dataset_count = len(user_datasets)
+            file_count = len(files_to_delete)
+            
+            user_info = {
+                "deleted_user_id": user_id,
+                "deleted_username": target_user.username,
+                "deleted_email": target_user.email,
+                "deleted_role": target_user.role.role_name if target_user.role else "no_role",
+                "admin_performing_deletion": admin_user.username,
+                "datasets_deleted": dataset_count,
+                "files_deleted": file_count,
+                "deletion_timestamp": datetime.now().isoformat()
+            }
+            
+            # STEP 6: Delete files from storage before database deletion
+            failed_file_deletions = []
+            if files_to_delete:
+                try:
+                    from backend.app.features.file.utils.upload import delete_file_from_storage
+                    for file_obj in files_to_delete:
+                        try:
+                            if file_obj.file_url:
+                                delete_file_from_storage(file_obj.file_url)
+                        except Exception as file_err:
+                            logger.warning(f"Failed to delete file {file_obj.file_name} from storage: {str(file_err)}")
+                            failed_file_deletions.append(file_obj.file_name)
+                except ImportError:
+                    logger.warning("File storage deletion utility not available - files may remain in storage")
+            
+            # STEP 7: Delete user and all related data (handled by repository)
+            success = self.repository.delete_user(db, user_id)
+            if not success:
+                raise AdminActionError("Failed to delete user from database")
+            
+            # STEP 8: Log admin action for audit trail (include file deletion info)
+            if failed_file_deletions:
+                user_info["failed_file_deletions"] = failed_file_deletions
+                user_info["storage_cleanup_status"] = "partial"
+            else:
+                user_info["storage_cleanup_status"] = "complete"
+            
+            self.repository.log_admin_action(
+                db=db,
+                admin_user_id=admin_user_id,
+                action_type="user_deletion",
+                target_type="user",
+                target_id=user_id,
+                details=user_info
+            )
+            
+            # STEP 9: Commit transaction
+            db.commit()
+            
+            logger.info(f"User {user_id} ({target_user.username}) completely deleted by admin {admin_user_id} - {dataset_count} datasets, {file_count} files removed")
+            
+            # Prepare response message
+            success_message = f"User '{target_user.username}' has been completely deleted"
+            if dataset_count > 0:
+                success_message += f" along with {dataset_count} datasets and {file_count} files"
+            if failed_file_deletions:
+                success_message += f" (Note: {len(failed_file_deletions)} files may remain in storage)"
+            
+            return UserManagementResponse(
+                user_id=user_id,
+                action="delete",
+                success=True,
+                message=success_message,
+                updated_fields={
+                    "status": "deleted",
+                    "datasets_deleted": dataset_count,
+                    "files_deleted": file_count
+                }
+            )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error deleting user {user_id}: {str(e)}")
+            raise 

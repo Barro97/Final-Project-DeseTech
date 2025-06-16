@@ -19,6 +19,7 @@ import {
   ChevronRight,
   UserCog,
   Shield,
+  Trash2,
 } from "lucide-react";
 
 interface RoleUpdateDialogProps {
@@ -139,9 +140,125 @@ function RoleUpdateDialog({
 interface UserCardProps {
   user: AdminUser;
   onEditRole: (user: AdminUser) => void;
+  onDeleteUser: (user: AdminUser) => void;
 }
 
-function UserCard({ user, onEditRole }: UserCardProps) {
+interface DeleteUserDialogProps {
+  user: AdminUser | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onDelete: (userId: number) => Promise<boolean>;
+}
+
+function DeleteUserDialog({
+  user,
+  isOpen,
+  onClose,
+  onDelete,
+}: DeleteUserDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  if (!isOpen || !user) return null;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const success = await onDelete(user.user_id);
+    if (success) {
+      onClose();
+    }
+    setIsDeleting(false);
+  };
+
+  const displayName =
+    user.first_name && user.last_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+            <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Delete User Account
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              This action cannot be undone
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            Are you sure you want to permanently delete{" "}
+            <strong>{displayName}</strong>?
+          </p>
+
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+              This will permanently delete:
+            </h4>
+            <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
+              <li>• User account and profile information</li>
+              <li>
+                • All datasets uploaded by this user ({user.dataset_count || 0}{" "}
+                datasets)
+              </li>
+              <li>• All files associated with their datasets</li>
+              <li>• All comments and activity by this user</li>
+              <li>
+                • User's ownership of other datasets (removed from owned
+                datasets)
+              </li>
+            </ul>
+          </div>
+
+          {user.dataset_count > 0 && (
+            <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>⚠️ Warning:</strong> This user has uploaded{" "}
+                {user.dataset_count} dataset(s). Deleting this user will also
+                delete all their datasets and files.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            {isDeleting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                Delete User Permanently
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserCard({ user, onEditRole, onDeleteUser }: UserCardProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Never";
     return new Date(dateString).toLocaleDateString();
@@ -221,13 +338,22 @@ function UserCard({ user, onEditRole }: UserCardProps) {
         </div>
       </div>
 
-      <button
-        onClick={() => onEditRole(user)}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-      >
-        <UserCog className="h-4 w-4" />
-        Edit Role
-      </button>
+      <div className="flex gap-3">
+        <button
+          onClick={() => onEditRole(user)}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <UserCog className="h-4 w-4" />
+          Edit Role
+        </button>
+        <button
+          onClick={() => onDeleteUser(user)}
+          className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete User
+        </button>
+      </div>
     </Card>
   );
 }
@@ -238,8 +364,15 @@ export function UserManagement() {
     limit: 12,
   };
 
-  const { users, loading, error, updateFilters, changePage, handleRoleUpdate } =
-    useUsers(initialFilters);
+  const {
+    users,
+    loading,
+    error,
+    updateFilters,
+    changePage,
+    handleRoleUpdate,
+    handleUserDelete,
+  } = useUsers(initialFilters);
   const { roles } = useRoles();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -247,6 +380,9 @@ export function UserManagement() {
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [selectedUserForDelete, setSelectedUserForDelete] =
+    useState<AdminUser | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Apply filters when inputs change
   const handleSearch = () => {
@@ -276,6 +412,16 @@ export function UserManagement() {
   const handleCloseRoleDialog = () => {
     setShowRoleDialog(false);
     setSelectedUser(null);
+  };
+
+  const handleDeleteUser = (user: AdminUser) => {
+    setSelectedUserForDelete(user);
+    setShowDeleteDialog(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setSelectedUserForDelete(null);
   };
 
   const totalPages = useMemo(() => {
@@ -422,6 +568,7 @@ export function UserManagement() {
                 key={user.user_id}
                 user={user}
                 onEditRole={handleEditRole}
+                onDeleteUser={handleDeleteUser}
               />
             ))}
           </div>
@@ -465,6 +612,14 @@ export function UserManagement() {
         onClose={handleCloseRoleDialog}
         onUpdate={handleRoleUpdate}
         availableRoles={roles}
+      />
+
+      {/* Delete User Dialog */}
+      <DeleteUserDialog
+        user={selectedUserForDelete}
+        isOpen={showDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        onDelete={handleUserDelete}
       />
     </div>
   );

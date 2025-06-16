@@ -1,20 +1,7 @@
 "use client";
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
-
-const AuthForms = dynamic(
-  // solves a bug
-  () => import("@/app/features/auth/components/templates/AuthForms"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    ),
-  }
-);
+import AuthForms from "@/app/features/auth/components/templates/AuthForms";
 
 export default function AuthPage() {
   const [isReady, setIsReady] = useState(false);

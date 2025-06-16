@@ -4,9 +4,10 @@ from typing import List, Optional
 
 from backend.app.database.session import get_db
 from backend.app.features.authentication.utils.authorizations import permit_action, get_current_user, oauth2_scheme
+from backend.app.features.authentication.utils.token_creation import create_access_token
 from backend.app.features.user.schemas import (
     UserCreate, UserUpdate, User as UserSchema, 
-    ProfileUpdateRequest, ProfileResponse
+    ProfileUpdateRequest, ProfileResponse, UserCreateRequest
 )
 from backend.app.features.user.user_schemas.search import (
     UserSearchRequest, UserSearchListResponse
@@ -17,6 +18,7 @@ from backend.app.features.user.crud import (
     get_user,
     update_user,
     delete_user,
+    create_user_with_auto_username,
 )
 from backend.app.features.user.services.profile_service import UserProfileService
 from backend.app.features.file.utils.upload import save_file
@@ -87,6 +89,34 @@ def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
     Create a new user in the system.
     """
     return create_user(db=db, user=user)
+
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
+def signup_endpoint(user: UserCreateRequest, db: Session = Depends(get_db)):
+    """
+    Create a new user via signup form with auto-generated username and immediate login.
+    
+    This endpoint is specifically for user registration from the frontend signup form.
+    It automatically generates a unique username based on the user's email address
+    and returns a JWT token for immediate login.
+    """
+    # Create the user
+    created_user = create_user_with_auto_username(db=db, user=user)
+    
+    # Generate JWT token for immediate login
+    user_role = created_user.role.role_name if created_user.role else None
+    access_token = create_access_token(data={
+        "email": created_user.email,
+        "role": user_role,
+        "user_id": created_user.user_id
+    })
+    
+    # Return both user data and token for immediate login
+    return {
+        "user": created_user,
+        "access_token": access_token,
+        "token_type": "bearer",
+        "message": "Account created successfully"
+    }
 
 # IMPORTANT: Search routes must come BEFORE parameterized routes to avoid path conflicts
 @router.get("/search", response_model=UserSearchListResponse)

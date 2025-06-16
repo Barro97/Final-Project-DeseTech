@@ -15,6 +15,19 @@ export interface LoginResponse {
   // Add any other fields your backend returns on successful login
 }
 
+export interface SignUpResponse {
+  user: {
+    user_id: number;
+    email: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+  };
+  access_token: string;
+  token_type: string;
+  message: string;
+}
+
 // You can also define a more generic User type if needed elsewhere
 export interface User {
   email: string;
@@ -25,7 +38,6 @@ export interface User {
 
 export interface SignUpData {
   email: string;
-  username: string;
   firstName: string;
   lastName: string;
   password: string;

@@ -11,7 +11,7 @@ class PrivacyLevel(str, Enum):
 class UserBase(BaseModel):
     """Base schema for user attributes, shared by other user-related schemas."""
     email: str
-    username: str
+    username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[str] = None
@@ -31,6 +31,18 @@ class UserDelete(BaseModel):
     # Note: This schema is defined but not currently used by any API endpoint for deletion,
     # as deletion is typically done via user_id path parameter.
     email: str
+
+class UserCreateRequest(BaseModel):
+    """Schema for creating a new user via signup form - username not required."""
+    email: str
+    password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    gender: Optional[str] = None
+    country: Optional[str] = None
+    education: Optional[str] = None
+    organization: Optional[str] = None
+    role_id: Optional[int] = 1
 
 class UserCreate(UserBase):
     """Schema for creating a new user, inherits from UserBase and adds password."""

@@ -28,6 +28,39 @@ def test_create_user_success(client: TestClient, new_user_payload: dict):
     assert "user_id" in data
     assert "password" not in data # Ensure password is not returned
 
+def test_signup_success_with_auto_login(client: TestClient):
+    """Test the new signup endpoint that auto-generates username and logs in the user"""
+    signup_payload = {
+        "email": "testuser@example.com",
+        "password": "StrongPass123!",
+        "first_name": "Test",
+        "last_name": "User",
+        "gender": "other",
+        "country": "Testland"
+    }
+    
+    response = client.post("/users/signup", json=signup_payload)
+    assert response.status_code == status.HTTP_201_CREATED
+    
+    data = response.json()
+    
+    # Check that user data is included
+    assert "user" in data
+    user_data = data["user"]
+    assert user_data["email"] == signup_payload["email"]
+    assert user_data["first_name"] == signup_payload["first_name"]
+    assert user_data["last_name"] == signup_payload["last_name"]
+    assert "username" in user_data  # Should be auto-generated
+    
+    # Check that authentication token is included for immediate login
+    assert "access_token" in data
+    assert "token_type" in data
+    assert data["token_type"] == "bearer"
+    assert "message" in data
+    
+    # Ensure password is not returned
+    assert "password" not in user_data
+
 def test_create_user_duplicate_email(client: TestClient, new_user_payload: dict):
     client.post("/users/", json=new_user_payload) # Create first user
     response = client.post("/users/", json=new_user_payload) # Attempt to create duplicate

@@ -22,7 +22,7 @@ class User(Base):
 
     user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String(255), nullable=False, unique=True, index=True)
-    username = Column(String(255), nullable=False, unique=True, index=True)
+    username = Column(String(255), nullable=True, unique=True, index=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
     gender = Column(String(50))

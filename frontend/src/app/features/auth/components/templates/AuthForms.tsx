@@ -1,25 +1,15 @@
 "use client";
 import { Card } from "@/app/components/molecules/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../atoms/Tabs";
+import { Tabs, TabsList, TabsTrigger } from "../atoms/Tabs";
 import { useRef, useState } from "react";
-// import { Separator } from "@/app/features/auth/components/ui/separator";
-import { cn } from "@/app/lib/utils";
-import { useContentHeight } from "../../hooks/useContentHeight";
 import LoginForm from "../organisms/LoginForm";
 import SignUpForm from "../organisms/SignUpForm";
 
 export default function AuthForms() {
-  // const [showPassword, setShowPassword] = useState(false);
-  // const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  // const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   const loginRef = useRef<HTMLDivElement>(null);
   const signupRef = useRef<HTMLDivElement>(null);
-
-  const refs = { login: loginRef, signup: signupRef };
-
-  const contentHeight = useContentHeight(activeTab, refs);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -35,10 +25,9 @@ export default function AuthForms() {
 
         <div className="relative">
           <div
-            className={cn(
-              "absolute inset-0 rounded-[var(--radius)] bg-primary/5 blur-xl transition-all duration-500",
+            className={`absolute inset-0 rounded-[var(--radius)] bg-primary/5 blur-xl transition-all duration-500 ${
               activeTab === "login" ? "opacity-50" : "opacity-30"
-            )}
+            }`}
           />
 
           <Card
@@ -66,27 +55,21 @@ export default function AuthForms() {
                 </TabsTrigger>
               </TabsList>
 
-              <div
-                className="relative overflow-hidden transition-all duration-500 ease-in-out"
-                style={{
-                  height: contentHeight ? `${contentHeight}px` : "auto",
-                }}
-              >
-                <TabsContent
-                  value="login"
-                  className="absolute w-full animate-in fade-in data-[state=inactive]:animate-out data-[state=inactive]:fade-out data-[state=active]:duration-300"
+              <div className="relative overflow-hidden">
+                {/* Always render both forms to prevent hooks order issues */}
+                <div
                   ref={loginRef}
+                  style={{ display: activeTab === "login" ? "block" : "none" }}
                 >
                   <LoginForm />
-                </TabsContent>
+                </div>
 
-                <TabsContent
-                  value="signup"
-                  className="absolute w-full animate-in fade-in data-[state=inactive]:animate-out data-[state=inactive]:fade-out data-[state=active]:duration-300"
+                <div
                   ref={signupRef}
+                  style={{ display: activeTab === "signup" ? "block" : "none" }}
                 >
                   <SignUpForm />
-                </TabsContent>
+                </div>
               </div>
             </Tabs>
           </Card>

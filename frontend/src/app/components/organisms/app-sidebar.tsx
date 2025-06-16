@@ -9,7 +9,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -50,12 +50,12 @@ const items = [
 export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
   const { user, logout } = useAuth();
   const { profileData, isLoading: isProfileLoading } = useUserProfile();
-  const router = useRouter();
   const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    // Use window.location for immediate redirect to avoid React state issues
+    window.location.href = "/login";
   };
 
   // Check if user is admin (case-insensitive)

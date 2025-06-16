@@ -32,6 +32,7 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   isLoading: boolean;
+  isCurrentTokenValid: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,9 +100,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    console.log("Logging out user - clearing session and redirecting");
     sessionStorage.removeItem("accessToken");
     setUser(null);
     setToken(null);
+    // Force redirect to login page
+    window.location.href = "/login";
+  };
+
+  // Method to check if current token is valid
+  const isCurrentTokenValid = (): boolean => {
+    if (!token) return false;
+    return !isTokenExpired(token);
   };
 
   // Periodically check if token is expired (check every minute)
@@ -119,7 +129,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [token]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, token, login, logout, isLoading, isCurrentTokenValid }}
+    >
       {children}
     </AuthContext.Provider>
   );

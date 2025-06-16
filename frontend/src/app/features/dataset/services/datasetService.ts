@@ -1,4 +1,4 @@
-import axios from "axios";
+import httpClient from "@/app/lib/httpClient";
 import {
   Dataset,
   DatasetFile,
@@ -33,13 +33,8 @@ export async function getAllDatasets(
     });
   }
 
-  // Make the API request
-  const response = await axios.get(`${API_URL}/datasets?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
-  });
-
+  // Make the API request using httpClient (no manual auth headers needed)
+  const response = await httpClient.get(`/datasets?${params.toString()}`);
   return response.data;
 }
 
@@ -61,7 +56,7 @@ export async function getUserDatasets(
     };
   }
 
-  const response = await axios.get(endpoint, config);
+  const response = await httpClient.get(endpoint, config);
   return response.data;
 }
 
@@ -69,11 +64,7 @@ export async function getUserDatasets(
 export async function getDatasetById(
   datasetId: string | number
 ): Promise<Dataset> {
-  const response = await axios.get(`${API_URL}/datasets/${datasetId}`, {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
-  });
+  const response = await httpClient.get(`/datasets/${datasetId}`);
   return response.data;
 }
 
@@ -81,20 +72,13 @@ export async function getDatasetById(
 export async function getDatasetFiles(
   datasetId: string | number
 ): Promise<DatasetFile[]> {
-  const response = await axios.get(`${API_URL}/datasets/${datasetId}/files`, {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
-  });
+  const response = await httpClient.get(`/datasets/${datasetId}/files`);
   return response.data;
 }
 
 // Download a file
 export async function downloadFile(fileId: string | number): Promise<Blob> {
-  const response = await axios.get(`${API_URL}/files/${fileId}/download`, {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
+  const response = await httpClient.get(`/files/${fileId}/download`, {
     responseType: "blob",
   });
   return response.data;
@@ -104,15 +88,9 @@ export async function downloadFile(fileId: string | number): Promise<Blob> {
 export async function downloadDataset(
   datasetId: string | number
 ): Promise<Blob> {
-  const response = await axios.get(
-    `${API_URL}/datasets/${datasetId}/download`,
-    {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-      },
-      responseType: "blob",
-    }
-  );
+  const response = await httpClient.get(`/datasets/${datasetId}/download`, {
+    responseType: "blob",
+  });
   return response.data;
 }
 
@@ -128,14 +106,10 @@ export async function deleteDatasets(
   datasetIds: number[]
 ): Promise<BatchDeleteResponse> {
   try {
-    const response = await axios.post<BatchDeleteResponse>(
-      `${API_URL}/datasets/batch-delete`,
-      { dataset_ids: datasetIds },
+    const response = await httpClient.post<BatchDeleteResponse>(
+      "/datasets/batch-delete",
       {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          "Content-Type": "application/json",
-        },
+        dataset_ids: datasetIds,
       }
     );
     return response.data;
@@ -148,11 +122,7 @@ export async function deleteDatasets(
 // Delete a single dataset
 export async function deleteDataset(datasetId: string | number): Promise<void> {
   try {
-    await axios.delete(`${API_URL}/datasets/${datasetId}`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-      },
-    });
+    await httpClient.delete(`/datasets/${datasetId}`);
   } catch (error) {
     console.error("Error deleting dataset:", error);
     throw error; // Re-throw to handle in the UI layer
@@ -165,15 +135,9 @@ export async function updateDataset(
   updateData: Partial<Dataset>
 ): Promise<Dataset> {
   try {
-    const response = await axios.put<Dataset>(
-      `${API_URL}/datasets/${datasetId}`,
-      updateData,
-      {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          "Content-Type": "application/json",
-        },
-      }
+    const response = await httpClient.put<Dataset>(
+      `/datasets/${datasetId}`,
+      updateData
     );
     return response.data;
   } catch (error) {
@@ -185,11 +149,7 @@ export async function updateDataset(
 // Delete a file from a dataset
 export async function deleteDatasetFile(fileId: number): Promise<void> {
   try {
-    await axios.delete(`${API_URL}/delete_file/${fileId}`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-      },
-    });
+    await httpClient.delete(`/delete_file/${fileId}`);
   } catch (error) {
     console.error("Error deleting file:", error);
     throw error;
@@ -206,9 +166,8 @@ export async function uploadFileToDataset(
   formData.append("dataset_id", datasetId.toString());
 
   try {
-    const response = await axios.post(`${API_URL}/upload-file/`, formData, {
+    const response = await httpClient.post("/upload-file/", formData, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
         "Content-Type": "multipart/form-data",
       },
     });
@@ -239,13 +198,10 @@ export async function getFilePreview(
   maxRows: number = 50
 ): Promise<PreviewResponse> {
   try {
-    const response = await axios.get(`${API_URL}/files/${fileId}/preview`, {
+    const response = await httpClient.get(`/files/${fileId}/preview`, {
       params: {
         offset,
         max_rows: maxRows,
-      },
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
       },
     });
     return response.data;
@@ -261,7 +217,7 @@ export async function getFilePreview(
  */
 export async function getPublicStats(): Promise<PublicStats> {
   try {
-    const response = await axios.get(`${API_URL}/datasets/public-stats`);
+    const response = await httpClient.get("/datasets/public-stats");
     return response.data;
   } catch (error) {
     console.error("Error fetching public stats:", error);
@@ -272,9 +228,7 @@ export async function getPublicStats(): Promise<PublicStats> {
 // Get available file types for filtering
 export async function getAvailableFileTypes(): Promise<string[]> {
   try {
-    const response = await axios.get(
-      `${API_URL}/datasets/available-file-types`
-    );
+    const response = await httpClient.get("/datasets/available-file-types");
     return response.data;
   } catch (error) {
     console.error("Error fetching available file types:", error);
@@ -293,7 +247,7 @@ export async function getSearchSuggestions(
       return [];
     }
 
-    const response = await axios.get(`${API_URL}/datasets/search-suggestions`, {
+    const response = await httpClient.get("/datasets/search-suggestions", {
       params: {
         search_term: searchTerm.trim(),
         limit: limit,
@@ -320,14 +274,10 @@ export async function addDatasetOwner(
   userId: number
 ): Promise<OwnerActionResponse> {
   try {
-    const response = await axios.post<OwnerActionResponse>(
-      `${API_URL}/datasets/${datasetId}/add-owner`,
-      { user_id: userId },
+    const response = await httpClient.post<OwnerActionResponse>(
+      `/datasets/${datasetId}/add-owner`,
       {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          "Content-Type": "application/json",
-        },
+        user_id: userId,
       }
     );
     return response.data;
@@ -343,14 +293,10 @@ export async function removeDatasetOwner(
   userId: number
 ): Promise<OwnerActionResponse> {
   try {
-    const response = await axios.post<OwnerActionResponse>(
-      `${API_URL}/datasets/${datasetId}/remove-owner`,
-      { user_id: userId },
+    const response = await httpClient.post<OwnerActionResponse>(
+      `/datasets/${datasetId}/remove-owner`,
       {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          "Content-Type": "application/json",
-        },
+        user_id: userId,
       }
     );
     return response.data;
@@ -401,21 +347,10 @@ export const searchDatasets = async (
   if (filters.max_downloads !== undefined)
     params.append("max_downloads", filters.max_downloads.toString());
 
-  const url = `${API_URL}/datasets/search?${params.toString()}`;
+  const url = `/datasets/search?${params.toString()}`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
+  const response = await httpClient.get(url);
+  const data = response.data;
 
   return {
     datasets: data.datasets || [],

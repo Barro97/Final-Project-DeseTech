@@ -1,6 +1,7 @@
 "use client";
 import { useAuth } from "@/app/features/auth/context/AuthContext";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -16,6 +17,7 @@ export default function ConditionalLayout({
 }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Define public routes that don't need the sidebar
   const publicRoutes = [
@@ -28,6 +30,17 @@ export default function ConditionalLayout({
     pathname.startsWith(route)
   );
 
+  // Redirect unauthenticated users from protected routes to login
+  useEffect(() => {
+    if (!isLoading && !user && !isPublicRoute) {
+      console.log(
+        "User not authenticated, redirecting to login from:",
+        pathname
+      );
+      router.push("/login");
+    }
+  }, [user, isLoading, isPublicRoute, pathname, router]);
+
   // If it's a public route, render without sidebar
   if (isPublicRoute) {
     return <main className="flex-1">{children}</main>;
@@ -38,9 +51,9 @@ export default function ConditionalLayout({
     return null;
   }
 
-  // If user is not authenticated and not on a public route, don't render sidebar
+  // If user is not authenticated and not on a public route, show nothing while redirecting
   if (!user) {
-    return <main className="flex-1">{children}</main>;
+    return null;
   }
 
   // User is authenticated, render with sidebar

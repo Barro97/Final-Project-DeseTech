@@ -42,7 +42,7 @@ USAGE EXAMPLE:
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc, asc, func
+from sqlalchemy import or_, and_, desc, asc, func
 from backend.app.database.models import Dataset, Tag, File, User
 from backend.app.features.dataset.schemas.internal import DatasetFilterInternal
 
@@ -108,6 +108,20 @@ class DatasetRepositoryInterface(ABC):
             
         Returns:
             List[Dataset]: All datasets where user is uploader or owner
+        """
+        pass
+
+    @abstractmethod
+    def get_approved_by_user(self, db: Session, user_id: int) -> List[Dataset]:
+        """
+        Get only approved datasets where user is either uploader or owner.
+        
+        Args:
+            db: Database session for query execution
+            user_id: User identifier to search for
+            
+        Returns:
+            List[Dataset]: All approved datasets where user is uploader or owner
         """
         pass
 
@@ -293,6 +307,27 @@ class DatasetRepository(DatasetRepositoryInterface):
             or_(
                 Dataset.uploader_id == user_id,  # User created the dataset
                 Dataset.owners.any(User.user_id == user_id)  # User is an owner
+            )
+        ).all()
+
+    def get_approved_by_user(self, db: Session, user_id: int) -> List[Dataset]:
+        """
+        Get only approved datasets where user is either uploader or owner.
+        
+        Args:
+            db: Database session for query execution
+            user_id: ID of user to find approved datasets for
+            
+        Returns:
+            List[Dataset]: All approved datasets where user is uploader or owner
+        """
+        return db.query(Dataset).filter(
+            and_(
+                or_(
+                    Dataset.uploader_id == user_id,  # User created the dataset
+                    Dataset.owners.any(User.user_id == user_id)  # User is an owner
+                ),
+                Dataset.approval_status == 'approved'  # Only approved datasets
             )
         ).all()
 

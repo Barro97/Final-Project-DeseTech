@@ -45,13 +45,23 @@ export async function getAllDatasets(
 
 // Get all datasets for a specific user
 export async function getUserDatasets(
-  userId: string | number
+  userId: string | number,
+  isOwnProfile: boolean = false
 ): Promise<Dataset[]> {
-  const response = await axios.get(`${API_URL}/datasets/user/${userId}`, {
-    headers: {
+  const endpoint = isOwnProfile
+    ? `${API_URL}/datasets/user/${userId}` // Private endpoint - requires auth, shows all datasets
+    : `${API_URL}/datasets/user/${userId}/public`; // Public endpoint - no auth required, shows only approved
+
+  const config: { headers?: { Authorization: string } } = {};
+
+  // Only add Authorization header for private endpoint
+  if (isOwnProfile) {
+    config.headers = {
       Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-    },
-  });
+    };
+  }
+
+  const response = await axios.get(endpoint, config);
   return response.data;
 }
 

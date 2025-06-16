@@ -48,7 +48,12 @@ const UserProfilePage = () => {
     error: datasetsError,
   } = useQuery({
     queryKey: ["userDatasets", userId],
-    queryFn: () => getUserDatasets(userId),
+    queryFn: () => {
+      // Determine if this is the user's own profile
+      const isOwnProfile =
+        profileData?.isOwnProfile || user?.id?.toString() === userId;
+      return getUserDatasets(userId, isOwnProfile);
+    },
     enabled: !!userId,
   });
 

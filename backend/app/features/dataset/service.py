@@ -574,6 +574,34 @@ class DatasetService:
         datasets = self.repository.get_by_user(db, user_id)
         return [self._format_dataset_response(dataset) for dataset in datasets]
 
+    def get_public_user_datasets(self, db: Session, user_id: int) -> List[DatasetResponse]:
+        """
+        Retrieve only approved datasets associated with a specific user for public viewing.
+        
+        This method returns approved datasets where the user is either:
+        - The original uploader/creator
+        - Listed as an owner (added later)
+        
+        PUBLIC ACCESS:
+        - No authentication required - open to all users
+        - Only returns approved datasets (publicly visible content)
+        - Protects user privacy by filtering out pending/rejected datasets
+        
+        Args:
+            db: Database session for query execution
+            user_id: ID of user whose public datasets to retrieve
+            
+        Returns:
+            List[DatasetResponse]: All approved datasets associated with the user
+            
+        Example:
+            >>> datasets = service.get_public_user_datasets(db, user_id=123)
+            >>> print(f"User has {len(datasets)} public datasets")
+        """
+        # QUERY: Get only approved datasets where user is uploader OR owner
+        datasets = self.repository.get_approved_by_user(db, user_id)
+        return [self._format_dataset_response(dataset) for dataset in datasets]
+
     def search_datasets(self, db: Session, request: DatasetFilterRequest) -> DatasetListResponse:
         """Search datasets with filters."""
         try:

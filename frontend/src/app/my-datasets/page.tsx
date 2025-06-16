@@ -45,7 +45,7 @@ export default function MyDatasetsPage() {
     queryKey: ["userDatasets", user?.id],
     queryFn: async () => {
       if (!user?.id) return [] as Dataset[];
-      return getUserDatasets(user.id);
+      return getUserDatasets(user.id, true); // true for isOwnProfile
     },
     enabled: !!user?.id,
     staleTime: 1 * 60 * 1000,

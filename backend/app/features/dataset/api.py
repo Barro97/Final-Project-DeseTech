@@ -189,6 +189,21 @@ def get_user_datasets(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/user/{user_id}/public", response_model=List[DatasetResponse])
+def get_public_user_datasets(
+    user_id: int = Path(..., gt=0),
+    db: Session = Depends(get_db)
+):
+    """Get only approved datasets where the specified user is an uploader or owner. No authentication required."""
+    try:
+        return dataset_service.get_public_user_datasets(db, user_id)
+    except DatasetError as e:
+        raise handle_dataset_exception(e)
+    except Exception as e:
+        logger.error(f"Unexpected error getting public user datasets for user {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(
     dataset_id: int = Path(..., gt=0),

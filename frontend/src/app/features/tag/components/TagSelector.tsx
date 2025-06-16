@@ -53,7 +53,10 @@ export function TagSelector({
     }
   };
 
-  const handleRemoveTag = (tagName: string, event: React.MouseEvent) => {
+  const handleRemoveTag = (
+    tagName: string,
+    event: React.MouseEvent | React.KeyboardEvent
+  ) => {
     event.stopPropagation(); // Prevent dropdown from opening
     onTagsChange(selectedTags.filter((tag) => tag !== tagName));
   };
@@ -91,10 +94,21 @@ export function TagSelector({
               >
                 <Tag className="h-3 w-3" />
                 {tag}
-                <X
-                  className="h-3 w-3 hover:bg-gray-300 rounded-full cursor-pointer"
+                <div
                   onClick={(e) => handleRemoveTag(tag, e)}
-                />
+                  className="h-4 w-4 hover:bg-red-200 dark:hover:bg-red-800 rounded-full cursor-pointer flex-shrink-0 flex items-center justify-center transition-colors ml-1"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Remove tag ${tag}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleRemoveTag(tag, e);
+                    }
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </div>
               </span>
             ))
           )}

@@ -977,6 +977,7 @@ class DatasetService:
         TRANSFORMATIONS PERFORMED:
         - Extracts owner IDs from relationship objects
         - Extracts tag names from tag relationship objects
+        - Extracts approver name from approver relationship
         - Formats dates consistently
         - Handles optional fields gracefully
         
@@ -990,6 +991,14 @@ class DatasetService:
             >>> response = service._format_dataset_response(dataset_model)
             >>> print(response.dataset_name)  # Clean API format
         """
+        # Extract approver name if available
+        approved_by_name = None
+        if dataset.approver:
+            if dataset.approver.first_name and dataset.approver.last_name:
+                approved_by_name = f"{dataset.approver.first_name} {dataset.approver.last_name}"
+            else:
+                approved_by_name = dataset.approver.username
+        
         return DatasetResponse(
             dataset_id=dataset.dataset_id,
             dataset_name=dataset.dataset_name,
@@ -1001,9 +1010,10 @@ class DatasetService:
             # RELATIONSHIP EXTRACTION: Convert objects to simple ID lists
             owners=[owner.user_id for owner in dataset.owners],
             tags=[tag.tag_category_name for tag in dataset.tags],
-            # APPROVAL FIELDS: Include approval status information
+            # APPROVAL FIELDS: Include approval status information and approver name
             approval_status=dataset.approval_status,
             approved_by=dataset.approved_by,
+            approved_by_name=approved_by_name,
             approval_date=dataset.approval_date,
             # AGRICULTURAL RESEARCH CONTEXT FIELDS: Include location and time period
             geographic_location=dataset.geographic_location,

@@ -410,6 +410,15 @@ export default function DatasetDetailPage({
                         <p className="mt-1">
                           <span className="font-medium">Approved on:</span>{" "}
                           {formatDate(dataset.approval_date)}
+                          {dataset.approved_by_name && (
+                            <>
+                              {" "}
+                              by{" "}
+                              <span className="font-medium">
+                                {dataset.approved_by_name}
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>

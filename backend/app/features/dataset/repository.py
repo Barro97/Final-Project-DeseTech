@@ -257,7 +257,7 @@ class DatasetRepository(DatasetRepositoryInterface):
         """
         Retrieve a single dataset by ID with relationship loading.
         
-        This method loads the dataset with its related entities (owners, tags)
+        This method loads the dataset with its related entities (owners, tags, approver)
         to avoid additional queries when the service layer accesses relationships.
         
         Args:
@@ -268,7 +268,7 @@ class DatasetRepository(DatasetRepositoryInterface):
             Dataset or None: Complete dataset with relationships loaded,
                            or None if no dataset exists with the given ID
         """
-        return db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
+        return db.query(Dataset).outerjoin(Dataset.approver).filter(Dataset.dataset_id == dataset_id).first()
 
     def get_by_user(self, db: Session, user_id: int) -> List[Dataset]:
         """

@@ -37,6 +37,7 @@ class DatasetResponse(BaseModel):
     # Approval fields
     approval_status: Optional[str] = None  # "pending", "approved", "rejected"
     approved_by: Optional[int] = None
+    approved_by_name: Optional[str] = None
     approval_date: Optional[datetime] = None
 
     class Config:

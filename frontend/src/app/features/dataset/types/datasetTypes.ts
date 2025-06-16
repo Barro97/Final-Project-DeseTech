@@ -15,6 +15,7 @@ export interface Dataset {
   row_count?: number; // e.g., 10000 - NOT BACKED BY DATABASE
   approval_status?: string; // "pending", "approved", "rejected"
   approved_by?: number;
+  approved_by_name?: string;
   approval_date?: string;
   // Agricultural research context fields
   geographic_location?: string; // e.g., "Kenya, Nairobi County", "Farm XYZ, coordinates: 1.2921, 36.8219"

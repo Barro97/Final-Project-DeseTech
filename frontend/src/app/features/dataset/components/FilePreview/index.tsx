@@ -1,8 +1,7 @@
 import { useFilePreview } from "../../hooks/useFilePreview";
 import { DatasetFile } from "../../types/datasetTypes";
-// @ts-expect-error - Components exist but TypeScript can't find them
+import { PreviewData } from "../../services/datasetService";
 import { CSVPreview } from "./CSVPreview";
-// @ts-expect-error - Components exist but TypeScript can't find them
 import { JSONPreview } from "./JSONPreview";
 import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { useEffect, useState, useRef } from "react";
@@ -136,17 +135,17 @@ export function FilePreview({ files, onFileChange }: FilePreviewProps) {
               </div>
             ) : (
               <div ref={jsonContainerRef}>
-                <JSONPreview data={previewData.data} />
+                <JSONPreview data={previewData.data as PreviewData[]} />
               </div>
             )}
           </>
         )}
 
-        {/* Floating lazy loading indicator */}
+        {/* Lazy loading indicator centered in container */}
         {isLazyLoading && (
-          <div className="fixed inset-x-0 bottom-4 flex justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3 max-w-xs mx-auto">
-              <LoadingSpinner />
+          <div className="absolute inset-0 flex items-center justify-center z-50 bg-black bg-opacity-5">
+            <div className="bg-white rounded-lg shadow-lg p-4 flex items-center justify-center gap-3">
+              <div className="h-5 w-5 rounded-full border-2 border-t-blue-500 border-r-transparent border-b-blue-500 border-l-transparent animate-spin"></div>
               <span className="text-gray-800 font-medium whitespace-nowrap">
                 Loading more data...
               </span>

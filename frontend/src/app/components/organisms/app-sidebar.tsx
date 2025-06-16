@@ -4,7 +4,6 @@ import {
   Home,
   PlusCircle,
   Search,
-  User,
   LogOut,
   Database,
   Shield,
@@ -26,6 +25,8 @@ import {
   SidebarSeparator,
 } from "@/app/components/organisms/sidebar";
 import Link from "next/link";
+import { useUserProfile } from "@/app/features/user/hooks/useUserProfile";
+import { ProfileSidebarLink } from "@/app/components/molecules/ProfileSidebarLink";
 
 // Menu items.
 const items = [
@@ -48,6 +49,7 @@ const items = [
 
 export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
   const { user, logout } = useAuth();
+  const { profileData, isLoading: isProfileLoading } = useUserProfile();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -160,40 +162,26 @@ export function AppSidebar({ onOpenModal }: { onOpenModal: () => void }) {
       {/* Footer with Profile Button and User Info */}
       <SidebarFooter>
         {user && (
-          <div className="px-4 py-2 text-sm">
-            <p className="font-medium">{user.email}</p>
-            <div className="flex items-center gap-1">
-              <p className="text-xs opacity-75">Role: {user.role}</p>
-              {isAdmin && <Shield className="h-3 w-3 text-red-500" />}
-            </div>
-          </div>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <ProfileSidebarLink
+                isLoading={isProfileLoading}
+                userId={user.id}
+                fullName={profileData?.fullName}
+                profilePictureUrl={profileData?.profilePictureUrl}
+              />
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleLogout}
+                className={menuItemHoverClass}
+              >
+                <LogOut />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         )}
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === "/profile"}
-              className={menuItemHoverClass}
-              style={getMenuItemStyles(pathname === "/profile")}
-            >
-              <Link href="/profile" className="rounded-md">
-                <User
-                  className={pathname === "/profile" ? "text-primary" : ""}
-                />
-                <span>Profile</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleLogout}
-              className={menuItemHoverClass}
-            >
-              <LogOut />
-              <span>Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarFooter>
 
       {/* Improved Sidebar Rail for Smoother Toggle */}

@@ -52,7 +52,7 @@ export async function getUserDatasets(
   // Only add Authorization header for private endpoint
   if (isOwnProfile) {
     config.headers = {
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
     };
   }
 

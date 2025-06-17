@@ -44,7 +44,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // To handle initial loading of token from session storage
+  const [isLoading, setIsLoading] = useState(true); // To handle initial loading of token from localStorage
 
   // Helper function to check if token is expired
   const isTokenExpired = (token: string): boolean => {
@@ -59,19 +59,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Clear all authentication data
+  const clearAuthData = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("access_token"); // Clear old key if it exists
+    localStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("accessToken"); // Clear old sessionStorage if it exists
+    setUser(null);
+    setToken(null);
+  };
+
   useEffect(() => {
-    const storedToken = sessionStorage.getItem("accessToken");
+    // Clear any stale sessionStorage tokens first
+    const oldSessionToken = sessionStorage.getItem("accessToken");
+    if (oldSessionToken) {
+      sessionStorage.removeItem("accessToken");
+    }
+
+    const storedToken = localStorage.getItem("accessToken");
+
     if (storedToken) {
       try {
         // Check if token is expired
         if (isTokenExpired(storedToken)) {
-          console.log("Stored token is expired, clearing authentication");
-          sessionStorage.removeItem("accessToken");
+          clearAuthData();
           setIsLoading(false);
           return;
         }
 
         const decoded = jwtDecode<DecodedToken>(storedToken);
+
         setUser({
           email: decoded.email,
           role: decoded.role,
@@ -81,8 +98,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         setToken(storedToken);
       } catch (error) {
-        console.error("Failed to decode token from session storage:", error);
-        sessionStorage.removeItem("accessToken"); // Clear invalid token
+        console.error("Failed to decode token from localStorage:", error);
+        clearAuthData();
       }
     }
     setIsLoading(false);
@@ -97,7 +114,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const decoded = jwtDecode<DecodedToken>(newToken);
-      sessionStorage.setItem("accessToken", newToken);
+
+      localStorage.setItem("accessToken", newToken);
+
       setUser({
         email: decoded.email,
         role: decoded.role,
@@ -107,19 +126,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       setToken(newToken);
     } catch (error) {
-      console.error("Failed to decode token:", error);
+      console.error("Failed to decode token during login:", error);
       // Handle login error, maybe clear token and user
-      setUser(null);
-      setToken(null);
-      sessionStorage.removeItem("accessToken");
+      clearAuthData();
     }
   };
 
   const logout = () => {
-    console.log("Logging out user - clearing session and redirecting");
-    sessionStorage.removeItem("accessToken");
-    setUser(null);
-    setToken(null);
+    clearAuthData();
     // Force redirect to login page
     window.location.href = "/login";
   };
@@ -136,12 +150,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const interval = setInterval(() => {
       if (isTokenExpired(token)) {
-        console.log("Token expired, logging out user");
         logout();
       }
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
+  }, [token]);
+
+  // Listen for storage changes to sync authentication across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "accessToken") {
+        if (e.newValue === null) {
+          // Token was removed in another tab
+          setUser(null);
+          setToken(null);
+        } else if (e.newValue && e.newValue !== token) {
+          // Token was updated in another tab
+          try {
+            if (!isTokenExpired(e.newValue)) {
+              const decoded = jwtDecode<DecodedToken>(e.newValue);
+              setUser({
+                email: decoded.email,
+                role: decoded.role,
+                id: decoded.id,
+                first_name: decoded.first_name,
+                last_name: decoded.last_name,
+              });
+              setToken(e.newValue);
+            }
+          } catch (error) {
+            console.error("Failed to decode token from storage event:", error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [token]);
 
   return (

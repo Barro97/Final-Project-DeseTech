@@ -66,13 +66,6 @@ export async function getUserProfile(
  * Get the current user's profile
  */
 export async function getMyProfile(token: string): Promise<ProfileData> {
-  console.log("🚀 Making API call to /users/me/profile");
-  console.log("📝 Request details:", {
-    url: `${process.env.NEXT_PUBLIC_BACKEND}/users/me/profile`,
-    headers: { Authorization: `Bearer ${token}` },
-    token_preview: token.substring(0, 20) + "...",
-  });
-
   const response = await axios.get(
     `${process.env.NEXT_PUBLIC_BACKEND}/users/me/profile`,
     {
@@ -80,7 +73,6 @@ export async function getMyProfile(token: string): Promise<ProfileData> {
     }
   );
 
-  console.log("✅ API response received:", response.data);
   return response.data;
 }
 

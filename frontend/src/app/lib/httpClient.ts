@@ -9,7 +9,7 @@ const httpClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 httpClient.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,7 +32,11 @@ httpClient.interceptors.response.use(
         "Authentication error detected, clearing session and redirecting to login"
       );
 
-      // Clear session storage
+      // Clear localStorage (consistent with AuthContext)
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refresh_token");
+
+      // Also clear sessionStorage in case there are any stale tokens
       sessionStorage.removeItem("accessToken");
 
       // Force redirect to login page

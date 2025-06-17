@@ -27,14 +27,18 @@ export default function AuthSessionManager() {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("accessToken", data.access_token);
         console.log("Token refreshed");
       } else {
         // Failed to refresh — logout
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refresh_token");
         window.location.href = "/login";
       }
     } catch (error) {
       console.error("Refresh failed:", error);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refresh_token");
       window.location.href = "/login";
     }
   };
@@ -59,7 +63,7 @@ export default function AuthSessionManager() {
   // check every 30 seconds if the token is expired and delete it.
   useEffect(() => {
     const checkTokenExpiration = () => {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("accessToken");
       if (!token) return;
 
       try {
@@ -68,12 +72,14 @@ export default function AuthSessionManager() {
 
         if (decoded.exp < currentTime) {
           console.log("Token expired — logging out");
-          localStorage.removeItem("access_token");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refresh_token");
           window.location.href = "/login";
         }
       } catch (error) {
         console.error("Invalid token:", error);
-        localStorage.removeItem("access_token");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refresh_token");
         window.location.href = "/login";
       }
     };

@@ -30,7 +30,8 @@ class ProfileService {
    */
   private handleAuthError() {
     console.warn("Authentication failed - clearing session");
-    sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refresh_token");
     // Note: We can't directly call logout from auth context here
     // The auth context will detect the missing token and update state
     window.location.reload(); // Force reload to trigger auth context update

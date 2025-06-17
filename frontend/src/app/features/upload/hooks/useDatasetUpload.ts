@@ -65,7 +65,7 @@ export function useDatasetUpload() {
         },
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             "Content-Type": "application/json",
           },
         }
@@ -119,7 +119,7 @@ export function useDatasetUpload() {
             {
               headers: {
                 "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
               },
               onUploadProgress: (progressEvent) => {
                 const filePercentCompleted = progressEvent.progress

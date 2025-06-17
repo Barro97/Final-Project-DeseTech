@@ -11,7 +11,7 @@ const API_URL = `${process.env.NEXT_PUBLIC_BACKEND}`;
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = sessionStorage.getItem("accessToken");
+  const token = localStorage.getItem("accessToken");
   return {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),

@@ -140,7 +140,7 @@ export async function getUserById(userId: number): Promise<UserSearchResponse> {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
     },
   });
 

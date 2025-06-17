@@ -34,7 +34,6 @@ function ApprovalDialog({
   onApprove,
 }: ApprovalDialogProps) {
   const [action, setAction] = useState<"approve" | "reject">("approve");
-  const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !dataset) return null;
@@ -45,11 +44,9 @@ function ApprovalDialog({
 
     const success = await onApprove(dataset.dataset_id, {
       action,
-      reason: reason || undefined,
     });
 
     if (success) {
-      setReason("");
       setAction("approve");
       onClose();
     }
@@ -112,23 +109,6 @@ function ApprovalDialog({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Reason (optional)
-            </label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder={`Why are you ${action === "approve" ? "approving" : "rejecting"} this dataset?`}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              rows={3}
-              maxLength={500}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {reason.length}/500 characters
-            </p>
-          </div>
-
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -141,16 +121,14 @@ function ApprovalDialog({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 ${
+              className={`flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 min-w-[140px] h-10 flex items-center justify-center ${
                 action === "approve"
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-red-600 hover:bg-red-700 text-white"
               }`}
             >
               {isSubmitting ? (
-                <div className="flex items-center justify-center">
-                  <LoadingSpinner size="sm" />
-                </div>
+                <LoadingSpinner size="sm" />
               ) : (
                 `${action === "approve" ? "Approve" : "Reject"} Dataset`
               )}

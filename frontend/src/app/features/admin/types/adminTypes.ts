@@ -156,7 +156,6 @@ export interface AdminStats {
 
 export interface DatasetApprovalRequest {
   action: "approve" | "reject";
-  reason?: string;
 }
 
 export interface DatasetApprovalResponse {

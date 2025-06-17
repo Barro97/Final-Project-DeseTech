@@ -151,8 +151,6 @@ class AdminService:
                 "previous_status": "pending",
                 "new_status": new_status
             }
-            if approval_request.reason:
-                action_details["reason"] = approval_request.reason
             
             self.repository.log_admin_action(
                 db=db,

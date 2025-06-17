@@ -80,10 +80,7 @@ export default function DatasetDetailPage({
     retry: 1,
   });
 
-  const handleApproval = async (
-    action: "approve" | "reject",
-    reason?: string
-  ) => {
+  const handleApproval = async (action: "approve" | "reject") => {
     if (!dataset) return;
 
     const isApprove = action === "approve";
@@ -93,7 +90,6 @@ export default function DatasetDetailPage({
     try {
       await approveDataset(dataset.dataset_id, {
         action,
-        reason,
       });
 
       // Invalidate queries to refresh data
@@ -362,20 +358,15 @@ export default function DatasetDetailPage({
                       <button
                         onClick={() => handleApproval("approve")}
                         disabled={isApproving}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors"
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors min-w-[140px] h-10 justify-center"
                       >
                         <CheckCircle className="h-4 w-4" />
                         {isApproving ? "Approving..." : "Approve Dataset"}
                       </button>
                       <button
-                        onClick={() =>
-                          handleApproval(
-                            "reject",
-                            "Content does not meet guidelines"
-                          )
-                        }
+                        onClick={() => handleApproval("reject")}
                         disabled={isRejecting}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors"
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-md flex items-center gap-2 transition-colors min-w-[140px] h-10 justify-center"
                       >
                         <XCircle className="h-4 w-4" />
                         {isRejecting ? "Rejecting..." : "Reject Dataset"}

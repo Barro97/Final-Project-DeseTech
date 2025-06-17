@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, validator
 class DatasetApprovalRequest(BaseModel):
     """Request schema for approving or rejecting datasets"""
     action: str = Field(..., pattern="^(approve|reject)$")
-    reason: Optional[str] = Field(None, max_length=500)
 
     @validator('action')
     def validate_action(cls, v):

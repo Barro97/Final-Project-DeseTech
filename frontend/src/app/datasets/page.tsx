@@ -346,6 +346,13 @@ const FilterPanelPlaceholder = ({
     onPendingFilterChange("has_location", checked);
   };
 
+  const handleTextChange = (
+    filterKey: "geographic_location" | "data_time_period",
+    value: string
+  ) => {
+    onPendingFilterChange(filterKey, value.trim() || undefined);
+  };
+
   const renderFilterGroup = (
     title: string,
     filterKey: "tags" | "file_types" | "approval_status",
@@ -470,6 +477,34 @@ const FilterPanelPlaceholder = ({
           className="w-full"
           onChange={(e) => handleDateChange("date_to", e.target.value)}
           value={pendingFilters.date_to || ""}
+        />
+      </div>
+
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Geographic Location
+        </h3>
+        <Input
+          type="text"
+          placeholder="e.g., Brazil, São Paulo, Farm XYZ"
+          className="w-full"
+          value={pendingFilters.geographic_location || ""}
+          onChange={(e) =>
+            handleTextChange("geographic_location", e.target.value)
+          }
+        />
+      </div>
+
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Data Time Period
+        </h3>
+        <Input
+          type="text"
+          placeholder="e.g., 2020-2023, Growing season 2022"
+          className="w-full"
+          value={pendingFilters.data_time_period || ""}
+          onChange={(e) => handleTextChange("data_time_period", e.target.value)}
         />
       </div>
     </div>
@@ -914,7 +949,11 @@ export default function SearchDatasetsPage() {
           } else {
             delete newFilters[filterKey];
           }
-        } else if (filterKey === "search_term") {
+        } else if (
+          filterKey === "search_term" ||
+          filterKey === "geographic_location" ||
+          filterKey === "data_time_period"
+        ) {
           if (typeof value === "string" && value) {
             newFilters[filterKey] = value;
           } else {

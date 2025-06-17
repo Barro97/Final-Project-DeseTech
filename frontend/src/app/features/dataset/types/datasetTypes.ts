@@ -39,6 +39,9 @@ export interface SearchFilters {
   max_downloads?: number;
   // Approval status filter
   approval_status?: string[];
+  // Agricultural research context filters
+  geographic_location?: string;
+  data_time_period?: string;
 }
 
 // Backend response format for search

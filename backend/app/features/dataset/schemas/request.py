@@ -135,6 +135,10 @@ class DatasetFilterRequest(BaseModel):
     
     # Approval status filter
     approval_status: Optional[List[str]] = Field(None, max_items=3)
+    
+    # Agricultural research context filters
+    geographic_location: Optional[str] = Field(None, max_length=500)
+    data_time_period: Optional[str] = Field(None, max_length=100)
 
     @validator('search_term')
     def validate_search_term(cls, v):
@@ -167,4 +171,22 @@ class DatasetFilterRequest(BaseModel):
         if v is not None and 'min_downloads' in values and values['min_downloads'] is not None:
             if v < values['min_downloads']:
                 raise ValueError('max_downloads must be greater than or equal to min_downloads')
+        return v
+    
+    @validator('geographic_location')
+    def validate_geographic_location_filter(cls, v):
+        if v:
+            v = v.strip()
+            if len(v) < 2:
+                raise ValueError('Geographic location filter must be at least 2 characters')
+            return v if v else None
+        return v
+    
+    @validator('data_time_period')
+    def validate_data_time_period_filter(cls, v):
+        if v:
+            v = v.strip()
+            if len(v) < 2:
+                raise ValueError('Data time period filter must be at least 2 characters')
+            return v if v else None
         return v 

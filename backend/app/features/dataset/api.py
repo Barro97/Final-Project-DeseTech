@@ -131,7 +131,10 @@ def search_datasets(
     min_downloads: int = None,
     max_downloads: int = None,
     # Approval status filter
-    approval_status: List[str] = Query(None)
+    approval_status: List[str] = Query(None),
+    # Agricultural research context filters
+    geographic_location: str = None,
+    data_time_period: str = None
 ):
     """Search and filter datasets with enhanced filtering capabilities."""
     try:
@@ -165,7 +168,9 @@ def search_datasets(
             has_location=has_location,
             min_downloads=min_downloads,
             max_downloads=max_downloads,
-            approval_status=approval_status
+            approval_status=approval_status,
+            geographic_location=geographic_location,
+            data_time_period=data_time_period
         )
         
         # Get service and search

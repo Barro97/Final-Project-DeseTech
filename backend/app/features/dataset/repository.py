@@ -491,6 +491,17 @@ class DatasetRepository(DatasetRepositoryInterface):
         if filters.max_downloads is not None:
             query = query.filter(Dataset.downloads_count <= filters.max_downloads)
 
+        # Agricultural research context filters
+        if filters.geographic_location:
+            # Case-insensitive partial matching for geographic location
+            location_search = f"%{filters.geographic_location}%"
+            query = query.filter(Dataset.geographic_location.ilike(location_search))
+            
+        if filters.data_time_period:
+            # Case-insensitive partial matching for data time period
+            period_search = f"%{filters.data_time_period}%"
+            query = query.filter(Dataset.data_time_period.ilike(period_search))
+
         # GET TOTAL COUNT (before pagination for UI)
         total_count = query.count()
 

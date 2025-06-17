@@ -45,6 +45,10 @@ class DatasetFilterInternal(BaseModel):
     
     # User approval status filter (replaces include_approval_status for regular users)
     approval_status: Optional[List[str]] = None
+    
+    # Agricultural research context filters
+    geographic_location: Optional[str] = None
+    data_time_period: Optional[str] = None
 
 
 class BatchDeleteResult(BaseModel):

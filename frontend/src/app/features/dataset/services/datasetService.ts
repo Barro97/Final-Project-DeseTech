@@ -347,6 +347,12 @@ export const searchDatasets = async (
   if (filters.max_downloads !== undefined)
     params.append("max_downloads", filters.max_downloads.toString());
 
+  // Add agricultural research context filters
+  if (filters.geographic_location)
+    params.append("geographic_location", filters.geographic_location);
+  if (filters.data_time_period)
+    params.append("data_time_period", filters.data_time_period);
+
   const url = `/datasets/search?${params.toString()}`;
 
   const response = await httpClient.get(url);

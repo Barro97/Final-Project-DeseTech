@@ -624,7 +624,9 @@ class DatasetService:
                 has_location=request.has_location,
                 min_downloads=request.min_downloads,
                 max_downloads=request.max_downloads,
-                approval_status=request.approval_status
+                approval_status=request.approval_status,
+                geographic_location=request.geographic_location,
+                data_time_period=request.data_time_period
             )
             
             # Get datasets from repository

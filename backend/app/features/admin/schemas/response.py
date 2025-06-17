@@ -57,7 +57,19 @@ class UserManagementResponse(BaseModel):
 
 
 class AdminStatsResponse(BaseModel):
-    """Response schema for admin dashboard statistics"""
+    """
+    Response schema for comprehensive admin dashboard statistics.
+    
+    Includes basic platform statistics plus enhanced analytics for:
+    - Geographic distribution of research data
+    - Research domain trends and popularity
+    - Organization collaboration patterns
+    - Data quality and metadata completeness
+    - Enhanced download analytics with abuse prevention
+    - Approval workflow performance metrics
+    - Dataset collaboration patterns
+    """
+    # Basic Statistics
     total_users: int
     active_users: int
     total_datasets: int
@@ -67,6 +79,17 @@ class AdminStatsResponse(BaseModel):
     total_downloads: int
     datasets_this_month: int
     users_this_month: int
+    
+    # Enhanced Analytics
+    geographic_analytics: Dict[str, Any]
+    research_domain_analytics: Dict[str, Any]
+    organization_analytics: Dict[str, Any]
+    data_quality_metrics: Dict[str, Any]
+    download_analytics: Dict[str, Any]
+    approval_performance: Dict[str, Any]
+    collaboration_patterns: Dict[str, Any]
+    
+    # Activity and Categories
     recent_activity: List[Dict[str, Any]] = []
     popular_categories: List[Dict[str, Any]] = []
 

@@ -1,52 +1,46 @@
 """
-Admin Service Layer - Business Logic and Transaction Management
+Admin Service Layer - Business Logic and Orchestration
 
-This module implements the Service Layer Pattern for admin operations, providing:
-- Centralized business logic for admin functionality
-- Transaction management with proper rollback handling
-- Permission checking and validation
-- Audit logging for compliance
-- Integration with repository layer for data access
+This module provides the core business logic for admin operations, serving as the
+orchestration layer between the API endpoints and the data access layer.
 
-Following the established dataset service pattern for consistency and maintainability.
+Key Features:
+- Dataset approval workflow management
+- User management and role assignment
+- Admin dashboard statistics and analytics
+- Audit trail management
+- Comprehensive error handling and validation
 
-ADMIN BUSINESS LOGIC:
-├── **Dataset Approval Workflow**: Approve/reject datasets with proper status updates
-├── **User Management**: Role updates, status changes, user creation
-├── **Analytics and Statistics**: Dashboard metrics and reporting
-├── **Audit Trail**: Comprehensive logging of all admin actions
-└── **Permission Enforcement**: Admin-only access with role validation
-
-TRANSACTION MANAGEMENT:
-- All operations wrapped in database transactions
-- Automatic rollback on errors
-- Audit logging within same transaction for consistency
+The service follows the Repository Pattern for data access and implements
+proper transaction management, logging, and error handling throughout.
 """
+
 import logging
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
-from backend.app.features.admin.repository import AdminRepository, AdminRepositoryInterface
+from backend.app.database.models import User, Dataset, File
+from backend.app.features.admin.repository import AdminRepositoryInterface, AdminRepository
+from backend.app.features.dataset.repository import DatasetRepository
 from backend.app.features.admin.schemas.request import (
     DatasetApprovalRequest, UserRoleUpdateRequest, UserStatusUpdateRequest,
-    UserCreateRequest, AdminFilterRequest, BatchActionRequest
+    AdminFilterRequest
 )
 from backend.app.features.admin.schemas.response import (
-    DatasetApprovalResponse, UserManagementResponse, AdminStatsResponse,
-    AdminUserResponse, AdminDatasetResponse, AdminListResponse,
-    BatchActionResponse, RoleListResponse
+    DatasetApprovalResponse, UserManagementResponse, AdminStatsResponse, 
+    AdminDatasetResponse, AdminListResponse, RoleListResponse,
+    AdminUserResponse
 )
 from backend.app.features.admin.exceptions import (
-    AdminError, AdminPermissionError, UserNotFoundError, RoleNotFoundError,
-    AdminValidationError, AdminActionError, DatasetAlreadyProcessedError
+    AdminPermissionError, UserNotFoundError, AdminValidationError, AdminActionError,
+    DatasetAlreadyProcessedError, RoleNotFoundError
 )
-from backend.app.features.dataset.repository import DatasetRepository
-from backend.app.database.models import Dataset, User, File
-from backend.app.features.user.models import Role
+from backend.app.features.dataset.exceptions import DatasetNotFoundError
 
+# Initialize logger for this module
 logger = logging.getLogger(__name__)
-
 
 class AdminService:
     """
@@ -130,7 +124,6 @@ class AdminService:
             # STEP 2: Get and validate dataset
             dataset = self.dataset_repository.get_by_id(db, dataset_id)
             if not dataset:
-                from backend.app.features.dataset.exceptions import DatasetNotFoundError
                 raise DatasetNotFoundError(dataset_id)
             
             # STEP 3: Check current approval status
@@ -349,24 +342,120 @@ class AdminService:
         """
         Generate comprehensive statistics for admin dashboard.
         
+        Combines basic statistics with enhanced analytics including:
+        - Geographic distribution analysis
+        - Research domain trends
+        - Organization collaboration patterns
+        - Data quality metrics
+        - Enhanced download analytics
+        - Approval performance metrics
+        - Collaboration patterns
+        
         Args:
             db: Database session
             admin_user_id: ID of admin requesting stats
             
         Returns:
-            AdminStatsResponse: Dashboard statistics and metrics
+            AdminStatsResponse: Comprehensive dashboard statistics and metrics
         """
         # Validate admin permissions
         self._check_admin_permission(db, admin_user_id)
         
-        # Get dataset statistics
+        # Get basic statistics (essential - no error handling)
         dataset_stats = self.repository.get_dataset_statistics(db)
-        
-        # Get user statistics
         user_stats = self.repository.get_user_statistics(db)
         
-        # Combine and return comprehensive stats
+        # Get enhanced analytics with error handling and fallbacks
+        def safe_get_analytics(method_name, fallback_data):
+            try:
+                method = getattr(self.repository, method_name)
+                return method(db)
+            except Exception as e:
+                logger.warning(f"Failed to get {method_name}: {str(e)}")
+                return fallback_data
+        
+        geographic_analytics = safe_get_analytics('get_geographic_distribution', {
+            "geotagged_datasets": 0,
+            "total_approved_datasets": dataset_stats.get("approved_datasets", 0),
+            "geographic_coverage_percentage": 0,
+            "top_locations": [],
+            "unique_locations": 0
+        })
+        
+        research_domain_analytics = safe_get_analytics('get_research_domain_analytics', {
+            "popular_domains": [],
+            "trending_domains": [],
+            "total_research_domains": 0,
+            "tagged_datasets": 0
+        })
+        
+        organization_analytics = safe_get_analytics('get_organization_analytics', {
+            "top_contributing_organizations": [],
+            "organizations_by_users": [],
+            "unique_organizations": 0,
+            "organization_coverage_percentage": 0,
+            "users_with_organization": 0
+        })
+        
+        quality_metrics = safe_get_analytics('get_data_quality_metrics', {
+            "total_approved_datasets": dataset_stats.get("approved_datasets", 0),
+            "geographic_completeness": {"count": 0, "percentage": 0},
+            "temporal_completeness": {"count": 0, "percentage": 0},
+            "tag_completeness": {"count": 0, "percentage": 0},
+            "description_completeness": {"count": 0, "percentage": 0},
+            "complete_metadata": {"count": 0, "percentage": 0},
+            "quality_score": 0
+        })
+        
+        download_analytics = safe_get_analytics('get_enhanced_download_analytics', {
+            "unique_download_relationships": 0,
+            "total_download_events": dataset_stats.get("total_downloads", 0),
+            "abuse_prevention_ratio": 0,
+            "popular_datasets": [],
+            "average_downloads_per_user": 0,
+            "recent_downloads_30d": 0,
+            "download_conversion_rate": 0,
+            "datasets_with_downloads": 0
+        })
+        
+        approval_metrics = safe_get_analytics('get_approval_performance_metrics', {
+            "pending_datasets": dataset_stats.get("pending_datasets", 0),
+            "oldest_pending_days": 0,
+            "approval_rate_30d": 0,
+            "recent_approved": 0,
+            "recent_rejected": 0,
+            "average_approval_time_days": 0,
+            "admin_activity_30d": []
+        })
+        
+        collaboration_patterns = safe_get_analytics('get_collaboration_patterns', {
+            "multi_owner_datasets": 0,
+            "collaboration_rate": 0,
+            "average_owners_per_dataset": 0,
+            "cross_organizational_datasets": 0,
+            "cross_org_collaboration_rate": 0,
+            "most_collaborative_organizations": []
+        })
+        
+        # Get recent audit trail for activity display with error handling
+        try:
+            recent_audit, _ = self.repository.get_audit_trail(db, page=1, limit=10)
+            recent_activity = [
+                {
+                    "id": audit.audit_id,
+                    "action": f"{audit.action_type.title()} {audit.target_type}",
+                    "timestamp": audit.timestamp.isoformat(),
+                    "details": f"Admin: {audit.admin_user.username if audit.admin_user else 'Unknown'}"
+                }
+                for audit in recent_audit
+            ]
+        except Exception as e:
+            logger.warning(f"Failed to get recent activity: {str(e)}")
+            recent_activity = []
+        
+        # Combine all analytics into comprehensive response
         return AdminStatsResponse(
+            # Basic statistics
             total_users=user_stats["total_users"],
             active_users=user_stats["active_users"],
             total_datasets=dataset_stats["total_datasets"],
@@ -376,8 +465,22 @@ class AdminService:
             total_downloads=dataset_stats["total_downloads"],
             datasets_this_month=dataset_stats["datasets_this_month"],
             users_this_month=user_stats["users_this_month"],
-            recent_activity=[],  # To be implemented with audit trail
-            popular_categories=[]  # To be implemented with tag analysis
+            
+            # Enhanced analytics
+            geographic_analytics=geographic_analytics,
+            research_domain_analytics=research_domain_analytics,
+            organization_analytics=organization_analytics,
+            data_quality_metrics=quality_metrics,
+            download_analytics=download_analytics,
+            approval_performance=approval_metrics,
+            collaboration_patterns=collaboration_patterns,
+            
+            # Activity data
+            recent_activity=recent_activity,
+            popular_categories=[
+                {"category": domain["domain"], "count": domain["dataset_count"]}
+                for domain in research_domain_analytics.get("popular_domains", [])[:6]
+            ]
         )
 
     def get_available_roles(self, db: Session, admin_user_id: int) -> List[RoleListResponse]:

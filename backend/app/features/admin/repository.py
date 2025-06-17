@@ -14,11 +14,14 @@ import json
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, asc, or_, and_
+from sqlalchemy import func, desc, asc, or_, and_, extract
 from datetime import datetime, timedelta
 
 from backend.app.database.models import Dataset, User, AdminAudit, File, Comment, Like
 from backend.app.features.user.models import Role
+from backend.app.features.dataset.models import DatasetTag, dataset_owner_table
+from backend.app.features.tag.models import Tag
+from backend.app.features.file.models import UserDownload
 from backend.app.features.admin.schemas.request import AdminFilterRequest
 
 
@@ -59,6 +62,43 @@ class AdminRepositoryInterface(ABC):
     @abstractmethod
     def get_audit_trail(self, db: Session, page: int = 1, limit: int = 50) -> Tuple[List[AdminAudit], int]:
         """Get admin audit trail with pagination."""
+        pass
+
+    # NEW ENHANCED ANALYTICS METHODS
+    
+    @abstractmethod
+    def get_geographic_distribution(self, db: Session) -> Dict[str, Any]:
+        """Get geographic distribution analytics of dataset locations."""
+        pass
+
+    @abstractmethod
+    def get_research_domain_analytics(self, db: Session) -> Dict[str, Any]:
+        """Get research domain popularity and trends using tag analysis."""
+        pass
+
+    @abstractmethod
+    def get_organization_analytics(self, db: Session) -> Dict[str, Any]:
+        """Get organization-based analytics and collaboration patterns."""
+        pass
+
+    @abstractmethod
+    def get_data_quality_metrics(self, db: Session) -> Dict[str, Any]:
+        """Get data quality indicators and metadata completeness."""
+        pass
+
+    @abstractmethod
+    def get_enhanced_download_analytics(self, db: Session) -> Dict[str, Any]:
+        """Get enhanced download analytics using UserDownload system."""
+        pass
+
+    @abstractmethod
+    def get_approval_performance_metrics(self, db: Session) -> Dict[str, Any]:
+        """Get approval timing and performance analytics."""
+        pass
+
+    @abstractmethod
+    def get_collaboration_patterns(self, db: Session) -> Dict[str, Any]:
+        """Get collaboration pattern analytics for multi-owner datasets."""
         pass
 
 
@@ -263,6 +303,553 @@ class AdminRepository(AdminRepositoryInterface):
         ).offset(offset).limit(limit).all()
         
         return audit_records, total_count
+
+    # ENHANCED ANALYTICS METHODS IMPLEMENTATION
+    
+    def get_geographic_distribution(self, db: Session) -> Dict[str, Any]:
+        """
+        Get geographic distribution analytics of dataset locations.
+        
+        Analyzes the geographic_location field to provide insights into
+        global research coverage and data distribution patterns.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Geographic distribution statistics
+        """
+        # Count of datasets with geographic information
+        geotagged_datasets = db.query(Dataset).filter(
+            and_(
+                Dataset.geographic_location.isnot(None),
+                Dataset.geographic_location != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).count()
+        
+        # Total approved datasets for percentage calculation
+        total_approved = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
+        
+        # Top geographic locations (extract country/region names)
+        geo_locations = db.query(
+            Dataset.geographic_location,
+            func.count(Dataset.dataset_id).label('count')
+        ).filter(
+            and_(
+                Dataset.geographic_location.isnot(None),
+                Dataset.geographic_location != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).group_by(Dataset.geographic_location).order_by(desc('count')).limit(10).all()
+        
+        # Geographic coverage percentage
+        geo_coverage_percentage = (geotagged_datasets / total_approved * 100) if total_approved > 0 else 0
+        
+        return {
+            "geotagged_datasets": geotagged_datasets,
+            "total_approved_datasets": total_approved,
+            "geographic_coverage_percentage": round(geo_coverage_percentage, 1),
+            "top_locations": [
+                {"location": loc.geographic_location, "dataset_count": loc.count}
+                for loc in geo_locations
+            ],
+            "unique_locations": len(geo_locations)
+        }
+
+    def get_research_domain_analytics(self, db: Session) -> Dict[str, Any]:
+        """
+        Get research domain popularity and trends using tag analysis.
+        
+        Analyzes DatasetTag relationships to understand which research
+        domains are most active and trending in the platform.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Research domain analytics
+        """
+        # Most popular research tags (domains)
+        popular_tags = db.query(
+            Tag.tag_category_name,
+            func.count(DatasetTag.dataset_id).label('dataset_count')
+        ).join(
+            DatasetTag, Tag.tag_id == DatasetTag.tag_id
+        ).join(
+            Dataset, DatasetTag.dataset_id == Dataset.dataset_id
+        ).filter(
+            Dataset.approval_status == 'approved'
+        ).group_by(
+            Tag.tag_category_name
+        ).order_by(
+            desc('dataset_count')
+        ).limit(10).all()
+        
+        # Recent trending tags (last 3 months)
+        three_months_ago = datetime.now() - timedelta(days=90)
+        trending_tags = db.query(
+            Tag.tag_category_name,
+            func.count(DatasetTag.dataset_id).label('recent_count')
+        ).join(
+            DatasetTag, Tag.tag_id == DatasetTag.tag_id
+        ).join(
+            Dataset, DatasetTag.dataset_id == Dataset.dataset_id
+        ).filter(
+            and_(
+                Dataset.approval_status == 'approved',
+                Dataset.date_of_creation >= three_months_ago
+            )
+        ).group_by(
+            Tag.tag_category_name
+        ).order_by(
+            desc('recent_count')
+        ).limit(5).all()
+        
+        # Total tags and tagged datasets
+        total_tags = db.query(Tag).count()
+        tagged_datasets = db.query(Dataset).join(DatasetTag).filter(
+            Dataset.approval_status == 'approved'
+        ).distinct().count()
+        
+        return {
+            "popular_domains": [
+                {"domain": tag.tag_category_name, "dataset_count": tag.dataset_count}
+                for tag in popular_tags
+            ],
+            "trending_domains": [
+                {"domain": tag.tag_category_name, "recent_count": tag.recent_count}
+                for tag in trending_tags
+            ],
+            "total_research_domains": total_tags,
+            "tagged_datasets": tagged_datasets
+        }
+
+    def get_organization_analytics(self, db: Session) -> Dict[str, Any]:
+        """
+        Get organization-based analytics and collaboration patterns.
+        
+        Analyzes user organizations to understand institutional participation
+        and cross-organizational collaboration in the platform.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Organization analytics
+        """
+        # Top contributing organizations by dataset count
+        top_orgs = db.query(
+            User.organization,
+            func.count(Dataset.dataset_id).label('dataset_count')
+        ).join(
+            Dataset, User.user_id == Dataset.uploader_id
+        ).filter(
+            and_(
+                User.organization.isnot(None),
+                User.organization != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).group_by(
+            User.organization
+        ).order_by(
+            desc('dataset_count')
+        ).limit(10).all()
+        
+        # Organizations by user count
+        org_user_counts = db.query(
+            User.organization,
+            func.count(User.user_id).label('user_count')
+        ).filter(
+            and_(
+                User.organization.isnot(None),
+                User.organization != '',
+                User.status == 'active'
+            )
+        ).group_by(
+            User.organization
+        ).order_by(
+            desc('user_count')
+        ).limit(10).all()
+        
+        # Total unique organizations
+        unique_organizations = db.query(User.organization).filter(
+            and_(
+                User.organization.isnot(None),
+                User.organization != ''
+            )
+        ).distinct().count()
+        
+        # Users with organization data
+        users_with_org = db.query(User).filter(
+            and_(
+                User.organization.isnot(None),
+                User.organization != ''
+            )
+        ).count()
+        
+        total_users = db.query(User).count()
+        org_coverage = (users_with_org / total_users * 100) if total_users > 0 else 0
+        
+        return {
+            "top_contributing_organizations": [
+                {"organization": org.organization, "dataset_count": org.dataset_count}
+                for org in top_orgs
+            ],
+            "organizations_by_users": [
+                {"organization": org.organization, "user_count": org.user_count}
+                for org in org_user_counts
+            ],
+            "unique_organizations": unique_organizations,
+            "organization_coverage_percentage": round(org_coverage, 1),
+            "users_with_organization": users_with_org
+        }
+
+    def get_data_quality_metrics(self, db: Session) -> Dict[str, Any]:
+        """
+        Get data quality indicators and metadata completeness.
+        
+        Analyzes dataset metadata completeness and quality indicators
+        to help administrators understand data quality across the platform.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Data quality metrics
+        """
+        total_datasets = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
+        
+        # Geographic location completeness
+        with_geo = db.query(Dataset).filter(
+            and_(
+                Dataset.geographic_location.isnot(None),
+                Dataset.geographic_location != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).count()
+        
+        # Time period completeness
+        with_time = db.query(Dataset).filter(
+            and_(
+                Dataset.data_time_period.isnot(None),
+                Dataset.data_time_period != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).count()
+        
+        # Datasets with tags
+        with_tags = db.query(Dataset).join(DatasetTag).filter(
+            Dataset.approval_status == 'approved'
+        ).distinct().count()
+        
+        # Datasets with descriptions
+        with_description = db.query(Dataset).filter(
+            and_(
+                Dataset.dataset_description.isnot(None),
+                Dataset.dataset_description != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).count()
+        
+        # Complete metadata (all fields filled)
+        complete_metadata = db.query(Dataset).filter(
+            and_(
+                Dataset.geographic_location.isnot(None),
+                Dataset.geographic_location != '',
+                Dataset.data_time_period.isnot(None),
+                Dataset.data_time_period != '',
+                Dataset.dataset_description.isnot(None),
+                Dataset.dataset_description != '',
+                Dataset.approval_status == 'approved'
+            )
+        ).join(DatasetTag).distinct().count()
+        
+        # Calculate percentages
+        def calc_percentage(count, total):
+            return round((count / total * 100), 1) if total > 0 else 0
+        
+        return {
+            "total_approved_datasets": total_datasets,
+            "geographic_completeness": {
+                "count": with_geo,
+                "percentage": calc_percentage(with_geo, total_datasets)
+            },
+            "temporal_completeness": {
+                "count": with_time,
+                "percentage": calc_percentage(with_time, total_datasets)
+            },
+            "tag_completeness": {
+                "count": with_tags,
+                "percentage": calc_percentage(with_tags, total_datasets)
+            },
+            "description_completeness": {
+                "count": with_description,
+                "percentage": calc_percentage(with_description, total_datasets)
+            },
+            "complete_metadata": {
+                "count": complete_metadata,
+                "percentage": calc_percentage(complete_metadata, total_datasets)
+            },
+            "quality_score": calc_percentage(complete_metadata, total_datasets)
+        }
+
+    def get_enhanced_download_analytics(self, db: Session) -> Dict[str, Any]:
+        """
+        Get enhanced download analytics using UserDownload system.
+        
+        Leverages the smart UserDownload tracking to provide insights into
+        genuine download patterns and user engagement.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Enhanced download analytics
+        """
+        # Total unique download relationships (abuse-free count)
+        unique_downloads = db.query(UserDownload).count()
+        
+        # Total download events (including repeats)
+        total_events = db.query(func.sum(UserDownload.total_download_count)).scalar() or 0
+        
+        # Most downloaded datasets (by unique users)
+        popular_datasets = db.query(
+            Dataset.dataset_name,
+            Dataset.downloads_count,
+            func.count(UserDownload.user_id).label('unique_downloaders')
+        ).join(
+            UserDownload, Dataset.dataset_id == UserDownload.dataset_id
+        ).filter(
+            Dataset.approval_status == 'approved'
+        ).group_by(
+            Dataset.dataset_id, Dataset.dataset_name, Dataset.downloads_count
+        ).order_by(
+            desc('unique_downloaders')
+        ).limit(10).all()
+        
+        # Calculate average downloads per user using a simpler approach
+        total_user_downloads = db.query(func.count(UserDownload.user_id.distinct())).scalar() or 0
+        total_unique_users = db.query(User.user_id).distinct().count()
+        avg_downloads_per_user = (total_user_downloads / total_unique_users) if total_unique_users > 0 else 0
+        
+        # Recent download trends (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_downloads = db.query(UserDownload).filter(
+            UserDownload.last_download_date >= thirty_days_ago
+        ).count()
+        
+        # Download conversion rate (datasets with at least one download)
+        datasets_with_downloads = db.query(Dataset).filter(
+            and_(
+                Dataset.downloads_count > 0,
+                Dataset.approval_status == 'approved'
+            )
+        ).count()
+        
+        total_approved = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
+        conversion_rate = (datasets_with_downloads / total_approved * 100) if total_approved > 0 else 0
+        
+        return {
+            "unique_download_relationships": unique_downloads,
+            "total_download_events": total_events,
+            "abuse_prevention_ratio": round((total_events / unique_downloads), 1) if unique_downloads > 0 else 0,
+            "popular_datasets": [
+                {
+                    "name": ds.dataset_name,
+                    "total_downloads": ds.downloads_count,
+                    "unique_downloaders": ds.unique_downloaders
+                }
+                for ds in popular_datasets
+            ],
+            "average_downloads_per_user": round(float(avg_downloads_per_user), 1),
+            "recent_downloads_30d": recent_downloads,
+            "download_conversion_rate": round(conversion_rate, 1),
+            "datasets_with_downloads": datasets_with_downloads
+        }
+
+    def get_approval_performance_metrics(self, db: Session) -> Dict[str, Any]:
+        """
+        Get approval timing and performance analytics.
+        
+        Analyzes the approval workflow to provide insights into
+        approval efficiency and admin workload patterns.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Approval performance metrics
+        """
+        # Current pending datasets
+        pending_count = db.query(Dataset).filter(Dataset.approval_status == 'pending').count()
+        
+        # Oldest pending dataset
+        oldest_pending = db.query(Dataset).filter(
+            Dataset.approval_status == 'pending'
+        ).order_by(Dataset.date_of_creation).first()
+        
+        oldest_pending_days = 0
+        if oldest_pending:
+            oldest_pending_days = (datetime.now() - oldest_pending.date_of_creation).days
+        
+        # Approval rates (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_approved = db.query(Dataset).filter(
+            and_(
+                Dataset.approval_status == 'approved',
+                Dataset.approval_date >= thirty_days_ago
+            )
+        ).count()
+        
+        recent_rejected = db.query(Dataset).filter(
+            and_(
+                Dataset.approval_status == 'rejected',
+                Dataset.approval_date >= thirty_days_ago
+            )
+        ).count()
+        
+        total_recent_decisions = recent_approved + recent_rejected
+        approval_rate = (recent_approved / total_recent_decisions * 100) if total_recent_decisions > 0 else 0
+        
+        # Average approval time for approved datasets
+        approved_with_times = db.query(
+            Dataset.date_of_creation,
+            Dataset.approval_date
+        ).filter(
+            and_(
+                Dataset.approval_status == 'approved',
+                Dataset.approval_date.isnot(None)
+            )
+        ).all()
+        
+        avg_approval_time = 0
+        if approved_with_times:
+            approval_times = [
+                (ds.approval_date - ds.date_of_creation).days 
+                for ds in approved_with_times 
+                if ds.approval_date and ds.date_of_creation
+            ]
+            avg_approval_time = sum(approval_times) / len(approval_times) if approval_times else 0
+        
+        # Admin activity (approvals by admin) - simplified query
+        admin_activity = db.query(
+            User.username,
+            func.count(Dataset.dataset_id).label('approvals')
+        ).join(
+            Dataset, User.user_id == Dataset.approved_by
+        ).filter(
+            and_(
+                Dataset.approval_date.isnot(None),
+                Dataset.approval_date >= thirty_days_ago
+            )
+        ).group_by(
+            User.user_id, User.username
+        ).order_by(
+            desc('approvals')
+        ).limit(5).all()
+        
+        return {
+            "pending_datasets": pending_count,
+            "oldest_pending_days": oldest_pending_days,
+            "approval_rate_30d": round(approval_rate, 1),
+            "recent_approved": recent_approved,
+            "recent_rejected": recent_rejected,
+            "average_approval_time_days": round(avg_approval_time, 1),
+            "admin_activity_30d": [
+                {"admin": admin.username, "approvals": admin.approvals}
+                for admin in admin_activity
+            ]
+        }
+
+    def get_collaboration_patterns(self, db: Session) -> Dict[str, Any]:
+        """
+        Get collaboration pattern analytics for multi-owner datasets.
+        
+        Analyzes dataset ownership patterns to understand collaboration
+        and knowledge sharing across the platform.
+        
+        Args:
+            db: Database session for query execution
+            
+        Returns:
+            Dict[str, Any]: Collaboration analytics
+        """
+        # Datasets with multiple owners - simplified approach
+        multi_owner_subquery = db.query(
+            dataset_owner_table.c.dataset_id,
+            func.count(dataset_owner_table.c.user_id).label('owner_count')
+        ).group_by(
+            dataset_owner_table.c.dataset_id
+        ).having(
+            func.count(dataset_owner_table.c.user_id) > 1
+        ).subquery()
+        
+        multi_owner_datasets = db.query(Dataset).join(
+            multi_owner_subquery, Dataset.dataset_id == multi_owner_subquery.c.dataset_id
+        ).filter(
+            Dataset.approval_status == 'approved'
+        ).count()
+        
+        # Total approved datasets for percentage
+        total_approved = db.query(Dataset).filter(Dataset.approval_status == 'approved').count()
+        collaboration_rate = (multi_owner_datasets / total_approved * 100) if total_approved > 0 else 0
+        
+        # Calculate average owners per dataset using a simpler approach
+        total_ownership_relationships = db.query(dataset_owner_table).count()
+        total_datasets_with_owners = db.query(dataset_owner_table.c.dataset_id).distinct().count()
+        avg_owners = (total_ownership_relationships / total_datasets_with_owners) if total_datasets_with_owners > 0 else 0
+        
+        # Cross-organizational collaboration - simplified approach
+        cross_org_datasets = db.query(Dataset).join(
+            dataset_owner_table, Dataset.dataset_id == dataset_owner_table.c.dataset_id
+        ).join(
+            User, dataset_owner_table.c.user_id == User.user_id
+        ).filter(
+            and_(
+                Dataset.approval_status == 'approved',
+                User.organization.isnot(None),
+                User.organization != ''
+            )
+        ).group_by(
+            Dataset.dataset_id
+        ).having(
+            func.count(func.distinct(User.organization)) > 1
+        ).count()
+        
+        cross_org_rate = (cross_org_datasets / total_approved * 100) if total_approved > 0 else 0
+        
+        # Most collaborative organizations
+        collaborative_orgs = db.query(
+            User.organization,
+            func.count(func.distinct(Dataset.dataset_id)).label('shared_datasets')
+        ).join(
+            dataset_owner_table, User.user_id == dataset_owner_table.c.user_id
+        ).join(
+            Dataset, dataset_owner_table.c.dataset_id == Dataset.dataset_id
+        ).filter(
+            and_(
+                Dataset.approval_status == 'approved',
+                User.organization.isnot(None),
+                User.organization != ''
+            )
+        ).group_by(
+            User.organization
+        ).order_by(
+            desc('shared_datasets')
+        ).limit(10).all()
+        
+        return {
+            "multi_owner_datasets": multi_owner_datasets,
+            "collaboration_rate": round(collaboration_rate, 1),
+            "average_owners_per_dataset": round(float(avg_owners), 1),
+            "cross_organizational_datasets": cross_org_datasets,
+            "cross_org_collaboration_rate": round(cross_org_rate, 1),
+            "most_collaborative_organizations": [
+                {"organization": org.organization, "shared_datasets": org.shared_datasets}
+                for org in collaborative_orgs
+            ]
+        }
 
     def get_role_by_name(self, db: Session, role_name: str) -> Optional[Role]:
         """

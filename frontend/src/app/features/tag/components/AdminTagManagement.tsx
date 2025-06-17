@@ -160,7 +160,14 @@ export function AdminTagManagement() {
               Create Tag
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            className="!bg-background !bg-opacity-100"
+            style={{
+              opacity: 1,
+              backgroundColor: "var(--background)",
+              backdropFilter: "none",
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Create New Tag</DialogTitle>
             </DialogHeader>
@@ -278,7 +285,14 @@ export function AdminTagManagement() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent
+          className="!bg-background !bg-opacity-100"
+          style={{
+            opacity: 1,
+            backgroundColor: "var(--background)",
+            backdropFilter: "none",
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Tag</DialogTitle>
           </DialogHeader>
@@ -332,7 +346,14 @@ export function AdminTagManagement() {
 
       {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent
+          className="!bg-background !bg-opacity-100"
+          style={{
+            opacity: 1,
+            backgroundColor: "var(--background)",
+            backdropFilter: "none",
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Delete Tag</DialogTitle>
           </DialogHeader>

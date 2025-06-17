@@ -366,7 +366,6 @@ export function UserManagement() {
   const { roles } = useRoles();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -378,18 +377,15 @@ export function UserManagement() {
   const handleSearch = () => {
     updateFilters({
       search_term: searchTerm || undefined,
-      status_filter: statusFilter || undefined,
       role_filter: roleFilter || undefined,
     });
   };
 
   const handleResetFilters = () => {
     setSearchTerm("");
-    setStatusFilter("");
     setRoleFilter("");
     updateFilters({
       search_term: undefined,
-      status_filter: undefined,
       role_filter: undefined,
     });
   };
@@ -419,7 +415,7 @@ export function UserManagement() {
     return Math.ceil(users.total_count / users.limit);
   }, [users]);
 
-  const hasActiveFilters = searchTerm || statusFilter || roleFilter;
+  const hasActiveFilters = searchTerm || roleFilter;
 
   if (loading && !users) {
     return (
@@ -458,7 +454,7 @@ export function UserManagement() {
 
       {/* Filters */}
       <Card className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Search Users
@@ -474,22 +470,6 @@ export function UserManagement() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </select>
           </div>
 
           <div>

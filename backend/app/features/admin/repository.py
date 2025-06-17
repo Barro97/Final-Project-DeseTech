@@ -159,9 +159,7 @@ class AdminRepository(AdminRepositoryInterface):
                 )
             )
 
-        # APPLY STATUS FILTER
-        if filters.status_filter:
-            query = query.filter(User.status == filters.status_filter)
+
 
         # APPLY ROLE FILTER
         if filters.role_filter:

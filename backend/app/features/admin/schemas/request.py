@@ -64,7 +64,6 @@ class UserCreateRequest(BaseModel):
 class AdminFilterRequest(BaseModel):
     """Request schema for admin filtering and search"""
     search_term: Optional[str] = Field(None, max_length=100)
-    status_filter: Optional[str] = Field(None, pattern="^(pending|approved|rejected|active|inactive|suspended)$")
     role_filter: Optional[str] = Field(None, max_length=50)
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None

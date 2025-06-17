@@ -196,7 +196,6 @@ export interface Role {
 
 export interface AdminFilterRequest {
   search_term?: string;
-  status_filter?: string;
   role_filter?: string;
   date_from?: string;
   date_to?: string;

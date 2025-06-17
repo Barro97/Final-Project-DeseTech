@@ -84,8 +84,6 @@ export async function getUsers(
   const params = new URLSearchParams();
 
   if (filters.search_term) params.append("search_term", filters.search_term);
-  if (filters.status_filter)
-    params.append("status_filter", filters.status_filter);
   if (filters.role_filter) params.append("role_filter", filters.role_filter);
   params.append("page", filters.page.toString());
   params.append("limit", filters.limit.toString());

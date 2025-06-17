@@ -74,7 +74,6 @@ def approve_dataset(
 @router.get("/users", response_model=AdminListResponse)
 def get_users_for_management(
     search_term: Optional[str] = Query(None),
-    status_filter: Optional[str] = Query(None),
     role_filter: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -85,7 +84,6 @@ def get_users_for_management(
     try:
         filters = AdminFilterRequest(
             search_term=search_term,
-            status_filter=status_filter,
             role_filter=role_filter,
             page=page,
             limit=limit

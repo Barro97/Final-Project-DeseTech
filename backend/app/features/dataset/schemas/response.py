@@ -39,6 +39,8 @@ class DatasetResponse(BaseModel):
     approved_by: Optional[int] = None
     approved_by_name: Optional[str] = None
     approval_date: Optional[datetime] = None
+    # File information
+    file_types: List[str] = []  # e.g., ["csv", "json", "pdf"]
 
     class Config:
         from_attributes = True

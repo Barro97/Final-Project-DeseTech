@@ -200,6 +200,27 @@ class DatasetRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def get_dataset_file_types(self, db: Session, dataset_id: int) -> List[str]:
+        """
+        Get file types for a specific dataset, converted to user-friendly extensions.
+        
+        This method retrieves the MIME types of all files in a dataset and converts
+        them to user-friendly file extensions for display purposes.
+        
+        Args:
+            db: Database session for query execution
+            dataset_id: Dataset to get file types for
+            
+        Returns:
+            List[str]: List of user-friendly file extensions (e.g., ['csv', 'json'])
+            
+        Example:
+            >>> file_types = repository.get_dataset_file_types(db, 123)
+            >>> print(file_types)  # ['csv', 'pdf', 'json']
+        """
+        pass
+
+    @abstractmethod
     def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
         """
         Get search suggestions based on dataset names and descriptions.
@@ -739,6 +760,66 @@ class DatasetRepository(DatasetRepositoryInterface):
         """
         result = db.query(File.file_type).filter(File.file_type.isnot(None)).distinct().all()
         return [row[0] for row in result if row[0]]
+
+    def get_dataset_file_types(self, db: Session, dataset_id: int) -> List[str]:
+        """
+        Get file types for a specific dataset, converted to user-friendly extensions.
+        
+        This method retrieves the MIME types of all files in a dataset and converts
+        them to user-friendly file extensions for display purposes.
+        
+        Args:
+            db: Database session for query execution
+            dataset_id: Dataset to get file types for
+            
+        Returns:
+            List[str]: List of user-friendly file extensions (e.g., ['csv', 'json'])
+        """
+        # Get unique MIME types for this dataset
+        result = db.query(File.file_type).filter(
+            File.dataset_id == dataset_id,
+            File.file_type.isnot(None)
+        ).distinct().all()
+        
+        mime_types = [row[0] for row in result if row[0]]
+        
+        # Create mapping from MIME types to user-friendly extensions
+        mime_to_extension = {
+            'text/csv': 'csv',
+            'application/csv': 'csv',
+            'application/json': 'json',
+            'text/json': 'json',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+            'application/vnd.ms-excel': 'xls',
+            'application/pdf': 'pdf',
+            'text/plain': 'txt',
+            'application/xml': 'xml',
+            'text/xml': 'xml',
+            'application/zip': 'zip',
+            'application/sql': 'sql',
+            'text/sql': 'sql',
+            'application/octet-stream': 'parquet',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+            'application/msword': 'doc',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+            'application/vnd.ms-powerpoint': 'ppt'
+        }
+        
+        # Convert MIME types to extensions
+        extensions = set()
+        for mime_type in mime_types:
+            if mime_type in mime_to_extension:
+                extensions.add(mime_to_extension[mime_type])
+            else:
+                # For unknown MIME types, try to extract extension from MIME type
+                if '/' in mime_type:
+                    potential_ext = mime_type.split('/')[-1].lower()
+                    # Only add if it looks like a reasonable file extension
+                    if len(potential_ext) <= 10 and potential_ext.isalnum():
+                        extensions.add(potential_ext)
+        
+        # Return sorted list of unique extensions
+        return sorted(list(extensions))
 
     def get_search_suggestions(self, db: Session, search_term: str, limit: int = 10) -> List[str]:
         """

@@ -11,7 +11,7 @@ export interface Dataset {
   size?: string; // e.g., "15 MB", "2 GB" - NOT BACKED BY DATABASE
   license?: string; // e.g., "MIT", "CC BY 4.0" - NOT BACKED BY DATABASE
   tags?: string[]; // e.g., ["Health", "AI"]
-  file_types?: string[]; // e.g., ["CSV", "JSON"] - NOT BACKED BY DATABASE
+  file_types?: string[]; // e.g., ["csv", "json", "pdf"] - Types of files in the dataset
   row_count?: number; // e.g., 10000 - NOT BACKED BY DATABASE
   approval_status?: string; // "pending", "approved", "rejected"
   approved_by?: number;

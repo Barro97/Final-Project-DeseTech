@@ -180,7 +180,7 @@ class DatasetService:
             db.commit()
             db.refresh(created_dataset)  # Get the latest state with all relationships
 
-            return self._format_dataset_response(created_dataset)
+            return self._format_dataset_response(created_dataset, db)
 
         except Exception as e:
             # TRANSACTION SAFETY: Rollback on any error to maintain consistency
@@ -214,7 +214,7 @@ class DatasetService:
         if not dataset:
             raise DatasetNotFoundError(dataset_id)
 
-        return self._format_dataset_response(dataset)
+        return self._format_dataset_response(dataset, db)
 
     def get_dataset_detail(self, db: Session, dataset_id: int) -> DatasetDetailResponse:
         """
@@ -250,7 +250,7 @@ class DatasetService:
         files = self.repository.get_files(db, dataset_id)
         
         return DatasetDetailResponse(
-            **self._format_dataset_response(dataset).dict(),
+            **self._format_dataset_response(dataset, db).dict(),
             # Extended information not available in basic response
             owner_details=[
                 {"user_id": owner.user_id, "username": owner.username,
@@ -347,7 +347,7 @@ class DatasetService:
             db.commit()
             db.refresh(updated_dataset)
 
-            return self._format_dataset_response(updated_dataset)
+            return self._format_dataset_response(updated_dataset, db)
 
         except Exception as e:
             # TRANSACTION SAFETY: Rollback on any error
@@ -572,7 +572,7 @@ class DatasetService:
 
         # QUERY: Get datasets where user is uploader OR owner
         datasets = self.repository.get_by_user(db, user_id)
-        return [self._format_dataset_response(dataset) for dataset in datasets]
+        return [self._format_dataset_response(dataset, db) for dataset in datasets]
 
     def get_public_user_datasets(self, db: Session, user_id: int) -> List[DatasetResponse]:
         """
@@ -600,7 +600,7 @@ class DatasetService:
         """
         # QUERY: Get only approved datasets where user is uploader OR owner
         datasets = self.repository.get_approved_by_user(db, user_id)
-        return [self._format_dataset_response(dataset) for dataset in datasets]
+        return [self._format_dataset_response(dataset, db) for dataset in datasets]
 
     def search_datasets(self, db: Session, request: DatasetFilterRequest) -> DatasetListResponse:
         """Search datasets with filters."""
@@ -625,26 +625,9 @@ class DatasetService:
             # Get datasets from repository
             datasets, total_count = self.repository.get_filtered(db, internal_filters)
             
-            # Convert to response models
+            # Convert to response models using the helper method that includes file types
             dataset_responses = [
-                DatasetResponse(
-                    dataset_id=dataset.dataset_id,
-                    dataset_name=dataset.dataset_name,
-                    dataset_description=dataset.dataset_description,
-                    date_of_creation=dataset.date_of_creation,
-                    dataset_last_updated=dataset.dataset_last_updated,
-                    downloads_count=dataset.downloads_count,
-                    uploader_id=dataset.uploader_id,
-                    uploader_username=dataset.uploader.username if dataset.uploader else None,
-                    geographic_location=dataset.geographic_location,
-                    data_time_period=dataset.data_time_period,
-                    approval_status=dataset.approval_status,
-                    approved_by=dataset.approved_by,
-                    approval_date=dataset.approval_date,
-                    tags=[tag.tag_category_name for tag in dataset.tags],
-                    file_count=len(dataset.files),
-                    total_file_size=sum(file.size or 0 for file in dataset.files)
-                )
+                self._format_dataset_response(dataset, db)
                 for dataset in datasets
             ]
             
@@ -994,7 +977,7 @@ class DatasetService:
         # OWNER PERMISSION: Check if user is in the owners list
         return any(owner.user_id == user_id for owner in dataset.owners)
 
-    def _format_dataset_response(self, dataset: Dataset) -> DatasetResponse:
+    def _format_dataset_response(self, dataset: Dataset, db: Session = None) -> DatasetResponse:
         """
         Convert a database model to an API response format.
         
@@ -1006,18 +989,20 @@ class DatasetService:
         - Extracts owner IDs from relationship objects
         - Extracts tag names from tag relationship objects
         - Extracts approver name from approver relationship
+        - Extracts file types from dataset files
         - Formats dates consistently
         - Handles optional fields gracefully
         
         Args:
             dataset: SQLAlchemy dataset model instance
+            db: Database session for additional queries (optional)
             
         Returns:
             DatasetResponse: API-formatted dataset data ready for JSON serialization
             
         Example:
-            >>> response = service._format_dataset_response(dataset_model)
-            >>> print(response.dataset_name)  # Clean API format
+            >>> response = service._format_dataset_response(dataset_model, db)
+            >>> print(response.file_types)  # ['csv', 'json', 'pdf']
         """
         # Extract approver name if available
         approved_by_name = None
@@ -1026,6 +1011,15 @@ class DatasetService:
                 approved_by_name = f"{dataset.approver.first_name} {dataset.approver.last_name}"
             else:
                 approved_by_name = dataset.approver.username
+        
+        # Get file types for this dataset if db session is available
+        file_types = []
+        if db:
+            try:
+                file_types = self.repository.get_dataset_file_types(db, dataset.dataset_id)
+            except Exception as e:
+                logger.warning(f"Failed to get file types for dataset {dataset.dataset_id}: {str(e)}")
+                file_types = []
         
         return DatasetResponse(
             dataset_id=dataset.dataset_id,
@@ -1045,5 +1039,7 @@ class DatasetService:
             approval_date=dataset.approval_date,
             # AGRICULTURAL RESEARCH CONTEXT FIELDS: Include location and time period
             geographic_location=dataset.geographic_location,
-            data_time_period=dataset.data_time_period
+            data_time_period=dataset.data_time_period,
+            # FILE INFORMATION: Include file types present in the dataset
+            file_types=file_types
         ) 

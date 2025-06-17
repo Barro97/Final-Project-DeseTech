@@ -345,14 +345,6 @@ export default function DatasetDetailPage({
                   {getApprovalStatusDisplay()}
                 </div>
 
-                {/* Dataset Contributors */}
-                <div className="my-6">
-                  <DatasetPeople
-                    uploaderId={dataset.uploader_id}
-                    ownerIds={dataset.owners || []}
-                  />
-                </div>
-
                 {/* Admin approval notice */}
                 {canApprove && (
                   <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -423,6 +415,14 @@ export default function DatasetDetailPage({
                       </div>
                     </div>
                   )}
+
+                {/* Dataset Contributors */}
+                <div className="my-6">
+                  <DatasetPeople
+                    uploaderId={dataset.uploader_id}
+                    ownerIds={dataset.owners || []}
+                  />
+                </div>
               </div>
 
               {canModify && (

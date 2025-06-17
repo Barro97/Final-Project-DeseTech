@@ -107,7 +107,9 @@ def signup_endpoint(user: UserCreateRequest, db: Session = Depends(get_db)):
     access_token = create_access_token(data={
         "email": created_user.email,
         "role": user_role,
-        "user_id": created_user.user_id
+        "user_id": created_user.user_id,
+        "first_name": created_user.first_name,
+        "last_name": created_user.last_name
     })
     
     # Return both user data and token for immediate login

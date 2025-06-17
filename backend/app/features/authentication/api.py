@@ -50,7 +50,9 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(data={
         "email": db_user.email,
         "role": user_role,
-        "user_id": db_user.user_id  # Use user_id consistently
+        "user_id": db_user.user_id,  # Use user_id consistently
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name
     })
     
     # Return the token in response
@@ -139,7 +141,9 @@ def oauth_login(oauth_data: OAuthUserData, db: Session = Depends(get_db)):
         access_token = create_access_token(data={
             "email": db_user.email,
             "role": user_role,
-            "user_id": db_user.user_id
+            "user_id": db_user.user_id,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name
         })
         
         return {"access_token": access_token, "token_type": "bearer"}
@@ -172,7 +176,9 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
         new_access_token = create_access_token(data={
             "user_id": user.user_id, 
             "email": user.email, 
-            "role": user.role.role_name if user.role else None
+            "role": user.role.role_name if user.role else None,
+            "first_name": user.first_name,
+            "last_name": user.last_name
         })
 
         return {"access_token": new_access_token, "token_type": "bearer"}

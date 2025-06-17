@@ -12,6 +12,8 @@ interface DecodedToken {
   email: string;
   role: string;
   id: string;
+  first_name?: string;
+  last_name?: string;
   exp?: number; // Add expiration time
   // Include other fields from the JWT payload like iat, exp, etc., if needed for typing
   // For example:
@@ -23,6 +25,8 @@ interface User {
   email: string;
   role: string;
   id: string;
+  first_name?: string;
+  last_name?: string;
   // Add other user properties as needed, derived or directly from token
 }
 
@@ -68,7 +72,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const decoded = jwtDecode<DecodedToken>(storedToken);
-        setUser({ email: decoded.email, role: decoded.role, id: decoded.id });
+        setUser({
+          email: decoded.email,
+          role: decoded.role,
+          id: decoded.id,
+          first_name: decoded.first_name,
+          last_name: decoded.last_name,
+        });
         setToken(storedToken);
       } catch (error) {
         console.error("Failed to decode token from session storage:", error);
@@ -88,7 +98,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const decoded = jwtDecode<DecodedToken>(newToken);
       sessionStorage.setItem("accessToken", newToken);
-      setUser({ email: decoded.email, role: decoded.role, id: decoded.id });
+      setUser({
+        email: decoded.email,
+        role: decoded.role,
+        id: decoded.id,
+        first_name: decoded.first_name,
+        last_name: decoded.last_name,
+      });
       setToken(newToken);
     } catch (error) {
       console.error("Failed to decode token:", error);

@@ -87,6 +87,15 @@ function HomePage() {
     }
   }, [token, isLoading, router]);
 
+  // Debug: Log user object to see what's available
+  useEffect(() => {
+    if (user) {
+      console.log("User object:", user);
+      console.log("First name:", user.first_name);
+      console.log("Last name:", user.last_name);
+    }
+  }, [user]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -120,9 +129,13 @@ function HomePage() {
             {/* Greeting */}
             <div className="mb-6 animate-in fade-in-50 slide-in-up duration-700">
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
-                Welcome back,{" "}
+                Welcome,{" "}
                 <span className="font-semibold text-gray-800 dark:text-gray-200">
-                  {user.email.split("@")[0]}
+                  {user.first_name && user.last_name
+                    ? `${user.first_name} ${user.last_name}`
+                    : user.first_name ||
+                      user.last_name ||
+                      user.email.split("@")[0]}
                 </span>
               </p>
             </div>

@@ -13,7 +13,9 @@ import {
   Download,
   FileText,
   MessageSquare,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
 interface ApprovalDialogProps {
   dataset: AdminDataset | null;
@@ -174,9 +176,15 @@ function DatasetCard({ dataset, onReview }: DatasetCardProps) {
     <Card className="p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {dataset.dataset_name}
-          </h3>
+          <Link
+            href={`/datasets/${dataset.dataset_id}`}
+            className="group inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+          >
+            <h3 className="text-lg font-semibold underline-offset-4 group-hover:underline">
+              {dataset.dataset_name}
+            </h3>
+            <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
           {dataset.dataset_description && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
               {dataset.dataset_description}

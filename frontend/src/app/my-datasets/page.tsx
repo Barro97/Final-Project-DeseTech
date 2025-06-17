@@ -169,17 +169,33 @@ export default function MyDatasetsPage() {
         </Button>
       </div>
 
-      {selectedDatasetIds.length > 0 && (
-        <div className="mb-4 flex justify-end">
-          <Button
-            onClick={handleDeleteSelected}
-            variant="destructive"
-            disabled={deleteMutation.isPending}
-          >
-            Delete Selected ({selectedDatasetIds.length})
-          </Button>
-        </div>
-      )}
+      {/* Fixed positioned delete button area to prevent layout shifts */}
+      <div className="mb-4 h-12 flex justify-end items-center">
+        {selectedDatasetIds.length > 0 && (
+          <div className="animate-in slide-in-from-right-5 fade-in-0 duration-300">
+            <Button
+              onClick={handleDeleteSelected}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2 rounded-lg font-medium transform hover:scale-105 active:scale-95"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              Delete Selected ({selectedDatasetIds.length})
+            </Button>
+          </div>
+        )}
+      </div>
 
       {datasets.length === 0 ? (
         <div className="text-center py-12">

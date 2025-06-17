@@ -92,13 +92,17 @@ export function DatasetCard({
       {showSelectionCheckbox && (
         <div
           onClick={handleSelectClick}
-          className="absolute top-4 right-4 z-10 p-1 bg-white dark:bg-gray-800 rounded-full cursor-pointer group-hover:opacity-100 opacity-75 transition-opacity shadow-sm border border-gray-200 dark:border-gray-600"
+          className={`absolute top-4 right-4 z-10 p-2 rounded-lg cursor-pointer transition-all duration-200 shadow-md border-2 ${
+            isSelected
+              ? "bg-blue-50 dark:bg-blue-950 border-blue-500 dark:border-blue-400 scale-105"
+              : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-lg"
+          } transform hover:scale-105 active:scale-95`}
           aria-label={isSelected ? "Deselect dataset" : "Select dataset"}
         >
           {isSelected ? (
-            <CheckSquare className="h-5 w-5 text-blue-600" />
+            <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-in zoom-in-75 duration-200" />
           ) : (
-            <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+            <Square className="h-5 w-5 text-gray-500 dark:text-gray-400 transition-colors" />
           )}
         </div>
       )}

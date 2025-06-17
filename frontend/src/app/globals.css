@@ -360,3 +360,42 @@ main {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Enhanced checkbox and button animations */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.zoom-in-75 {
+  animation: zoomIn 0.2s ease-out;
+}
+
+.slide-in-from-right-5 {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.fade-in-0 {
+  animation: fadeIn 0.3s ease-out;
+}

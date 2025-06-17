@@ -92,7 +92,7 @@ export function DatasetCard({
       {showSelectionCheckbox && (
         <div
           onClick={handleSelectClick}
-          className="absolute top-4 right-4 z-10 p-1 bg-white dark:bg-gray-800 rounded-full cursor-pointer group-hover:opacity-100 opacity-75 transition-opacity"
+          className="absolute top-4 right-4 z-10 p-1 bg-white dark:bg-gray-800 rounded-full cursor-pointer group-hover:opacity-100 opacity-75 transition-opacity shadow-sm border border-gray-200 dark:border-gray-600"
           aria-label={isSelected ? "Deselect dataset" : "Select dataset"}
         >
           {isSelected ? (
@@ -103,10 +103,17 @@ export function DatasetCard({
         </div>
       )}
 
+      {/* Approval status in bottom-right when selection checkbox is shown */}
+      {showSelectionCheckbox && getApprovalStatusIcon() && (
+        <div className="absolute bottom-4 right-4 z-10">
+          {getApprovalStatusIcon()}
+        </div>
+      )}
+
       <Link href={`/datasets/${dataset.dataset_id}`} className="block h-full">
         <Card className="h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
           <div className="p-4 flex flex-col flex-grow">
-            {/* Title with inline approval status */}
+            {/* Title with conditional approval status */}
             <div className="flex items-start">
               <h3
                 className="text-lg font-semibold truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 flex-grow"
@@ -114,7 +121,8 @@ export function DatasetCard({
               >
                 {dataset.dataset_name}
               </h3>
-              {getApprovalStatusIcon()}
+              {/* Show approval status inline only when selection checkbox is NOT shown */}
+              {!showSelectionCheckbox && getApprovalStatusIcon()}
             </div>
 
             {dataset.dataset_description && (

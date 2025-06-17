@@ -240,7 +240,7 @@ export function UserOwnerSelector({
 
       {/* Dropdown content */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg">
+        <div className="absolute top-full left-0 right-0 z-[9999] mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg">
           <div className="p-3">
             {/* Search input */}
             <div className="mb-3">

@@ -1146,11 +1146,18 @@ export default function SearchDatasetsPage() {
         <>
           <div className="text-center mb-10">
             <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-gray-800 dark:text-white">
-              Discover Datasets
+              {searchType === "users"
+                ? "Discover Researchers"
+                : searchType === "all"
+                  ? "Discover Datasets & Researchers"
+                  : "Discover Datasets"}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Explore a universe of data. Start your search or browse
-              categories.
+              {searchType === "users"
+                ? "Connect with researchers and explore their work."
+                : searchType === "all"
+                  ? "Explore datasets and connect with researchers."
+                  : "Explore a universe of data. Start your search or browse categories."}
             </p>
           </div>
           <EnhancedSearchBarPlaceholder
@@ -1175,30 +1182,49 @@ export default function SearchDatasetsPage() {
             viewType="landing"
           />
 
-          <DatasetCarouselSectionPlaceholder
-            title="Most Downloaded"
-            onSeeAll={() => handleCarouselSeeAll("Most Downloaded")}
-            datasets={mostDownloadedData?.datasets || []}
-            isLoading={isLoadingMostDownloaded}
-          />
-          <DatasetCarouselSectionPlaceholder
-            title="Recently Added"
-            onSeeAll={() => handleCarouselSeeAll("Recently Added")}
-            datasets={recentlyAddedData?.datasets || []}
-            isLoading={isLoadingRecentlyAdded}
-          />
-          <DatasetCarouselSectionPlaceholder
-            title="This Month's Uploads"
-            onSeeAll={() => handleCarouselSeeAll("This Month's Uploads")}
-            datasets={thisMonthData?.datasets || []}
-            isLoading={isLoadingThisMonth}
-          />
-          <DatasetCarouselSectionPlaceholder
-            title="Popular This Week"
-            onSeeAll={() => handleCarouselSeeAll("Popular This Week")}
-            datasets={popularThisWeekData?.datasets || []}
-            isLoading={isLoadingPopularThisWeek}
-          />
+          {/* Only show dataset carousels when search type includes datasets */}
+          {(searchType === "datasets" || searchType === "all") && (
+            <>
+              <DatasetCarouselSectionPlaceholder
+                title="Most Downloaded"
+                onSeeAll={() => handleCarouselSeeAll("Most Downloaded")}
+                datasets={mostDownloadedData?.datasets || []}
+                isLoading={isLoadingMostDownloaded}
+              />
+              <DatasetCarouselSectionPlaceholder
+                title="Recently Added"
+                onSeeAll={() => handleCarouselSeeAll("Recently Added")}
+                datasets={recentlyAddedData?.datasets || []}
+                isLoading={isLoadingRecentlyAdded}
+              />
+              <DatasetCarouselSectionPlaceholder
+                title="This Month's Uploads"
+                onSeeAll={() => handleCarouselSeeAll("This Month's Uploads")}
+                datasets={thisMonthData?.datasets || []}
+                isLoading={isLoadingThisMonth}
+              />
+              <DatasetCarouselSectionPlaceholder
+                title="Popular This Week"
+                onSeeAll={() => handleCarouselSeeAll("Popular This Week")}
+                datasets={popularThisWeekData?.datasets || []}
+                isLoading={isLoadingPopularThisWeek}
+              />
+            </>
+          )}
+
+          {/* Show message for users-only search */}
+          {searchType === "users" && (
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">
+                Search for Researchers
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+                Use the search bar above to find researchers by name,
+                organization, or expertise area.
+              </p>
+            </div>
+          )}
         </>
       )}
 

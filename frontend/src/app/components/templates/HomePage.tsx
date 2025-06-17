@@ -156,13 +156,13 @@ function HomePage() {
             {/* Description */}
             <div className="mb-8 animate-in fade-in-50 slide-in-up duration-700 animation-delay-400">
               <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Discover, share, and collaborate with the world&apos;s most
-                comprehensive
+                Discover, share, and collaborate with a comprehensive
                 <span className="font-semibold text-gray-800 dark:text-gray-200">
                   {" "}
                   research dataset repository
                 </span>
-                . Empowering researchers to accelerate scientific discovery.
+                . Empowering researchers to accelerate scientific discovery and
+                technological innovation.
               </p>
             </div>
 

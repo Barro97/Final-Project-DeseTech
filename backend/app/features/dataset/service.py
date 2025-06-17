@@ -317,18 +317,23 @@ class DatasetService:
             # STEP 1: Prepare the update data
             updates = {}
             
-            # Only update fields that were provided (partial updates)
-            if request.dataset_name is not None:
+            # Get fields that were explicitly provided in the request
+            # This allows us to distinguish between "don't update" vs "clear field"
+            provided_fields = request.__pydantic_fields_set__
+            
+            # Only update fields that were explicitly provided (partial updates)
+            if 'dataset_name' in provided_fields:
                 updates['dataset_name'] = request.dataset_name
             
-            if request.dataset_description is not None:
+            if 'dataset_description' in provided_fields:
                 updates['dataset_description'] = request.dataset_description
             
             # Agricultural research context fields (optional)
-            if request.geographic_location is not None:
+            # These can be cleared by providing empty string -> None conversion
+            if 'geographic_location' in provided_fields:
                 updates['geographic_location'] = request.geographic_location
             
-            if request.data_time_period is not None:
+            if 'data_time_period' in provided_fields:
                 updates['data_time_period'] = request.data_time_period
             
             # Always update the last modified timestamp on any change

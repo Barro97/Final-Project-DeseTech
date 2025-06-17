@@ -143,17 +143,17 @@ export function EditDatasetDialog({
       // 1. Update dataset metadata
       const hasMetadataChanges =
         name !== dataset.dataset_name ||
-        description !== dataset.dataset_description ||
-        geographicLocation !== (dataset.geographic_location || "") ||
-        dataTimePeriod !== (dataset.data_time_period || "") ||
+        description !== (dataset.dataset_description || "") ||
+        geographicLocation.trim() !== (dataset.geographic_location || "") ||
+        dataTimePeriod.trim() !== (dataset.data_time_period || "") ||
         JSON.stringify(selectedTags) !== JSON.stringify(dataset.tags || []);
 
       if (hasMetadataChanges) {
         await updateDataset(datasetId, {
           dataset_name: name,
           dataset_description: description,
-          geographic_location: geographicLocation || undefined,
-          data_time_period: dataTimePeriod || undefined,
+          geographic_location: geographicLocation.trim(),
+          data_time_period: dataTimePeriod.trim(),
           uploader_id: dataset.uploader_id,
           downloads_count: dataset.downloads_count,
           tags: selectedTags,

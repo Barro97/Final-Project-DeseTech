@@ -186,12 +186,11 @@ export function UserOwnerSelector({
   return (
     <div className={`space-y-2 relative ${className}`} ref={dropdownRef}>
       {/* Main selector button */}
-      <Button
-        variant="outline"
-        disabled={disabled}
-        className="w-full justify-between h-auto min-h-[2.5rem] p-3"
-        onClick={() => setIsOpen(!isOpen)}
-        type="button"
+      <div
+        className={`w-full justify-between h-auto min-h-[2.5rem] p-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md cursor-pointer transition-colors flex items-center ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <div className="flex flex-wrap gap-1.5 flex-1 text-left">
           {selectedOwners.length === 0 ? (
@@ -237,7 +236,7 @@ export function UserOwnerSelector({
             isOpen ? "rotate-180" : ""
           }`}
         />
-      </Button>
+      </div>
 
       {/* Dropdown content */}
       {isOpen && (

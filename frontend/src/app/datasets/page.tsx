@@ -1300,12 +1300,16 @@ export default function SearchDatasetsPage() {
                           </h3>
                         )}
                         <div
-                          className={`grid gap-4 ${currentLayout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}
+                          className={`grid gap-4 items-stretch ${
+                            currentLayout === "grid"
+                              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                              : "grid-cols-1"
+                          }`}
                         >
                           {datasets.map((dataset) => (
                             <div
                               key={dataset.dataset_id}
-                              className="group relative"
+                              className="group relative h-full"
                             >
                               <DatasetCard
                                 dataset={dataset}

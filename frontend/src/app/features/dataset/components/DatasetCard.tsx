@@ -85,7 +85,7 @@ export function DatasetCard({
   return (
     <div
       className={cn(
-        "relative block group",
+        "relative block group h-full",
         isSelected && showSelectionCheckbox && "ring-2 ring-blue-500 rounded-lg"
       )}
     >
@@ -116,7 +116,7 @@ export function DatasetCard({
 
       <Link href={`/datasets/${dataset.dataset_id}`} className="block h-full">
         <Card className="h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
-          <div className="p-4 flex flex-col flex-grow">
+          <div className="p-4 flex flex-col h-full">
             {/* Title with conditional approval status */}
             <div className="flex items-start">
               <h3
@@ -139,7 +139,7 @@ export function DatasetCard({
             )}
 
             {/* Metadata Bar */}
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50 space-y-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50 space-y-2 text-xs text-gray-500 dark:text-gray-400 flex-grow">
               <div className="flex items-center">
                 <Calendar className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
                 <span>Created: {formatDate(dataset.date_of_creation)}</span>

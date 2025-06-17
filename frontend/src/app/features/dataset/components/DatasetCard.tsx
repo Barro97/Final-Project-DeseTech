@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Dataset } from "@/app/features/dataset/types/datasetTypes";
 import { Card } from "@/app/components/molecules/card";
 import Link from "next/link";
@@ -9,7 +9,6 @@ import {
   Tag,
   ShieldCheck,
   HardDrive,
-  Image as ImageIcon,
   CheckSquare,
   Square,
   Clock,
@@ -31,19 +30,6 @@ export function DatasetCard({
   onSelect,
   showSelectionCheckbox = false,
 }: DatasetCardProps) {
-  const [imageStatus, setImageStatus] = useState<
-    "loading" | "loaded" | "error"
-  >("loading");
-
-  // Reset image status if the dataset (and thus thumbnailUrl) changes
-  useEffect(() => {
-    if (dataset.thumbnailUrl) {
-      setImageStatus("loading");
-    } else {
-      setImageStatus("loaded"); // Or 'error' if you want a specific icon for no-URL too
-    }
-  }, [dataset.thumbnailUrl]);
-
   // Format the date as DD/MM/YYYY
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -58,8 +44,7 @@ export function DatasetCard({
   };
 
   // Get approval status styling
-  const getApprovalStatusDisplay = () => {
-    // Show approval status for all datasets except those without any status
+  const getApprovalStatusIcon = () => {
     if (!dataset.approval_status) {
       return null;
     }
@@ -67,21 +52,18 @@ export function DatasetCard({
     const statusConfig = {
       pending: {
         icon: Clock,
-        text: "Pending Approval",
-        className:
-          "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
+        className: "text-yellow-600 dark:text-yellow-400",
+        title: "Pending Approval",
       },
       approved: {
         icon: CheckCircle,
-        text: "Approved",
-        className:
-          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
+        className: "text-green-600 dark:text-green-400",
+        title: "Approved",
       },
       rejected: {
         icon: XCircle,
-        text: "Rejected",
-        className:
-          "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
+        className: "text-red-600 dark:text-red-400",
+        title: "Rejected",
       },
     };
 
@@ -92,12 +74,11 @@ export function DatasetCard({
     const IconComponent = config.icon;
 
     return (
-      <div
-        className={`absolute top-2 left-2 z-10 px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1 ${config.className}`}
-      >
-        <IconComponent className="h-3 w-3" />
-        {config.text}
-      </div>
+      <span title={config.title}>
+        <IconComponent
+          className={`h-4 w-4 ml-2 flex-shrink-0 ${config.className}`}
+        />
+      </span>
     );
   };
 
@@ -122,48 +103,23 @@ export function DatasetCard({
         </div>
       )}
 
-      {/* Approval Status Badge */}
-      {getApprovalStatusDisplay()}
-
       <Link href={`/datasets/${dataset.dataset_id}`} className="block h-full">
         <Card className="h-full overflow-hidden border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
-          {/* Thumbnail Section */}
-          <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-            {!dataset.thumbnailUrl ? (
-              <ImageIcon className="h-12 w-12 text-slate-400" />
-            ) : imageStatus === "loading" ? (
-              // Optional: You can use a Skeleton component here if you have one
-              <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 animate-pulse">
-                <ImageIcon className="h-12 w-12 text-slate-400 opacity-50" />
-              </div>
-            ) : imageStatus === "error" ? (
-              <img
-                src="/placeholders/placeholder-image.png"
-                alt={`${dataset.dataset_name} fallback thumbnail`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <img
-                src={dataset.thumbnailUrl}
-                alt={`${dataset.dataset_name} thumbnail`}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                onLoad={() => setImageStatus("loaded")}
-                onError={() => setImageStatus("error")}
-              />
-            )}
-          </div>
-
           <div className="p-4 flex flex-col flex-grow">
-            <h3
-              className="text-lg font-semibold truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200"
-              title={dataset.dataset_name}
-            >
-              {dataset.dataset_name}
-            </h3>
+            {/* Title with inline approval status */}
+            <div className="flex items-start">
+              <h3
+                className="text-lg font-semibold truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 flex-grow"
+                title={dataset.dataset_name}
+              >
+                {dataset.dataset_name}
+              </h3>
+              {getApprovalStatusIcon()}
+            </div>
 
             {dataset.dataset_description && (
               <p
-                className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2"
+                className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2"
                 title={dataset.dataset_description}
               >
                 {dataset.dataset_description}

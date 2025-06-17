@@ -5,6 +5,7 @@ import zipfile
 import io
 from fastapi.responses import StreamingResponse
 import logging
+from datetime import datetime
 
 from backend.app.database.session import get_db
 from backend.app.features.authentication.utils.authorizations import get_current_user
@@ -119,6 +120,8 @@ def search_datasets(
     search_term: str = None,
     tags: List[str] = Query(None),
     uploader_id: int = None,
+    date_from: str = None,  # Date filter parameters
+    date_to: str = None,    # Date filter parameters
     sort_by: str = "newest",
     page: int = 1,
     limit: int = 20,
@@ -132,11 +135,29 @@ def search_datasets(
 ):
     """Search and filter datasets with enhanced filtering capabilities."""
     try:
+        # Convert date strings to datetime objects if provided
+        date_from_dt = None
+        date_to_dt = None
+        
+        if date_from:
+            try:
+                date_from_dt = datetime.fromisoformat(date_from)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid date format for date_from: {date_from}. Use YYYY-MM-DD format.")
+        
+        if date_to:
+            try:
+                date_to_dt = datetime.fromisoformat(date_to)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid date format for date_to: {date_to}. Use YYYY-MM-DD format.")
+        
         # Create filter request
         filter_request = DatasetFilterRequest(
             search_term=search_term,
             tags=tags,
             uploader_id=uploader_id,
+            date_from=date_from_dt,
+            date_to=date_to_dt,
             sort_by=sort_by,
             page=page,
             limit=limit,

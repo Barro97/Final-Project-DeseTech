@@ -209,7 +209,7 @@ function DeleteUserDialog({
               <li>• All files associated with their datasets</li>
               <li>• All comments and activity by this user</li>
               <li>
-                • User's ownership of other datasets (removed from owned
+                • User&apos;s ownership of other datasets (removed from owned
                 datasets)
               </li>
             </ul>

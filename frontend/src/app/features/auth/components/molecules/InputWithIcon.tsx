@@ -14,7 +14,7 @@ export interface InputWithIconProps {
 }
 
 export const InputWithIcon = forwardRef<HTMLInputElement, InputWithIconProps>(
-  ({ id, type, placeholder, icon, showToggle, register }, ref) => {
+  ({ id, type, placeholder, icon, showToggle, register }) => {
     const [visible, setVisible] = useState(false);
     const realType = showToggle ? (visible ? "text" : "password") : type;
 

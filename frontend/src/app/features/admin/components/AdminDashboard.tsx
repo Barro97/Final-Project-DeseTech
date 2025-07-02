@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAdminStats } from "../hooks/useAdminData";
-import { LoadingSpinner } from "@/app/components/atoms/loading-spinner";
 import { Card } from "@/app/components/molecules/card";
 import {
   Users,

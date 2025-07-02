@@ -78,7 +78,7 @@ export function useFileUpload(
             description: `${fileItem.file.name} was uploaded successfully`,
             variant: "success",
           });
-        } catch (error) {
+        } catch {
           setFiles((prev) =>
             prev.map((f) =>
               f.id === fileItem.id

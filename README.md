@@ -118,7 +118,6 @@ Create `frontend/.env.local` with the following variables:
 ```env
 # Backend API Configuration
 NEXT_PUBLIC_BACKEND=http://localhost:8000
-NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # OAuth Configuration (for Google/GitHub login)
 GOOGLE_CLIENT_ID=your_google_client_id
